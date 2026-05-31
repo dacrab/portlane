@@ -1,0 +1,144 @@
+<script lang="ts">
+	import { enhance } from '$app/forms';
+	import IconCheckCircleRegular from 'phosphor-icons-svelte/IconCheckCircleRegular.svelte';
+	import IconCheckCircleBold from 'phosphor-icons-svelte/IconCheckCircleBold.svelte';
+	import IconCircleRegular from 'phosphor-icons-svelte/IconCircleRegular.svelte';
+	import IconDownloadSimpleRegular from 'phosphor-icons-svelte/IconDownloadSimpleRegular.svelte';
+	import IconClockRegular from 'phosphor-icons-svelte/IconClockRegular.svelte';
+	import IconChatTextRegular from 'phosphor-icons-svelte/IconChatTextRegular.svelte';
+	import IconThumbsUpRegular from 'phosphor-icons-svelte/IconThumbsUpRegular.svelte';
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
+	let comment = $state('');
+	let note = $state('');
+
+	async function download(path: string, name: string) {
+		const res = await fetch(`/api/file-url?path=${encodeURIComponent(path)}`);
+		const { url } = await res.json();
+		const a = document.createElement('a');
+		a.href = url; a.download = name; a.click();
+	}
+
+	const freelancerName = $derived((data.project.profiles as any)?.full_name ?? 'Your freelancer');
+	const total = $derived(data.milestones.length);
+	const done = $derived(data.milestones.filter((m: any) => m.completed).length);
+	const progress = $derived(total ? Math.round((done / total) * 100) : 0);
+</script>
+
+<div class="min-h-screen" style="background:var(--color-bg)">
+	<header style="border-bottom:1px solid var(--color-border);background:var(--color-bg-elevated)" class="px-6 py-3.5">
+		<div class="mx-auto flex max-w-2xl items-center justify-between">
+			<div class="flex items-center gap-2">
+				<img src="/favicon.svg" alt="Portlane" class="h-6 w-6" />
+				<span class="text-[13px] font-semibold" style="color:var(--color-text-heading)">Portlane</span>
+			</div>
+			<span class="text-xs" style="color:var(--color-text-faint)">Client Portal</span>
+		</div>
+	</header>
+
+	<div class="mx-auto max-w-2xl px-6 py-8 space-y-4">
+		<!-- Project card -->
+		<div class="card">
+			<div class="mb-4 flex items-start justify-between">
+				<div>
+					<h1 class="text-[16px] font-semibold" style="color:var(--color-text-heading)">{data.project.name}</h1>
+					<p class="text-xs" style="color:var(--color-text-faint)">Managed by {freelancerName}</p>
+				</div>
+				<span class="badge badge-accent">{data.project.status.replace('_', ' ')}</span>
+			</div>
+			<div class="space-y-1">
+				<div class="flex justify-between text-xs" style="color:var(--color-text-faint)"><span>Progress</span><span>{progress}%</span></div>
+				<div class="h-1 rounded-full" style="background:var(--color-bg-subtle)">
+					<div class="h-1 rounded-full transition-all" style="width:{progress}%;background:var(--color-accent-600)"></div>
+				</div>
+			</div>
+		</div>
+
+		<div class="grid gap-4 sm:grid-cols-2">
+			<!-- Milestones -->
+			<div class="card">
+				<p class="card-label">Timeline</p>
+				{#if data.milestones.length === 0}
+					<p class="text-sm" style="color:var(--color-text-faint)">No milestones yet.</p>
+				{:else}
+					<div class="space-y-2.5">
+						{#each data.milestones as m, i}
+							<div class="flex items-center gap-2.5">
+								{#if m.completed}
+									<span style="color:var(--color-accent-600)"><IconCheckCircleBold class="h-4 w-4 shrink-0" /></span>
+								{:else}
+									<span style="color:var(--color-zinc-300)"><IconCircleRegular class="h-4 w-4 shrink-0" /></span>
+								{/if}
+								<span class="text-sm" style="{m.completed ? 'color:var(--color-text-faint);text-decoration:line-through' : 'color:var(--color-text)'}">{m.name}</span>
+								{#if !m.completed && data.milestones[i - 1]?.completed}
+									<span class="ml-auto flex items-center gap-1 text-[11px]" style="color:var(--color-accent-600)">
+										<IconClockRegular class="h-3 w-3" /> Active
+									</span>
+								{/if}
+							</div>
+						{/each}
+					</div>
+				{/if}
+			</div>
+
+			<!-- Files -->
+			<div class="card">
+				<p class="card-label">Deliverables</p>
+				{#if data.files.length === 0}
+					<p class="text-sm" style="color:var(--color-text-faint)">No files yet.</p>
+				{:else}
+					<div class="space-y-2">
+						{#each data.files as f}
+							<div class="flex items-center gap-3 rounded-md p-2.5" style="border:1px solid var(--color-border-subtle)">
+								<div class="flex-1 min-w-0">
+									<p class="truncate text-[13px] font-medium" style="color:var(--color-text)">{f.name}</p>
+									<p class="text-xs" style="color:var(--color-text-faint)">
+										{f.size_bytes ? (f.size_bytes / 1024 / 1024).toFixed(1) + ' MB' : '—'} ·
+										{new Date(f.created_at!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+									</p>
+								</div>
+								<button onclick={() => download(f.storage_path, f.name)} class="btn-icon"><IconDownloadSimpleRegular class="h-3.5 w-3.5" /></button>
+							</div>
+						{/each}
+					</div>
+				{/if}
+			</div>
+		</div>
+
+		<!-- Approval -->
+		<div class="card">
+			<p class="card-label">Review &amp; Approval</p>
+			<textarea bind:value={note} placeholder="Optional note…" rows="2" class="input mb-3 resize-none"></textarea>
+			<div class="flex gap-2">
+				<form method="POST" action="?/approve" use:enhance>
+					<input type="hidden" name="note" value={note} />
+					<button type="submit" class="btn btn-primary"><IconThumbsUpRegular class="h-3.5 w-3.5" /> Approve</button>
+				</form>
+				<form method="POST" action="?/request_revision" use:enhance>
+					<input type="hidden" name="note" value={note} />
+					<button type="submit" class="btn btn-ghost"><IconChatTextRegular class="h-3.5 w-3.5" /> Request Revision</button>
+				</form>
+			</div>
+		</div>
+
+		<!-- Comments -->
+		<div class="card">
+			<p class="card-label flex items-center gap-2"><span style="color:var(--color-text-faint)"><IconChatTextRegular class="h-3.5 w-3.5" /></span> Comments</p>
+			{#if data.comments.length > 0}
+				<div class="mb-4 space-y-3">
+					{#each data.comments as c}
+						<div class="rounded-md px-3 py-2.5" style="background:var(--color-bg)">
+							<p class="mb-1 text-[11px] font-medium" style="color:var(--color-text-faint)">{(c.profiles as any)?.full_name ?? 'Unknown'}</p>
+							<p class="text-sm" style="color:var(--color-text)">{c.body}</p>
+						</div>
+					{/each}
+				</div>
+			{/if}
+			<form method="POST" action="?/comment" use:enhance={() => async ({ update }) => { comment = ''; await update(); }} class="flex gap-2">
+				<input name="body" bind:value={comment} required placeholder="Leave a message…" class="input" />
+				<button type="submit" class="btn btn-primary px-4">Send</button>
+			</form>
+		</div>
+	</div>
+</div>
