@@ -6,9 +6,20 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	if (!session) redirect(303, '/login');
 
 	const projectId = url.searchParams.get('project');
-	if (!projectId) error(400, 'Missing project');
 
-	const [{ data: project }, { data: milestones }, { data: files }, { data: comments }] = await Promise.all([
+	// No project selected — return list of client's projects
+	if (!projectId) {
+		const { data: rows } = await locals.supabase
+			.from('project_clients')
+			.select('projects(id, name, status, due_date, profiles!projects_freelancer_id_fkey(full_name))')
+			.eq('client_id', user!.id);
+
+		const projects = (rows ?? []).map((r: any) => r.projects).filter(Boolean);
+		if (projects.length === 1) redirect(303, `/portal?project=${projects[0].id}`);
+		return { project: null, projects, milestones: [], files: [], comments: [], invoices: [], user };
+	}
+
+	const [{ data: project }, { data: milestones }, { data: files }, { data: comments }, { data: invoices }] = await Promise.all([
 		locals.supabase
 			.from('projects')
 			.select('*, profiles!projects_freelancer_id_fkey(full_name)')
@@ -29,11 +40,17 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			.select('*, profiles(full_name)')
 			.eq('project_id', projectId)
 			.order('created_at'),
+		locals.supabase
+			.from('invoices')
+			.select('*')
+			.eq('project_id', projectId)
+			.eq('client_id', user!.id)
+			.order('created_at', { ascending: false }),
 	]);
 
 	if (!project) error(404, 'Project not found');
 
-	return { project, milestones: milestones ?? [], files: files ?? [], comments: comments ?? [], user };
+	return { project, projects: [], milestones: milestones ?? [], files: files ?? [], comments: comments ?? [], invoices: invoices ?? [], user };
 };
 
 export const actions: Actions = {

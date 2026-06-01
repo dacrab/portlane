@@ -30,22 +30,33 @@
 	function toggle() { sidebarCollapsed.update(v => !v); }
 
 	const settingsActive = $derived(page.url.pathname.startsWith('/dashboard/settings'));
+
+	const initials = $derived(
+		(user?.email ?? '?').slice(0, 2).toUpperCase()
+	);
 </script>
 
 <aside
-	class="flex h-screen shrink-0 flex-col py-4 transition-[width] duration-200"
-	style="background:var(--color-sidebar-bg);width:{collapsed ? '3.5rem' : '13rem'};overflow:hidden"
+	class="flex h-screen shrink-0 flex-col transition-[width] duration-200"
+	style="background:var(--color-sidebar-bg);width:{collapsed ? '3.5rem' : '13.5rem'};overflow:hidden"
 >
-	<div class="mb-6 px-3">
-		<a href="/" class="flex items-center gap-2 py-1" title="Portlane">
+	<!-- Logo -->
+	<div class="flex items-center gap-2.5 px-4 py-4" style="border-bottom:1px solid rgba(255,255,255,0.06)">
+		<a href="/" class="flex items-center gap-2.5 py-0.5" title="Portlane">
 			<img src="/favicon.svg" alt="Portlane" class="h-6 w-6 shrink-0" />
 			{#if !collapsed}
 				<span class="text-[13px] font-semibold tracking-tight whitespace-nowrap" style="color:rgba(255,255,255,0.9)">Portlane</span>
 			{/if}
 		</a>
+		{#if !collapsed}
+			<button onclick={toggle} class="ml-auto rounded p-1 transition-colors" style="color:var(--color-zinc-500)" title="Collapse">
+				<IconSidebarSimpleRegular class="h-4 w-4" />
+			</button>
+		{/if}
 	</div>
 
-	<nav class="flex flex-1 flex-col gap-0.5 px-2">
+	<!-- Nav -->
+	<nav class="flex flex-1 flex-col gap-0.5 px-2 py-3">
 		{#each nav as item}
 			{@const active = page.url.pathname === item.href || (item.href !== '/dashboard' && page.url.pathname.startsWith(item.href))}
 			<a href={item.href} class="nav-item {active ? 'active' : ''} {collapsed ? 'justify-center' : ''}" title={collapsed ? item.label : ''}>
@@ -55,25 +66,40 @@
 		{/each}
 	</nav>
 
-	<div class="px-2 pt-3 space-y-1" style="border-top:1px solid rgba(255,255,255,0.08)">
-		<a href="/dashboard/settings" class="nav-item {settingsActive ? 'active' : ''} {collapsed ? 'justify-center' : ''}" title={collapsed ? 'Settings' : ''}>
-			{#if settingsActive}<IconGearSixBold class="h-[15px] w-[15px] shrink-0" />{:else}<IconGearSixRegular class="h-[15px] w-[15px] shrink-0" />{/if}
-			{#if !collapsed}<span class="whitespace-nowrap">Settings</span>{/if}
-		</a>
-		<button onclick={toggle} class="nav-item w-full {collapsed ? 'justify-center' : ''}" title={collapsed ? 'Expand' : 'Collapse'}>
-			<IconSidebarSimpleRegular class="h-[15px] w-[15px] shrink-0" />
-			{#if !collapsed}<span class="whitespace-nowrap">Collapse</span>{/if}
-		</button>
-		<div style="border-top:1px solid rgba(255,255,255,0.08)" class="pt-1 space-y-1">
-			{#if !collapsed && user}
-				<p class="truncate px-3 py-1 text-[12px]" style="color:var(--color-sidebar-text)">{user.email}</p>
-			{/if}
-			<form method="POST" action="/logout" use:enhance>
-				<button type="submit" class="nav-item w-full {collapsed ? 'justify-center' : ''}" title={collapsed ? 'Sign out' : ''}>
-					<IconSignOutRegular class="h-[15px] w-[15px] shrink-0" />
-					{#if !collapsed}<span class="whitespace-nowrap">Sign out</span>{/if}
+	<!-- Bottom -->
+	<div class="px-2 pb-3 space-y-0.5" style="border-top:1px solid rgba(255,255,255,0.06)">
+		<div class="pt-2 space-y-0.5">
+			<a href="/dashboard/settings" class="nav-item {settingsActive ? 'active' : ''} {collapsed ? 'justify-center' : ''}" title={collapsed ? 'Settings' : ''}>
+				{#if settingsActive}<IconGearSixBold class="h-[15px] w-[15px] shrink-0" />{:else}<IconGearSixRegular class="h-[15px] w-[15px] shrink-0" />{/if}
+				{#if !collapsed}<span class="whitespace-nowrap">Settings</span>{/if}
+			</a>
+			{#if collapsed}
+				<button onclick={toggle} class="nav-item w-full justify-center" title="Expand">
+					<IconSidebarSimpleRegular class="h-[15px] w-[15px] shrink-0" />
 				</button>
-			</form>
+			{/if}
+		</div>
+
+		<!-- User row -->
+		<div class="mt-1 pt-2" style="border-top:1px solid rgba(255,255,255,0.06)">
+			{#if !collapsed}
+				<div class="flex items-center gap-2.5 px-2 py-1.5 rounded-md" style="background:rgba(255,255,255,0.04)">
+					<div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold"
+						style="background:var(--color-accent-600);color:#fff">{initials}</div>
+					<p class="flex-1 truncate text-[12px]" style="color:var(--color-zinc-400)">{user?.email ?? ''}</p>
+					<form method="POST" action="/logout" use:enhance>
+						<button type="submit" class="rounded p-1 transition-colors" style="color:var(--color-zinc-500)" title="Sign out">
+							<IconSignOutRegular class="h-3.5 w-3.5" />
+						</button>
+					</form>
+				</div>
+			{:else}
+				<form method="POST" action="/logout" use:enhance>
+					<button type="submit" class="nav-item w-full justify-center" title="Sign out">
+						<IconSignOutRegular class="h-[15px] w-[15px] shrink-0" />
+					</button>
+				</form>
+			{/if}
 		</div>
 	</div>
 </aside>

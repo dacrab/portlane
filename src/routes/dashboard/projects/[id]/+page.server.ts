@@ -136,6 +136,14 @@ export const actions: Actions = {
 		});
 	},
 
+	delete_file: async ({ locals, request }) => {
+		const form = await request.formData();
+		const id = form.get('id') as string;
+		const { data: file } = await locals.supabase.from('files').select('storage_path').eq('id', id).single();
+		if (file) await locals.supabase.storage.from('project-files').remove([file.storage_path]);
+		await locals.supabase.from('files').delete().eq('id', id);
+	},
+
 	update_status: async ({ locals, params, request }) => {
 		const form = await request.formData();
 		const status = form.get('status') as string;
@@ -145,6 +153,14 @@ export const actions: Actions = {
 	delete_project: async ({ locals, params }) => {
 		await locals.supabase.from('projects').delete().eq('id', params.id);
 		redirect(303, '/dashboard/projects');
+	},
+
+	remove_client: async ({ locals, params, request }) => {
+		const form = await request.formData();
+		const client_id = form.get('client_id') as string;
+		await locals.supabase.from('project_clients').delete()
+			.eq('project_id', params.id)
+			.eq('client_id', client_id);
 	},
 
 	invite_client: async ({ locals, params, request, url }) => {

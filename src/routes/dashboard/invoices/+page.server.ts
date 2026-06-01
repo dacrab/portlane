@@ -46,4 +46,10 @@ export const actions: Actions = {
 		const status = form.get('status') as string;
 		await locals.supabase.from('invoices').update({ status }).eq('id', id);
 	},
+
+	delete: async ({ locals, request }) => {
+		const form = await request.formData();
+		const id = form.get('id') as string;
+		await locals.supabase.from('invoices').delete().eq('id', id);
+	},
 };

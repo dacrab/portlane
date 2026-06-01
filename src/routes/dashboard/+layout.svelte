@@ -5,8 +5,8 @@
 
 <div class="flex h-screen overflow-hidden">
 	<Sidebar user={data.user} />
-	<main class="flex-1 overflow-y-auto transition-all duration-200" style="background:var(--color-bg)">
-		<div class="mx-auto max-w-5xl px-10 py-10">
+	<main class="flex-1 overflow-y-auto" style="background:var(--color-bg)">
+		<div class="mx-auto max-w-7xl px-6 py-8 lg:px-10 lg:py-10">
 			{@render children()}
 		</div>
 	</main>

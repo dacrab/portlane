@@ -8,7 +8,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		.select('*')
 		.eq('id', user!.id)
 		.single();
-	return { profile };
+	return { profile, email: user!.email ?? '' };
 };
 
 export const actions: Actions = {
