@@ -39,7 +39,7 @@
 		<Select.Value {placeholder} />
 		<span style="color:var(--color-text-faint)" class="ml-auto shrink-0"><IconCaretUpDownRegular class="h-3.5 w-3.5" /></span>
 	</Select.Trigger>
-	<Select.Portal disabled={false}>
+	<Select.Portal>
 		<Select.Content class="app-select-content" sideOffset={6}>
 			<Select.Viewport class="app-select-viewport">
 				{#each items as item (item.value)}

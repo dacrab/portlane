@@ -22,14 +22,8 @@
 	let inviteEmail = $state('');
 	let timeMinutes = $state('');
 	let timeDesc = $state('');
-	let noteBody = $state('');
-	let projectStatus = $state('');
-	$effect(() => { noteBody = data.note; projectStatus = data.project.status; });
-
-	const statusBadge: Record<string, string> = {
-		in_progress: 'badge badge-accent', review: 'badge badge-yellow',
-		planning: 'badge badge-neutral',   completed: 'badge badge-green',
-	};
+	let noteBody = $state(data.note);
+	let projectStatus = $state(data.project.status);
 
 	const totalMilestones = $derived(data.milestones.length);
 	const doneMilestones = $derived(data.milestones.filter((m: any) => m.completed).length);
@@ -37,12 +31,8 @@
 	const totalMinutes = $derived((data.timeEntries as any[]).reduce((s: number, e: any) => s + e.minutes, 0));
 	const totalHours = $derived((totalMinutes / 60).toFixed(1));
 
-	const portalUrl = $derived(typeof window !== 'undefined'
-		? `${window.location.origin}/portal?project=${data.project.id}`
-		: `/portal?project=${data.project.id}`);
-
 	function copyPortalLink() {
-		navigator.clipboard.writeText(portalUrl);
+		navigator.clipboard.writeText(`${window.location.origin}/portal?project=${data.project.id}`);
 		toast.success('Portal link copied!');
 	}
 

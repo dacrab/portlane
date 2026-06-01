@@ -5,7 +5,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const { user } = await locals.safeGetSession();
 	const { data: profile } = await locals.supabase
 		.from('profiles')
-		.select('*')
+		.select('id, full_name')
 		.eq('id', user!.id)
 		.single();
 	return { profile, email: user!.email ?? '' };
@@ -34,7 +34,6 @@ export const actions: Actions = {
 
 	delete_account: async ({ locals }) => {
 		const { user } = await locals.safeGetSession();
-		// Delete profile (cascades to all user data via FK)
 		await locals.supabase.from('profiles').delete().eq('id', user!.id);
 		await locals.supabase.auth.signOut();
 		redirect(303, '/');

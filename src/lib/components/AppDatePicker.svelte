@@ -16,15 +16,11 @@
 	} = $props();
 
 	let calValue = $state<DateValue | undefined>(value ? parseDate(value) : undefined);
-
-	function onValueChange(v: DateValue | undefined) {
-		value = v ? v.toString() : '';
-	}
 </script>
 
 <input type="hidden" {name} value={value} />
 
-<DatePicker.Root bind:value={calValue} {onValueChange} locale="en-US">
+<DatePicker.Root bind:value={calValue} onValueChange={(v) => { value = v ? v.toString() : ''; }} locale="en-US">
 	<DatePicker.Trigger class="app-select-trigger">
 		<span class="flex-1 text-left" style="color:{calValue ? 'var(--color-text)' : 'var(--color-zinc-300)'}">
 			{calValue

@@ -3,13 +3,11 @@ import type { PageServerLoad } from './$types';
 export const load: PageServerLoad = async ({ locals }) => {
 	const { user } = await locals.safeGetSession();
 
-	// Get all unique clients across all projects owned by this freelancer
 	const { data } = await locals.supabase
 		.from('project_clients')
-		.select('profiles(id, full_name, avatar_url), projects!inner(id, name, freelancer_id)')
+		.select('profiles(id, full_name), projects!inner(id, name, freelancer_id)')
 		.eq('projects.freelancer_id', user!.id);
 
-	// Deduplicate clients, attach their projects
 	const clientMap = new Map<string, { id: string; full_name: string | null; projects: string[] }>();
 	for (const row of data ?? []) {
 		const profile = row.profiles as any;

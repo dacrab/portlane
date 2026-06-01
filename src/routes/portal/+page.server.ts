@@ -68,10 +68,8 @@ export const actions: Actions = {
 		const { user } = await locals.safeGetSession();
 		if (!user) error(401);
 		const projectId = url.searchParams.get('project')!;
-		const form = await request.formData();
-		const note = (form.get('note') as string | null)?.trim();
-		const body = note ? `✅ Approved — ${note}` : '✅ Approved';
-		await locals.supabase.from('comments').insert({ project_id: projectId, author_id: user.id, body });
+		const note = ((await request.formData()).get('note') as string | null)?.trim();
+		await locals.supabase.from('comments').insert({ project_id: projectId, author_id: user.id, body: note ? `✅ Approved — ${note}` : '✅ Approved' });
 		await locals.supabase.from('projects').update({ status: 'completed' }).eq('id', projectId);
 	},
 
@@ -79,10 +77,8 @@ export const actions: Actions = {
 		const { user } = await locals.safeGetSession();
 		if (!user) error(401);
 		const projectId = url.searchParams.get('project')!;
-		const form = await request.formData();
-		const note = (form.get('note') as string | null)?.trim();
-		const body = note ? `🔄 Revision requested — ${note}` : '🔄 Revision requested';
-		await locals.supabase.from('comments').insert({ project_id: projectId, author_id: user.id, body });
+		const note = ((await request.formData()).get('note') as string | null)?.trim();
+		await locals.supabase.from('comments').insert({ project_id: projectId, author_id: user.id, body: note ? `🔄 Revision requested — ${note}` : '🔄 Revision requested' });
 		await locals.supabase.from('projects').update({ status: 'review' }).eq('id', projectId);
 	},
 };

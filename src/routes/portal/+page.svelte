@@ -8,7 +8,6 @@
 	import IconChatTextRegular from 'phosphor-icons-svelte/IconChatTextRegular.svelte';
 	import IconThumbsUpRegular from 'phosphor-icons-svelte/IconThumbsUpRegular.svelte';
 	import IconArrowCounterClockwiseRegular from 'phosphor-icons-svelte/IconArrowCounterClockwiseRegular.svelte';
-	import IconFolderOpenRegular from 'phosphor-icons-svelte/IconFolderOpenRegular.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();

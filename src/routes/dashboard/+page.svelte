@@ -5,8 +5,6 @@
 	import IconClockRegular from 'phosphor-icons-svelte/IconClockRegular.svelte';
 	import IconCheckCircleRegular from 'phosphor-icons-svelte/IconCheckCircleRegular.svelte';
 	import IconCurrencyDollarRegular from 'phosphor-icons-svelte/IconCurrencyDollarRegular.svelte';
-	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
 
 	let { data }: { data: PageData } = $props();
 
@@ -27,18 +25,7 @@
 		{ label: 'Pending review',  value: data.pending,    icon: IconClockRegular,         color: '#b45309' },
 		{ label: 'Completed',       value: data.completed,  icon: IconCheckCircleRegular,   color: '#15803d' },
 		{ label: 'Revenue MTD',     value: '$' + (data.revenueMTD / 100).toLocaleString('en-US', { minimumFractionDigits: 0 }), icon: IconCurrencyDollarRegular, color: '#1d4ed8' },
-	]);
-
-	onMount(() => {
-		const handler = (e: KeyboardEvent) => {
-			if (e.key === 'n' && !['INPUT','TEXTAREA','SELECT'].includes((e.target as HTMLElement).tagName)) {
-				goto('/dashboard/projects/new');
-			}
-		};
-		window.addEventListener('keydown', handler);
-		return () => window.removeEventListener('keydown', handler);
-	});
-</script>
+	]);</script>
 
 <div class="space-y-8">
 	<!-- Header -->
@@ -49,7 +36,7 @@
 				{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
 			</p>
 		</div>
-		<a href="/dashboard/projects/new" class="btn btn-primary" title="New project (N)">
+		<a href="/dashboard/projects/new" class="btn btn-primary">
 			<IconPlusRegular class="h-[15px] w-[15px]" /> New project
 		</a>
 	</div>

@@ -11,11 +11,9 @@
 	let selectedProject = $state('');
 	let selectedClient = $state('');
 
-	// Local status state per invoice for reactive display
-	let invoiceStatuses = $state<Record<string, string>>({});
-	$effect(() => {
-		data.invoices.forEach((inv: any) => { invoiceStatuses[inv.id] = inv.status; });
-	});
+	let invoiceStatuses = $state<Record<string, string>>(
+		Object.fromEntries(data.invoices.map((inv: any) => [inv.id, inv.status]))
+	);
 
 	const statusBadge: Record<string, string> = {
 		draft: 'badge badge-neutral', sent: 'badge badge-blue',

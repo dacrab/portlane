@@ -26,13 +26,15 @@
 	];
 
 	let collapsed = $state(false);
-	sidebarCollapsed.subscribe(v => collapsed = v);
+	const unsubscribe = sidebarCollapsed.subscribe(v => collapsed = v);
+	$effect(() => unsubscribe);
 	function toggle() { sidebarCollapsed.update(v => !v); }
 
 	const settingsActive = $derived(page.url.pathname.startsWith('/dashboard/settings'));
 
 	const initials = $derived(
-		(user?.email ?? '?').slice(0, 2).toUpperCase()
+		(user?.user_metadata?.full_name ?? user?.email ?? '?')
+			.split(/[\s@]/).filter(Boolean).map((w: string) => w[0]).slice(0, 2).join('').toUpperCase()
 	);
 </script>
 

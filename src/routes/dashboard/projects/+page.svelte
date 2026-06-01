@@ -23,7 +23,6 @@
 	const byStatus = $derived({
 		active: data.projects.filter((p: any) => !['completed','archived'].includes(p.status)).length,
 		review: data.projects.filter((p: any) => p.status === 'review').length,
-		completed: data.projects.filter((p: any) => p.status === 'completed').length,
 	});
 </script>
 

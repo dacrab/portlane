@@ -6,7 +6,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
 	const { data: invoice } = await locals.supabase
 		.from('invoices')
-		.select('*, projects(name, description), profiles!invoices_freelancer_id_fkey(full_name), profiles!invoices_client_id_fkey(full_name)')
+		.select('*, projects(name, description), freelancer:profiles!invoices_freelancer_id_fkey(full_name), client:profiles!invoices_client_id_fkey(full_name)')
 		.eq('id', params.id)
 		.single();
 

@@ -8,7 +8,7 @@
 	let { children, data } = $props();
 
 	onMount(() => {
-		const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+		const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
 			if (session?.expires_at !== data.session?.expires_at) {
 				invalidate('supabase:auth');
 			}

@@ -20,12 +20,12 @@ export const load: PageServerLoad = async ({ locals }) => {
 			.order('created_at', { ascending: false }),
 		locals.supabase
 			.from('projects')
-			.select('*', { count: 'exact', head: true })
+			.select('id', { count: 'exact', head: true })
 			.eq('freelancer_id', user!.id)
 			.eq('status', 'completed'),
 		locals.supabase
 			.from('projects')
-			.select('*', { count: 'exact', head: true })
+			.select('id', { count: 'exact', head: true })
 			.eq('freelancer_id', user!.id)
 			.eq('status', 'review'),
 		locals.supabase

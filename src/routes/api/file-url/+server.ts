@@ -10,7 +10,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 
 	const { data, error: storageErr } = await locals.supabase.storage
 		.from('project-files')
-		.createSignedUrl(path, 60 * 60); // 1 hour
+		.createSignedUrl(path, 60 * 60);
 
 	if (storageErr) error(500, storageErr.message);
 

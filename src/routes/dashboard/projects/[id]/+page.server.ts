@@ -79,7 +79,7 @@ export const actions: Actions = {
 		const body = (form.get('body') as string).trim();
 		await locals.supabase
 			.from('project_notes')
-			.upsert({ project_id: params.id, body, updated_at: new Date().toISOString() }, { onConflict: 'project_id' });
+			.upsert({ project_id: params.id, body }, { onConflict: 'project_id' });
 	},
 
 	comment: async ({ locals, params, request }) => {
@@ -101,17 +101,14 @@ export const actions: Actions = {
 		const form = await request.formData();
 		const name = (form.get('name') as string).trim();
 		if (!name) return;
-		const { data: last } = await locals.supabase
+		const { count } = await locals.supabase
 			.from('milestones')
-			.select('position')
-			.eq('project_id', params.id)
-			.order('position', { ascending: false })
-			.limit(1)
-			.single();
+			.select('*', { count: 'exact', head: true })
+			.eq('project_id', params.id);
 		await locals.supabase.from('milestones').insert({
 			project_id: params.id,
 			name,
-			position: (last?.position ?? -1) + 1,
+			position: count ?? 0,
 		});
 	},
 

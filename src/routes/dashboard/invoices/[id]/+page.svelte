@@ -2,12 +2,10 @@
 	import type { PageData } from './$types';
 	let { data }: { data: PageData } = $props();
 
-	const inv = $derived(data.invoice);
-	const freelancer = $derived((inv as any).profiles as any);
-	const profiles = $derived(Array.isArray(freelancer) ? freelancer : [freelancer]);
-	const freelancerName = $derived(profiles[0]?.full_name ?? '—');
-	const clientName = $derived(profiles[1]?.full_name ?? '—');
-	const project = $derived((inv as any).projects as any);
+	const inv = $derived(data.invoice as any);
+	const project = $derived(inv.projects);
+	const freelancerName = $derived(inv.freelancer?.full_name ?? '—');
+	const clientName = $derived(inv.client?.full_name ?? '—');
 
 	const statusColor: Record<string, string> = {
 		draft: '#6b7280', sent: '#1d4ed8', paid: '#15803d', overdue: '#b91c1c',
