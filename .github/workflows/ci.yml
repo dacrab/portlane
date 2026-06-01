@@ -27,6 +27,10 @@ jobs:
 
       - name: Check
         run: bun run check
+        env:
+          PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          PUBLIC_SUPABASE_PUBLISHABLE_KEY: placeholder
+          SUPABASE_SECRET_KEY: placeholder
 
       - name: Build
         run: bun run build

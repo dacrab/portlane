@@ -31,7 +31,7 @@
 		draft: 'badge badge-neutral', sent: 'badge badge-blue',
 		paid: 'badge badge-green',    overdue: 'badge badge-red',
 	};
-	const today = new Date().toISOString().split('T')[0];
+	const today = new Date().toISOString().split('T').at(0) ?? '';
 </script>
 
 <div class="min-h-screen" style="background:var(--color-bg)">

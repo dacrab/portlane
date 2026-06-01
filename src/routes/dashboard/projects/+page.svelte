@@ -12,7 +12,7 @@
 		in_progress: 'In Progress', review: 'Review', planning: 'Planning', completed: 'Completed', archived: 'Archived',
 	};
 
-	const today = new Date().toISOString().split('T')[0];
+	const today = new Date().toISOString().split('T').at(0) ?? '';
 
 	function progress(p: any) {
 		const ms = p.milestones ?? [];
@@ -62,7 +62,7 @@
 					<div class="flex flex-1 items-center gap-3 min-w-0">
 						<div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold"
 							style="background:var(--color-accent-100);color:var(--color-accent-600)">
-							{p.name[0].toUpperCase()}
+							{p.name.at(0)?.toUpperCase()}
 						</div>
 						<div class="min-w-0">
 							<p class="text-sm font-medium truncate" style="color:var(--color-text)">{p.name}</p>
