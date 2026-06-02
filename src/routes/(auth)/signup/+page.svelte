@@ -10,11 +10,11 @@
 	<div class="w-full max-w-sm px-6">
 		<a href="/" class="mb-8 flex items-center gap-2">
 			<img src="/favicon.svg" alt="Portlane" class="h-7 w-7" />
-			<span class="text-[15px] font-semibold tracking-tight" style="color:var(--color-text-heading)">Portlane</span>
+			<span class="text-[15px] font-semibold tracking-tight text-heading">Portlane</span>
 		</a>
 
 		<h1 class="page-title mb-1 text-[22px]">Create an account</h1>
-		<p class="mb-7 text-sm" style="color:var(--color-text-muted)">Start managing your clients today</p>
+		<p class="mb-7 text-sm text-muted">Start managing your clients today</p>
 
 		<form method="POST" use:enhance={() => {
 			loading = true;
@@ -25,17 +25,17 @@
 			{/if}
 
 			<div>
-				<label for="full_name" class="mb-1.5 block text-xs font-medium" style="color:var(--color-zinc-700)">Full name</label>
+				<label for="full_name" class="mb-1.5 block text-xs font-medium text-label">Full name</label>
 				<input id="full_name" name="full_name" type="text" required autocomplete="name" class="input" placeholder="Alex Rivera" />
 			</div>
 
 			<div>
-				<label for="email" class="mb-1.5 block text-xs font-medium" style="color:var(--color-zinc-700)">Email</label>
+				<label for="email" class="mb-1.5 block text-xs font-medium text-label">Email</label>
 				<input id="email" name="email" type="email" required autocomplete="email" class="input" placeholder="you@example.com" />
 			</div>
 
 			<div>
-				<label for="password" class="mb-1.5 block text-xs font-medium" style="color:var(--color-zinc-700)">Password</label>
+				<label for="password" class="mb-1.5 block text-xs font-medium text-label">Password</label>
 				<input id="password" name="password" type="password" required autocomplete="new-password" minlength="8" class="input" placeholder="••••••••" />
 			</div>
 
@@ -44,8 +44,8 @@
 			</button>
 		</form>
 
-		<p class="mt-5 text-center text-sm" style="color:var(--color-text-muted)">
-			Already have an account? <a href="/login" class="font-medium" style="color:var(--color-accent-600)">Sign in</a>
+		<p class="mt-5 text-center text-sm text-muted">
+			Already have an account? <a href="/login" class="font-medium text-accent">Sign in</a>
 		</p>
 	</div>
 </div>

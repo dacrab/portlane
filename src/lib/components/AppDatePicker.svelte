@@ -27,7 +27,7 @@
 				? new Date(value + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 				: placeholder}
 		</span>
-		<span style="color:var(--color-text-faint)" class="ml-auto shrink-0"><IconCalendarRegular class="h-3.5 w-3.5" /></span>
+		<span class="text-faint ml-auto shrink-0"><IconCalendarRegular class="h-3.5 w-3.5" /></span>
 	</DatePicker.Trigger>
 	<DatePicker.Content class="app-calendar-content" sideOffset={6}>
 		<DatePicker.Calendar class="app-calendar">

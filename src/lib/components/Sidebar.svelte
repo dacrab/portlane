@@ -13,10 +13,13 @@
 	import IconSidebarSimpleRegular from 'phosphor-icons-svelte/IconSidebarSimpleRegular.svelte';
 	import IconGearSixRegular from 'phosphor-icons-svelte/IconGearSixRegular.svelte';
 	import IconGearSixBold from 'phosphor-icons-svelte/IconGearSixBold.svelte';
+	import IconMoonRegular from 'phosphor-icons-svelte/IconMoonRegular.svelte';
+	import IconSunRegular from 'phosphor-icons-svelte/IconSunRegular.svelte';
 	import type { User } from '@supabase/supabase-js';
 	import { sidebarCollapsed } from '$lib/stores';
+	import { onMount } from 'svelte';
 
-	let { user }: { user: User | null } = $props();
+	let { user, unreadComments = 0 }: { user: User | null; unreadComments?: number } = $props();
 
 	const nav = [
 		{ href: '/dashboard',          label: 'Dashboard', R: IconSquaresFourRegular, B: IconSquaresFourBold },
@@ -26,9 +29,26 @@
 	];
 
 	let collapsed = $state(false);
+	let dark = $state(false);
+
 	const unsubscribe = sidebarCollapsed.subscribe(v => collapsed = v);
 	$effect(() => unsubscribe);
 	function toggle() { sidebarCollapsed.update(v => !v); }
+
+	onMount(() => {
+		dark = document.documentElement.classList.contains('dark');
+	});
+
+	function toggleDark() {
+		dark = !dark;
+		if (dark) {
+			document.documentElement.classList.add('dark');
+			localStorage.setItem('theme', 'dark');
+		} else {
+			document.documentElement.classList.remove('dark');
+			localStorage.setItem('theme', 'light');
+		}
+	}
 
 	const settingsActive = $derived(page.url.pathname.startsWith('/dashboard/settings'));
 
@@ -63,7 +83,15 @@
 			{@const active = page.url.pathname === item.href || (item.href !== '/dashboard' && page.url.pathname.startsWith(item.href))}
 			<a href={item.href} class="nav-item {active ? 'active' : ''} {collapsed ? 'justify-center' : ''}" title={collapsed ? item.label : ''}>
 				{#if active}<item.B class="h-[15px] w-[15px] shrink-0" />{:else}<item.R class="h-[15px] w-[15px] shrink-0" />{/if}
-				{#if !collapsed}<span class="whitespace-nowrap">{item.label}</span>{/if}
+				{#if !collapsed}
+					<span class="flex-1 whitespace-nowrap">{item.label}</span>
+					{#if item.href === '/dashboard' && unreadComments > 0}
+						<span class="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold"
+							style="background:var(--color-accent-600);color:#fff">{unreadComments > 9 ? '9+' : unreadComments}</span>
+					{/if}
+				{:else if item.href === '/dashboard' && unreadComments > 0}
+					<span class="absolute top-0.5 right-0.5 h-2 w-2 rounded-full" style="background:var(--color-accent-600)"></span>
+				{/if}
 			</a>
 		{/each}
 	</nav>
@@ -71,6 +99,21 @@
 	<!-- Bottom -->
 	<div class="px-2 pb-3 space-y-0.5" style="border-top:1px solid rgba(255,255,255,0.06)">
 		<div class="pt-2 space-y-0.5">
+			<!-- Dark mode toggle -->
+			<button
+				onclick={toggleDark}
+				class="nav-item w-full {collapsed ? 'justify-center' : ''}"
+				title={collapsed ? (dark ? 'Light mode' : 'Dark mode') : ''}
+			>
+				{#if dark}
+					<IconSunRegular class="h-[15px] w-[15px] shrink-0" />
+					{#if !collapsed}<span class="whitespace-nowrap">Light mode</span>{/if}
+				{:else}
+					<IconMoonRegular class="h-[15px] w-[15px] shrink-0" />
+					{#if !collapsed}<span class="whitespace-nowrap">Dark mode</span>{/if}
+				{/if}
+			</button>
+
 			<a href="/dashboard/settings" class="nav-item {settingsActive ? 'active' : ''} {collapsed ? 'justify-center' : ''}" title={collapsed ? 'Settings' : ''}>
 				{#if settingsActive}<IconGearSixBold class="h-[15px] w-[15px] shrink-0" />{:else}<IconGearSixRegular class="h-[15px] w-[15px] shrink-0" />{/if}
 				{#if !collapsed}<span class="whitespace-nowrap">Settings</span>{/if}
@@ -88,7 +131,7 @@
 				<div class="flex items-center gap-2.5 px-2 py-1.5 rounded-md" style="background:rgba(255,255,255,0.04)">
 					<div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold"
 						style="background:var(--color-accent-600);color:#fff">{initials}</div>
-					<p class="flex-1 truncate text-[12px]" style="color:var(--color-zinc-400)">{user?.email ?? ''}</p>
+					<p class="flex-1 truncate text-[12px] text-faint">{user?.email ?? ''}</p>
 					<form method="POST" action="/logout" use:enhance>
 						<button type="submit" class="rounded p-1 transition-colors" style="color:var(--color-zinc-500)" title="Sign out">
 							<IconSignOutRegular class="h-3.5 w-3.5" />

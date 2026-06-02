@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import IconCheckCircleRegular from 'phosphor-icons-svelte/IconCheckCircleRegular.svelte';
+	import { toast } from 'svelte-sonner';
+	import { untrack } from 'svelte';
 	import IconCheckCircleBold from 'phosphor-icons-svelte/IconCheckCircleBold.svelte';
 	import IconCircleRegular from 'phosphor-icons-svelte/IconCircleRegular.svelte';
 	import IconChatTextRegular from 'phosphor-icons-svelte/IconChatTextRegular.svelte';
@@ -12,7 +13,7 @@
 	import IconClockRegular from 'phosphor-icons-svelte/IconClockRegular.svelte';
 	import IconLinkRegular from 'phosphor-icons-svelte/IconLinkRegular.svelte';
 	import IconNoteRegular from 'phosphor-icons-svelte/IconNoteRegular.svelte';
-	import { toast } from 'svelte-sonner';
+	import IconExportRegular from 'phosphor-icons-svelte/IconExportRegular.svelte';
 	import type { PageData } from './$types';
 	import AppSelect from '$lib/components/AppSelect.svelte';
 
@@ -20,10 +21,11 @@
 	let comment = $state('');
 	let newMilestone = $state('');
 	let inviteEmail = $state('');
+	let inviting = $state(false);
 	let timeMinutes = $state('');
 	let timeDesc = $state('');
-	let noteBody = $state(data.note);
-	let projectStatus = $state(data.project.status);
+	let noteBody = $state(untrack(() => data.note));
+	let projectStatus = $state(untrack(() => data.project.status));
 
 	const totalMilestones = $derived(data.milestones.length);
 	const doneMilestones = $derived(data.milestones.filter((m: any) => m.completed).length);
@@ -33,7 +35,28 @@
 
 	function copyPortalLink() {
 		navigator.clipboard.writeText(`${window.location.origin}/portal?project=${data.project.id}`);
-		toast.success('Portal link copied!');
+		toast.success('Portal link copied to clipboard');
+	}
+
+	function exportTimeCSV() {
+		const rows = [
+			['Date', 'Description', 'Minutes', 'Hours'],
+			...(data.timeEntries as any[]).map((e: any) => [
+				e.logged_at,
+				e.description ?? '',
+				e.minutes,
+				(e.minutes / 60).toFixed(2),
+			]),
+			['', 'Total', totalMinutes, (totalMinutes / 60).toFixed(2)],
+		];
+		const csv = rows.map(r => r.map(String).map(v => `"${v.replace(/"/g, '""')}"`).join(',')).join('\n');
+		const blob = new Blob([csv], { type: 'text/csv' });
+		const a = document.createElement('a');
+		a.href = URL.createObjectURL(blob);
+		a.download = `${data.project.name}-time-entries.csv`;
+		a.click();
+		URL.revokeObjectURL(a.href);
+		toast.success('Time entries exported');
 	}
 
 	async function download(path: string, name: string) {
@@ -41,6 +64,15 @@
 		const { url } = await res.json();
 		const a = document.createElement('a');
 		a.href = url; a.download = name; a.click();
+	}
+
+	function confirmDelete(message: string, form: HTMLFormElement) {
+		toast('Are you sure?', {
+			description: message,
+			action: { label: 'Delete', onClick: () => form.requestSubmit() },
+			cancel: { label: 'Cancel', onClick: () => {} },
+			duration: 8000,
+		});
 	}
 </script>
 
@@ -51,7 +83,11 @@
 		<div class="flex-1 min-w-0">
 			<div class="flex flex-wrap items-center gap-3">
 				<h1 class="page-title">{data.project.name}</h1>
-				<form id="status-form" method="POST" action="?/update_status" use:enhance>
+				<form id="status-form" method="POST" action="?/update_status"
+					use:enhance={() => async ({ result, update }) => {
+						await update();
+						if (result.type !== 'error') toast.success('Status updated');
+					}}>
 					<input type="hidden" name="status" value={projectStatus} />
 					<AppSelect
 						bind:value={projectStatus}
@@ -67,9 +103,9 @@
 				</form>
 			</div>
 			{#if data.project.description}
-				<p class="mt-1 text-sm" style="color:var(--color-text-muted)">{data.project.description}</p>
+				<p class="mt-1 text-sm text-muted">{data.project.description}</p>
 			{/if}
-			<div class="mt-2 flex flex-wrap items-center gap-4 text-xs" style="color:var(--color-text-faint)">
+			<div class="mt-2 flex flex-wrap items-center gap-4 text-xs text-faint">
 				{#if data.project.due_date}
 					<span>Due {new Date(data.project.due_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
 				{/if}
@@ -81,12 +117,13 @@
 		</div>
 		<div class="flex items-center gap-2 shrink-0">
 			<button onclick={copyPortalLink} class="btn btn-ghost px-3 py-1.5 text-xs">
-				<IconLinkRegular class="h-3.5 w-3.5" /> Copy portal link
+				<IconLinkRegular class="h-3.5 w-3.5" /><span class="hidden sm:inline">Copy portal link</span>
 			</button>
-			<form method="POST" action="?/delete_project" use:enhance
-				onsubmit={(e) => { if (!confirm('Delete this project? This cannot be undone.')) e.preventDefault(); }}>
-				<button type="submit" class="btn-icon" title="Delete project">
-					<span style="color:var(--color-zinc-400)"><IconTrashRegular class="h-4 w-4" /></span>
+			<form id="delete-project-form" method="POST" action="?/delete_project"
+				use:enhance={() => async ({ result, update }) => { await update(); }}>
+				<button type="button" class="btn-icon" title="Delete project"
+					onclick={(e) => confirmDelete('This will permanently delete the project and all its data.', (e.currentTarget as HTMLElement).closest('form') as HTMLFormElement)}>
+					<span class="text-faint"><IconTrashRegular class="h-4 w-4" /></span>
 				</button>
 			</form>
 		</div>
@@ -95,7 +132,7 @@
 	<!-- Progress bar -->
 	{#if totalMilestones > 0}
 		<div>
-			<div class="mb-1.5 flex items-center justify-between text-xs" style="color:var(--color-text-faint)">
+			<div class="mb-1.5 flex items-center justify-between text-xs text-faint">
 				<span>Overall progress</span><span>{progress}%</span>
 			</div>
 			<div class="h-2 rounded-full overflow-hidden" style="background:var(--color-border)">
@@ -106,7 +143,7 @@
 
 	<!-- Main grid -->
 	<div class="grid gap-6 lg:grid-cols-3">
-		<!-- Left: milestones + time tracking -->
+		<!-- Left: milestones + time tracking + comments -->
 		<div class="lg:col-span-2 space-y-6">
 
 			<!-- Milestones -->
@@ -114,19 +151,22 @@
 				<div class="mb-4 flex items-center justify-between">
 					<p class="card-label mb-0">Milestones</p>
 					{#if totalMilestones > 0}
-						<span class="text-xs" style="color:var(--color-text-faint)">{doneMilestones}/{totalMilestones} done</span>
+						<span class="text-xs text-faint">{doneMilestones}/{totalMilestones} done</span>
 					{/if}
 				</div>
-				{#if data.milestones.length > 0}
+				{#if data.milestones.length === 0}
+					<p class="mb-4 text-sm text-faint">No milestones yet. Add one to track project progress.</p>
+				{:else}
 					<div class="mb-4 space-y-1">
 						{#each data.milestones as m}
-							<form method="POST" action="?/toggle_milestone" use:enhance
+							<form method="POST" action="?/toggle_milestone"
+								use:enhance={() => async ({ update }) => { await update(); }}
 								class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-[var(--color-bg)]">
 								<input type="hidden" name="id" value={m.id} />
 								<input type="hidden" name="completed" value={m.completed} />
 								<button type="submit" class="shrink-0">
 									{#if m.completed}
-										<span style="color:var(--color-accent-600)"><IconCheckCircleBold class="h-4 w-4" /></span>
+										<span class="text-accent"><IconCheckCircleBold class="h-4 w-4" /></span>
 									{:else}
 										<span style="color:var(--color-zinc-300)"><IconCircleRegular class="h-4 w-4" /></span>
 									{/if}
@@ -137,8 +177,12 @@
 					</div>
 				{/if}
 				<form method="POST" action="?/add_milestone"
-					use:enhance={() => async ({ update }) => { newMilestone = ''; await update(); }}
-					class="flex gap-2 pt-3" style="border-top:1px solid var(--color-border-subtle)">
+					use:enhance={() => async ({ update }) => {
+						newMilestone = '';
+						await update();
+						toast.success('Milestone added');
+					}}
+					class="flex gap-2 pt-3 divide-top">
 					<input name="name" bind:value={newMilestone} required placeholder="Add a milestone…" class="input" />
 					<button type="submit" class="btn btn-primary px-3 shrink-0"><IconPlusRegular class="h-3.5 w-3.5" /></button>
 				</form>
@@ -148,23 +192,36 @@
 			<div class="card">
 				<div class="mb-4 flex items-center justify-between">
 					<p class="card-label mb-0">Time tracking</p>
-					<span class="text-sm font-semibold" style="color:var(--color-text-heading)">{totalHours}h total</span>
+					<div class="flex items-center gap-2">
+						<span class="text-sm font-semibold text-heading">{totalHours}h total</span>
+						{#if (data.timeEntries as any[]).length > 0}
+							<button onclick={exportTimeCSV} class="btn btn-ghost text-xs px-2 py-1 gap-1" title="Export CSV">
+								<IconExportRegular class="h-3.5 w-3.5" /> CSV
+							</button>
+						{/if}
+					</div>
 				</div>
-				{#if (data.timeEntries as any[]).length > 0}
-					<div class="mb-4 overflow-hidden rounded-lg" style="border:1px solid var(--color-border-subtle)">
+				{#if (data.timeEntries as any[]).length === 0}
+					<p class="mb-4 text-sm text-faint">No time logged yet. Track your hours below.</p>
+				{:else}
+					<div class="mb-4 overflow-hidden rounded-lg border-subtle">
 						{#each data.timeEntries as e, i}
 							<div class="flex items-center gap-3 px-4 py-3" style="{i > 0 ? 'border-top:1px solid var(--color-border-subtle)' : ''}">
-								<span style="color:var(--color-text-faint)"><IconClockRegular class="h-3.5 w-3.5 shrink-0" /></span>
-								<span class="flex-1 text-sm" style="color:var(--color-text)">{e.description ?? 'No description'}</span>
-								<span class="text-xs font-medium tabular-nums" style="color:var(--color-text-faint)">{(e.minutes / 60).toFixed(1)}h</span>
-								<span class="text-xs" style="color:var(--color-text-faint)">{new Date(e.logged_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+								<span class="text-faint"><IconClockRegular class="h-3.5 w-3.5 shrink-0" /></span>
+								<span class="flex-1 text-sm text-body">{e.description ?? 'No description'}</span>
+								<span class="text-xs font-medium tabular-nums text-faint">{(e.minutes / 60).toFixed(1)}h</span>
+								<span class="text-xs text-faint">{new Date(e.logged_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
 							</div>
 						{/each}
 					</div>
 				{/if}
 				<form method="POST" action="?/log_time"
-					use:enhance={() => async ({ update }) => { timeMinutes = ''; timeDesc = ''; await update(); }}
-					class="flex gap-2 pt-3" style="border-top:1px solid var(--color-border-subtle)">
+					use:enhance={() => async ({ update }) => {
+						timeMinutes = ''; timeDesc = '';
+						await update();
+						toast.success('Time logged');
+					}}
+					class="flex gap-2 pt-3 divide-top">
 					<input name="description" bind:value={timeDesc} placeholder="What did you work on?" class="input flex-1" />
 					<input name="minutes" bind:value={timeMinutes} type="number" min="1" required placeholder="mins" class="input w-20 shrink-0" />
 					<button type="submit" class="btn btn-primary px-3 shrink-0"><IconPlusRegular class="h-3.5 w-3.5" /></button>
@@ -174,12 +231,14 @@
 			<!-- Comments -->
 			<div class="card">
 				<p class="card-label flex items-center gap-2 mb-4">
-					<span style="color:var(--color-text-faint)"><IconChatTextRegular class="h-4 w-4" /></span> Comments
+					<span class="text-faint"><IconChatTextRegular class="h-4 w-4" /></span> Comments
 					{#if data.comments.length > 0}
-						<span class="ml-auto text-xs font-normal" style="color:var(--color-text-faint)">{data.comments.length}</span>
+						<span class="ml-auto text-xs font-normal text-faint">{data.comments.length}</span>
 					{/if}
 				</p>
-				{#if data.comments.length > 0}
+				{#if data.comments.length === 0}
+					<p class="mb-4 text-sm text-faint">No comments yet.</p>
+				{:else}
 					<div class="mb-4 space-y-3">
 						{#each data.comments as c}
 							<div class="flex items-start gap-3">
@@ -187,17 +246,21 @@
 									style="background:var(--color-accent-100);color:var(--color-accent-600)">
 									{((c.profiles as any)?.full_name ?? '?')[0].toUpperCase()}
 								</div>
-								<div class="flex-1 rounded-lg px-4 py-3" style="background:var(--color-bg)">
-									<p class="mb-1 text-xs font-semibold" style="color:var(--color-text-faint)">{(c.profiles as any)?.full_name ?? 'Unknown'}</p>
-									<p class="text-sm" style="color:var(--color-text)">{c.body}</p>
+								<div class="flex-1 rounded-lg px-4 py-3 bg-base">
+									<p class="mb-1 text-xs font-semibold text-faint">{(c.profiles as any)?.full_name ?? 'Unknown'}</p>
+									<p class="text-sm text-body">{c.body}</p>
 								</div>
 							</div>
 						{/each}
 					</div>
 				{/if}
 				<form method="POST" action="?/comment"
-					use:enhance={() => async ({ update }) => { comment = ''; await update(); }}
-					class="flex gap-3 pt-3" style="border-top:1px solid var(--color-border-subtle)">
+					use:enhance={() => async ({ update }) => {
+						comment = '';
+						await update();
+						toast.success('Comment posted');
+					}}
+					class="flex gap-3 pt-3 divide-top">
 					<input name="body" bind:value={comment} required placeholder="Add a comment…" class="input" />
 					<button type="submit" class="btn btn-primary px-5 shrink-0">Send</button>
 				</form>
@@ -209,71 +272,92 @@
 			<!-- Clients -->
 			<div class="card">
 				<p class="card-label mb-4">Clients</p>
-				{#if (data.clients as any[]).length > 0}
+				{#if (data.clients as any[]).length === 0}
+					<p class="mb-4 text-sm text-faint">No clients yet. Invite one below.</p>
+				{:else}
 					<div class="mb-4 space-y-2">
 						{#each data.clients as c}
-							<div class="flex items-center gap-2.5 rounded-lg px-3 py-2" style="background:var(--color-bg)">
+							<div class="flex items-center gap-2.5 rounded-lg px-3 py-2 bg-base">
 								<div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
 									style="background:var(--color-accent-100);color:var(--color-accent-600)">
 									{((c as any).full_name ?? '?')[0].toUpperCase()}
 								</div>
 								<div class="min-w-0 flex-1">
-									<p class="text-sm font-medium truncate" style="color:var(--color-text)">{(c as any).full_name ?? '—'}</p>
+									<p class="text-sm font-medium truncate text-body">{(c as any).full_name ?? '—'}</p>
 								</div>
-								<form method="POST" action="?/remove_client" use:enhance
-									onsubmit={(e) => { if (!confirm('Remove this client from the project?')) e.preventDefault(); }}>
+								<form method="POST" action="?/remove_client"
+									use:enhance={() => async ({ update }) => { await update(); toast.success('Client removed'); }}>
 									<input type="hidden" name="client_id" value={(c as any).id} />
-									<button type="submit" class="btn-icon shrink-0" title="Remove client">
-										<span style="color:var(--color-zinc-400)"><IconTrashRegular class="h-3.5 w-3.5" /></span>
+									<button type="button" class="btn-icon shrink-0" title="Remove client"
+										onclick={(e) => confirmDelete('Remove this client from the project?', (e.currentTarget as HTMLElement).closest('form') as HTMLFormElement)}>
+										<span class="text-faint"><IconTrashRegular class="h-3.5 w-3.5" /></span>
 									</button>
 								</form>
 							</div>
 						{/each}
 					</div>
-				{:else}
-					<p class="mb-4 text-sm" style="color:var(--color-text-faint)">No clients yet.</p>
 				{/if}
 				<form method="POST" action="?/invite_client"
-					use:enhance={() => async ({ update }) => { inviteEmail = ''; await update(); }}
-					class="flex gap-2 pt-3" style="border-top:1px solid var(--color-border-subtle)">
-					<input name="email" type="email" bind:value={inviteEmail} required placeholder="client@email.com" class="input min-w-0" />
-					<button type="submit" class="btn btn-primary px-3 shrink-0"><IconUserPlusRegular class="h-3.5 w-3.5" /></button>
+					use:enhance={() => {
+						inviting = true;
+						return async ({ result, update }) => {
+							inviting = false;
+							inviteEmail = '';
+							await update();
+							if (result.type === 'failure') {
+								toast.error((result.data as any)?.error ?? 'Invitation failed');
+							} else {
+								toast.success('Invitation sent', { description: 'The client will receive a magic link to access the portal.' });
+							}
+						};
+					}}
+					class="flex gap-2 pt-3 divide-top">
+					<input name="email" type="email" bind:value={inviteEmail} required placeholder="client@email.com" class="input min-w-0" disabled={inviting} />
+					<button type="submit" class="btn btn-primary px-3 shrink-0" disabled={inviting}>
+						{#if inviting}
+							<span class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+						{:else}
+							<IconUserPlusRegular class="h-3.5 w-3.5" />
+						{/if}
+					</button>
 				</form>
 			</div>
 
 			<!-- Files -->
 			<div class="card">
 				<p class="card-label mb-4">Files</p>
-				{#if data.files.length > 0}
+				{#if data.files.length === 0}
+					<p class="mb-4 text-sm text-faint">No files uploaded yet.</p>
+				{:else}
 					<div class="mb-4 space-y-2">
 						{#each data.files as f}
 							<div class="flex items-center gap-3 rounded-lg px-3 py-2.5" style="background:var(--color-bg);border:1px solid var(--color-border-subtle)">
 								<div class="flex-1 min-w-0">
-									<p class="truncate text-sm font-medium" style="color:var(--color-text)">{f.name}</p>
-									<p class="mt-0.5 text-xs" style="color:var(--color-text-faint)">
+									<p class="truncate text-sm font-medium text-body">{f.name}</p>
+									<p class="mt-0.5 text-xs text-faint">
 										{f.size_bytes ? (f.size_bytes / 1024 / 1024).toFixed(1) + ' MB' : '—'} ·
 										{new Date(f.created_at!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
 									</p>
 								</div>
-								<button onclick={() => download(f.storage_path, f.name)} class="btn-icon shrink-0">
+								<button onclick={() => download(f.storage_path, f.name)} class="btn-icon shrink-0" title="Download">
 									<IconDownloadSimpleRegular class="h-3.5 w-3.5" />
 								</button>
-								<form method="POST" action="?/delete_file" use:enhance
-									onsubmit={(e) => { if (!confirm('Delete this file?')) e.preventDefault(); }}>
+								<form method="POST" action="?/delete_file"
+									use:enhance={() => async ({ update }) => { await update(); toast.success('File deleted'); }}>
 									<input type="hidden" name="id" value={f.id} />
-									<button type="submit" class="btn-icon shrink-0" title="Delete file">
-										<span style="color:var(--color-zinc-400)"><IconTrashRegular class="h-3.5 w-3.5" /></span>
+									<button type="button" class="btn-icon shrink-0" title="Delete file"
+										onclick={(e) => confirmDelete(`Delete "${f.name}"?`, (e.currentTarget as HTMLElement).closest('form') as HTMLFormElement)}>
+										<span class="text-faint"><IconTrashRegular class="h-3.5 w-3.5" /></span>
 									</button>
 								</form>
 							</div>
 						{/each}
 					</div>
-				{:else}
-					<p class="mb-4 text-sm" style="color:var(--color-text-faint)">No files yet.</p>
 				{/if}
-				<form method="POST" action="?/upload_file" enctype="multipart/form-data" use:enhance
-					class="pt-3" style="border-top:1px solid var(--color-border-subtle)">
-					<label class="flex cursor-pointer items-center gap-1.5 text-xs font-medium" style="color:var(--color-accent-600)">
+				<form method="POST" action="?/upload_file" enctype="multipart/form-data"
+					use:enhance={() => async ({ update }) => { await update(); toast.success('File uploaded'); }}
+					class="pt-3 divide-top">
+					<label class="flex cursor-pointer items-center gap-1.5 text-xs font-medium text-accent">
 						<IconPlusRegular class="h-3 w-3" /> Upload file
 						<input type="file" name="file" class="hidden" onchange={(e) => (e.currentTarget.form as HTMLFormElement).requestSubmit()} />
 					</label>
@@ -283,9 +367,10 @@
 			<!-- Internal notes -->
 			<div class="card">
 				<p class="card-label flex items-center gap-2 mb-4">
-					<span style="color:var(--color-text-faint)"><IconNoteRegular class="h-3.5 w-3.5" /></span> Internal notes
+					<span class="text-faint"><IconNoteRegular class="h-3.5 w-3.5" /></span> Internal notes
 				</p>
-				<form method="POST" action="?/save_note" use:enhance>
+				<form method="POST" action="?/save_note"
+					use:enhance={() => async ({ update }) => { await update(); toast.success('Note saved'); }}>
 					<textarea name="body" bind:value={noteBody} rows="5" placeholder="Private notes — not visible to clients…"
 						class="input mb-3 resize-none w-full"></textarea>
 					<button type="submit" class="btn btn-ghost text-xs px-3 py-1.5">Save note</button>

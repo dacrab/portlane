@@ -37,7 +37,7 @@
 >
 	<Select.Trigger class="app-select-trigger">
 		<Select.Value {placeholder} />
-		<span style="color:var(--color-text-faint)" class="ml-auto shrink-0"><IconCaretUpDownRegular class="h-3.5 w-3.5" /></span>
+		<span class="text-faint ml-auto shrink-0"><IconCaretUpDownRegular class="h-3.5 w-3.5" /></span>
 	</Select.Trigger>
 	<Select.Portal>
 		<Select.Content class="app-select-content" sideOffset={6}>
@@ -47,7 +47,7 @@
 						{#snippet children({ selected })}
 							<span class="flex-1">{item.label}</span>
 							{#if selected}
-								<span style="color:var(--color-accent-600)" class="shrink-0"><IconCheckRegular class="h-3.5 w-3.5" /></span>
+								<span class="text-accent shrink-0"><IconCheckRegular class="h-3.5 w-3.5" /></span>
 							{/if}
 						{/snippet}
 					</Select.Item>

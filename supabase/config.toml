@@ -4,17 +4,21 @@ project_id = "portlane"
 [api]
 enabled = true
 port = 54321
-schemas = ["public", "graphql_public"]
+# Only public schema needed — no GraphQL
+schemas = ["public"]
 extra_search_path = ["public", "extensions"]
+# Ryzen 3 3200U / 5.8 GB RAM — keep row limit conservative
 max_rows = 1000
 
 [db]
 port = 54322
 shadow_port = 54320
-health_timeout = "2m"
+# Tighter timeout for low-resource machine
+health_timeout = "30s"
 major_version = 17
 
 [db.pooler]
+# Not needed for local dev with a single freelancer app
 enabled = false
 
 [db.migrations]
@@ -26,7 +30,10 @@ enabled = true
 sql_paths = ["./seed.sql"]
 
 [realtime]
+# Used for live comments in the portal
 enabled = true
+# Limit in-memory broadcast queue for constrained RAM
+max_header_length = 4096
 
 [studio]
 enabled = true
@@ -34,25 +41,31 @@ port = 54323
 api_url = "http://127.0.0.1"
 
 [inbucket]
+# Local email capture for magic-link/invite testing
 enabled = true
 port = 54324
 
 [storage]
 enabled = true
+# 50 MB is fine for deliverable file uploads
 file_size_limit = "50MiB"
 
 [storage.s3_protocol]
+# No S3-compatible access needed
 enabled = false
 
 [auth]
 enabled = true
 site_url = "http://127.0.0.1:3000"
 additional_redirect_urls = ["https://127.0.0.1:3000"]
+# 1-hour sessions
 jwt_expiry = 3600
 enable_refresh_token_rotation = true
 refresh_token_reuse_interval = 10
 enable_signup = true
+# No anonymous browsing in this app
 enable_anonymous_sign_ins = false
+# Accounts are created by invite only for clients; no manual linking needed
 enable_manual_linking = false
 minimum_password_length = 8
 password_requirements = "letters_digits"
@@ -66,6 +79,7 @@ token_verifications = 30
 [auth.email]
 enable_signup = true
 double_confirm_changes = true
+# Require email confirmation on signup
 enable_confirmations = true
 secure_password_change = true
 max_frequency = "1s"
@@ -73,9 +87,11 @@ otp_length = 6
 otp_expiry = 3600
 
 [auth.sms]
+# SMS not used — magic link / email only
 enable_signup = false
 
 [auth.mfa.totp]
+# MFA not implemented in this project
 enroll_enabled = false
 verify_enabled = false
 
@@ -84,7 +100,9 @@ enroll_enabled = false
 verify_enabled = false
 
 [edge_runtime]
+# No Edge Functions in this project
 enabled = false
 
 [analytics]
+# Not needed locally
 enabled = false
