@@ -378,7 +378,30 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_dashboard_stats: {
+        Args: { p_user_id: string; p_month_start: string }
+        Returns: { active_projects: number; completed_projects: number; review_projects: number; revenue_mtd: number; total_invoices: number; total_clients: number }[]
+      }
+      get_unread_comment_count: {
+        Args: { p_user_id: string }
+        Returns: number
+      }
+      get_activity_feed: {
+        Args: { p_user_id: string; p_limit?: number }
+        Returns: { body: string; created_at: string; author_name: string; project_id: string; project_name: string }[]
+      }
+      get_freelancer_clients: {
+        Args: { p_user_id: string }
+        Returns: { client_id: string; full_name: string | null; projects: string[] }[]
+      }
+      get_unread_comments: {
+        Args: { p_user_id: string }
+        Returns: { id: string; body: string; created_at: string; author_name: string; project_id: string; project_name: string }[]
+      }
+      is_project_client: {
+        Args: { p_project_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

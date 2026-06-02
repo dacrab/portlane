@@ -84,16 +84,16 @@
 			</div>
 			<div>
 				{#each data.unreadComments as c}
-					<a href="/dashboard/projects/{(c.projects as any)?.id}"
+					<a href="/dashboard/projects/{c.project_id}"
 						class="flex items-start gap-3 px-5 py-4 transition-colors hover:bg-[var(--color-bg)] no-underline divide-bottom">
 						<div class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold bg-accent-soft">
-							{((c.profiles as any)?.full_name ?? '?')[0].toUpperCase()}
+							{(c.author_name ?? '?').charAt(0).toUpperCase()}
 						</div>
 						<div class="flex-1 min-w-0">
 							<p class="text-xs text-faint">
-								<span class="font-medium text-body">{(c.profiles as any)?.full_name ?? 'Client'}</span>
+								<span class="font-medium text-body">{c.author_name ?? 'Client'}</span>
 								{' '}commented on{' '}
-								<span class="font-medium text-body">{(c.projects as any)?.name}</span>
+								<span class="font-medium text-body">{c.project_name}</span>
 							</p>
 							<p class="mt-0.5 text-sm truncate text-body">{c.body}</p>
 							<p class="mt-0.5 text-xs text-faint">
@@ -207,12 +207,12 @@
 							<div class="flex items-start gap-2.5">
 								<div class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold"
 									style="background:var(--color-accent-100);color:var(--color-accent-600)">
-									{((a.profiles as any)?.full_name ?? '?')[0].toUpperCase()}
+									{(a.author_name ?? '?').charAt(0).toUpperCase()}
 								</div>
 								<div class="flex-1 min-w-0">
 									<p class="text-xs text-faint">
-										<span class="font-medium text-body">{(a.profiles as any)?.full_name ?? 'Someone'}</span>
-										on <span class="text-body">{(a.projects as any)?.name}</span>
+										<span class="font-medium text-body">{a.author_name ?? 'Someone'}</span>
+										on <span class="text-body">{a.project_name}</span>
 									</p>
 									<p class="mt-0.5 text-sm truncate text-body">{a.body}</p>
 									<p class="mt-0.5 text-xs text-faint">

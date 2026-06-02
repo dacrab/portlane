@@ -5,31 +5,7 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 	const { session, user } = await locals.safeGetSession();
 	if (!session) redirect(303, '/login');
 
-	const { data: profile } = await locals.supabase
-		.from('profiles')
-		.select('last_read_comments_at')
-		.eq('id', user!.id)
-		.single();
+	const { data } = await locals.supabase.rpc('get_unread_comment_count', { p_user_id: user!.id });
 
-	const since = profile?.last_read_comments_at ?? new Date(0).toISOString();
-
-	const { data: projectRows } = await locals.supabase
-		.from('projects')
-		.select('id')
-		.eq('freelancer_id', user!.id);
-
-	const projectIds = (projectRows ?? []).map((p: any) => p.id);
-
-	let unreadComments = 0;
-	if (projectIds.length > 0) {
-		const { count } = await locals.supabase
-			.from('comments')
-			.select('id', { count: 'exact', head: true })
-			.in('project_id', projectIds)
-			.neq('author_id', user!.id)
-			.gt('created_at', since);
-		unreadComments = count ?? 0;
-	}
-
-	return { user, unreadComments };
+	return { user, unreadComments: (data as number) ?? 0 };
 };
