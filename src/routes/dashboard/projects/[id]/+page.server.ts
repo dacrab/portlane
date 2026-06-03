@@ -1,9 +1,8 @@
 import { error, fail, redirect } from '@sveltejs/kit';
-import { createClient } from '@supabase/supabase-js';
 import { PUBLIC_SUPABASE_URL } from '$env/static/public';
 import { SUPABASE_SECRET_KEY } from '$env/static/private';
 import type { PageServerLoad, Actions } from './$types';
-import type { Database } from '$lib/database.types';
+import { adminClient } from '$lib/admin';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
 	const { user } = await locals.safeGetSession();
@@ -165,9 +164,7 @@ export const actions: Actions = {
 		const email = (form.get('email') as string).trim().toLowerCase();
 		if (!email) return fail(400, { error: 'Email is required' });
 
-		const admin = createClient<Database>(PUBLIC_SUPABASE_URL, SUPABASE_SECRET_KEY, {
-			auth: { autoRefreshToken: false, persistSession: false },
-		});
+		const admin = adminClient;
 
 		const redirectTo = `${url.origin}/auth/callback?next=/portal?project=${params.id}`;
 		const { error: inviteErr } = await admin.auth.admin.inviteUserByEmail(email, {

@@ -4,7 +4,7 @@
 	import { onMount } from 'svelte';
 	import { invalidateAll } from '$app/navigation';
 	import { toast } from 'svelte-sonner';
-	import { fmtDate, fmtDateTime, today } from '$lib/fmt';
+	import { fmtDate, fmtDateTime, today, fmtMoney, statusBadge, statusLabel } from '$lib/fmt';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import IconPlusRegular from 'phosphor-icons-svelte/IconPlusRegular.svelte';
 	import IconFolderOpenRegular from 'phosphor-icons-svelte/IconFolderOpenRegular.svelte';
@@ -35,13 +35,6 @@
 
 	const showOnboarding = $derived(!onboardingDismissed && !data.onboardingDone);
 
-	const statusBadge: Record<string, string> = {
-		in_progress: 'badge badge-accent', review: 'badge badge-yellow',
-		planning: 'badge badge-neutral',   completed: 'badge badge-green',
-	};
-	const statusLabel: Record<string, string> = {
-		in_progress: 'In Progress', review: 'Review', planning: 'Planning', completed: 'Completed',
-	};
 
 	const isOverdue = (due: string | null) => due && due < today();
 
@@ -49,12 +42,12 @@
 		{ label: 'Active projects', value: data.active,     icon: IconFolderOpenRegular,    color: 'var(--color-accent-600)' },
 		{ label: 'Pending review',  value: data.pending,    icon: IconClockRegular,         color: '#b45309' },
 		{ label: 'Completed',       value: data.completed,  icon: IconCheckCircleRegular,   color: '#15803d' },
-		{ label: 'Revenue MTD',     value: '$' + (data.revenueMTD / 100).toLocaleString('en-US', { minimumFractionDigits: 0 }), icon: IconCurrencyDollarRegular, color: '#1d4ed8' },
+		{ label: 'Revenue', value: fmtMoney(data.revenueMTD), icon: IconCurrencyDollarRegular, color: '#1d4ed8' },
 	]);
 
 	const onboardingSteps = $derived([
 		{ label: 'Set your name in Settings', done: data.onboarding.hasProfile, href: '/dashboard/settings' },
-		{ label: 'Create your first project', done: data.onboarding.hasProject, href: '/dashboard/projects/new' },
+		{ label: 'Create your first project', done: data.onboarding.hasProject, href: '/dashboard/projects?new=1' },
 		{ label: 'Invite a client to a project', done: data.onboarding.hasClient, href: '/dashboard/projects' },
 		{ label: 'Send your first invoice', done: data.onboarding.hasInvoice, href: '/dashboard/invoices' },
 	]);
@@ -70,18 +63,18 @@
 				{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
 			</p>
 		</div>
-		<a href="/dashboard/projects" class="btn btn-primary shrink-0">
-			<IconPlusRegular class="h-[15px] w-[15px]" /><span class="hidden sm:inline"> New project</span>
+		<a href="/dashboard/projects?new=1" class="btn btn-primary shrink-0">
+			<IconPlusRegular class="h-4 w-4" /><span class="hidden sm:inline"> New project</span>
 		</a>
 	</div>
 
 	<!-- Unread client comments (auto-dismissed on mount) -->
 	{#if data.unreadComments.length > 0}
-		<div class="rounded-xl overflow-hidden surface">
+		<div class="rounded-xl overflow-hidden card p-0">
 			<div class="flex items-center gap-2 px-5 py-3.5 divide-bottom">
 				<span class="text-accent"><IconBellRegular class="h-4 w-4" /></span>
 				<span class="text-sm font-semibold text-heading">New client messages</span>
-				<span class="flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-semibold bg-accent-pill">{data.unreadComments.length}</span>
+				<span class="flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-semibold bg-accent-pill">{data.unreadComments.length}</span>
 			</div>
 			<div>
 				{#each data.unreadComments as c}
@@ -147,9 +140,9 @@
 	</div>
 
 	<!-- Main content -->
-	<div class="grid gap-5 lg:grid-cols-3">
+	<div class="grid gap-5 lg:grid-cols-[1fr_22rem]">
 		<!-- Projects list -->
-		<div class="lg:col-span-2 overflow-hidden rounded-xl surface">
+		<div class="overflow-hidden rounded-xl card p-0">
 			<div class="flex items-center justify-between px-5 py-3.5 divide-bottom">
 				<span class="section-label">Active projects</span>
 				<a href="/dashboard/projects" class="text-xs font-medium text-accent hover:underline">View all →</a>
@@ -166,10 +159,7 @@
 			{:else}
 				{#each data.projects as p}
 					<a href="/dashboard/projects/{p.id}" class="row-link divide-bottom">
-						<div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold"
-							style="background:var(--color-accent-100);color:var(--color-accent-600)">
-							{p.name.at(0)?.toUpperCase()}
-						</div>
+						<Avatar name={p.name} size={8} />
 						<div class="flex-1 min-w-0">
 							<p class="text-sm font-medium truncate text-body">{p.name}</p>
 							{#if p.due_date}
@@ -188,7 +178,7 @@
 		</div>
 
 		<!-- Activity feed -->
-		<div class="overflow-hidden rounded-xl surface">
+		<div class="overflow-hidden rounded-xl card p-0">
 			<div class="px-5 py-3.5 divide-bottom">
 				<span class="section-label">Recent activity</span>
 			</div>

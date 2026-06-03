@@ -16,7 +16,7 @@
 	import IconExportRegular from 'phosphor-icons-svelte/IconExportRegular.svelte';
 	import type { PageData } from './$types';
 	import AppSelect from '$lib/components/AppSelect.svelte';
-	import { fmtDate, fmtDateLong } from '$lib/fmt';
+	import { fmtDate, fmtDateLong, downloadFile, confirmDelete } from '$lib/fmt';
 	import Avatar from '$lib/components/Avatar.svelte';
 
 	let { data }: { data: PageData } = $props();
@@ -61,21 +61,7 @@
 		toast.success('Time entries exported');
 	}
 
-	async function download(path: string, name: string) {
-		const res = await fetch(`/api/file-url?path=${encodeURIComponent(path)}`);
-		const { url } = await res.json();
-		const a = document.createElement('a');
-		a.href = url; a.download = name; a.click();
-	}
 
-	function confirmDelete(message: string, form: HTMLFormElement) {
-		toast('Are you sure?', {
-			description: message,
-			action: { label: 'Delete', onClick: () => form.requestSubmit() },
-			cancel: { label: 'Cancel', onClick: () => {} },
-			duration: 8000,
-		});
-	}
 </script>
 
 <div class="space-y-6">
@@ -101,7 +87,7 @@
 							{ value: 'completed', label: 'Completed' },
 							{ value: 'archived', label: 'Archived' },
 						]}
-						onchange={(v) => { projectStatus = v; setTimeout(() => (document.getElementById('status-form') as HTMLFormElement)?.requestSubmit(), 0); }}
+						onchange={(v) => { projectStatus = v; (document.getElementById('status-form') as HTMLFormElement)?.requestSubmit(); }}
 					/>
 				</form>
 			</div>
@@ -138,16 +124,16 @@
 			<div class="mb-1.5 flex items-center justify-between text-xs text-faint">
 				<span>Overall progress</span><span>{progress}%</span>
 			</div>
-			<div class="h-2 rounded-full overflow-hidden" style="background:var(--color-border)">
+			<div class="h-1.5 rounded-full overflow-hidden" style="background:var(--color-border)">
 				<div class="h-full rounded-full transition-all" style="width:{progress}%;background:var(--color-accent-600)"></div>
 			</div>
 		</div>
 	{/if}
 
 	<!-- Main grid -->
-	<div class="grid gap-6 lg:grid-cols-3">
+	<div class="grid gap-5 lg:grid-cols-[1fr_22rem]">
 		<!-- Left: milestones + time tracking + comments -->
-		<div class="lg:col-span-2 space-y-6">
+		<div class="space-y-5">
 
 			<!-- Milestones -->
 			<div class="card">
@@ -242,12 +228,12 @@
 				{#if data.comments.length === 0}
 					<p class="mb-4 text-sm text-faint">No comments yet.</p>
 				{:else}
-					<div class="mb-4 space-y-3">
+					<div class="mb-4 space-y-3 max-h-80 overflow-y-auto">
 						{#each data.comments as c}
 							<div class="flex items-start gap-3">
 								<Avatar name={(c.profiles as any)?.full_name ?? "?"} size={7} />
-								<div class="flex-1 rounded-lg px-4 py-3" style="background:var(--color-bg)">
-									<p class="mb-1 text-xs font-semibold text-faint">{(c.profiles as any)?.full_name ?? 'Unknown'}</p>
+								<div class="rounded-lg px-3 py-2.5 max-w-[85%]" style="background:var(--color-bg)">
+									<p class="mb-0.5 text-xs font-semibold text-faint">{(c.profiles as any)?.full_name ?? 'Unknown'}</p>
 									<p class="text-sm text-body">{c.body}</p>
 								</div>
 							</div>
@@ -255,12 +241,8 @@
 					</div>
 				{/if}
 				<form method="POST" action="?/comment"
-					use:enhance={() => async ({ update }) => {
-						comment = '';
-						await update();
-						toast.success('Comment posted');
-					}}
-					class="flex gap-3 pt-3 divide-top">
+					use:enhance={() => async ({ update }) => { comment = ''; await update(); toast.success('Comment posted'); }}
+					class="flex gap-2 pt-3 divide-top">
 					<input name="body" bind:value={comment} required placeholder="Add a comment…" class="input" />
 					<button type="submit" class="btn btn-primary px-5 shrink-0">Send</button>
 				</form>
@@ -268,7 +250,7 @@
 		</div>
 
 		<!-- Right column -->
-		<div class="space-y-6">
+		<div class="space-y-5">
 			<!-- Clients -->
 			<div class="card">
 				<p class="card-label mb-4">Clients</p>
@@ -336,7 +318,7 @@
 										{fmtDate(f.created_at!)}
 									</p>
 								</div>
-								<button onclick={() => download(f.storage_path, f.name)} class="btn-icon shrink-0" title="Download">
+								<button onclick={() => downloadFile(f.storage_path, f.name)} class="btn-icon shrink-0" title="Download">
 									<IconDownloadSimpleRegular class="h-3.5 w-3.5" />
 								</button>
 								<form method="POST" action="?/delete_file"

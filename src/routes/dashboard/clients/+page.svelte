@@ -7,7 +7,6 @@
 
 </script>
 
-<div class="space-y-8">
 	<div>
 		<p class="mb-1 text-xs font-semibold uppercase tracking-widest text-muted">People</p>
 		<h1 class="page-title">Clients</h1>
@@ -15,7 +14,7 @@
 	</div>
 
 	{#if data.clients.length === 0}
-		<div class="flex flex-col items-center justify-center rounded-xl px-6 py-20 text-center surface">
+		<div class="flex flex-col items-center justify-center rounded-xl px-6 py-20 text-center card">
 			<div class="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-subtle">
 				<span class="text-faint"><IconUsersRegular class="h-6 w-6" /></span>
 			</div>
@@ -46,4 +45,3 @@
 			{/each}
 		</div>
 	{/if}
-</div>

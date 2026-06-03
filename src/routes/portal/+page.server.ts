@@ -81,4 +81,25 @@ export const actions: Actions = {
 		await locals.supabase.from('comments').insert({ project_id: projectId, author_id: user.id, body: note ? `🔄 Revision requested — ${note}` : '🔄 Revision requested' });
 		await locals.supabase.from('projects').update({ status: 'review' }).eq('id', projectId);
 	},
+
+	upload_file: async ({ locals, url, request }) => {
+		const { user } = await locals.safeGetSession();
+		if (!user) error(401);
+		const projectId = url.searchParams.get('project')!;
+		const form = await request.formData();
+		const file = form.get('file') as File;
+		if (!file?.size) return;
+
+		const path = `${projectId}/${crypto.randomUUID()}-${file.name}`;
+		const { error: uploadErr } = await locals.supabase.storage.from('project-files').upload(path, file);
+		if (uploadErr) error(500, uploadErr.message);
+
+		await locals.supabase.from('files').insert({
+			project_id: projectId,
+			uploaded_by: user.id,
+			name: file.name,
+			storage_path: path,
+			size_bytes: file.size,
+		});
+	},
 };

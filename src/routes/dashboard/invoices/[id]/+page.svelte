@@ -1,18 +1,15 @@
 <script lang="ts">
 	import { toast } from 'svelte-sonner';
 	import type { PageData } from './$types';
+	import { fmtMoney, statusBadge } from '$lib/fmt';
 	let { data }: { data: PageData } = $props();
 
 	const inv = $derived(data.invoice as any);
 	const project = $derived(inv.projects);
 	const freelancerName = $derived(inv.freelancer?.full_name ?? '—');
 	const clientName = $derived(inv.client?.full_name ?? '—');
-	const amount = $derived(`${inv.currency.toUpperCase()} ${(inv.amount_cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}`);
+	const amount = $derived(fmtMoney(inv.amount_cents, inv.currency?.toUpperCase()));
 
-	const statusBadge: Record<string, string> = {
-		draft: 'badge badge-neutral', sent: 'badge badge-blue',
-		paid: 'badge badge-green',    overdue: 'badge badge-red',
-	};
 
 	const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 </script>

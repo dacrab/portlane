@@ -3,7 +3,7 @@
 -- Returns all aggregate stats for the freelancer dashboard
 -- in a single round-trip instead of 6 separate queries.
 -- ============================================================
-create or replace function get_dashboard_stats(p_user_id uuid, p_month_start timestamptz)
+create or replace function get_dashboard_stats(p_user_id uuid)
 returns table (
   active_projects   bigint,
   completed_projects bigint,
@@ -26,8 +26,7 @@ as $$
     (select coalesce(sum(amount_cents), 0)
      from public.invoices
      where freelancer_id = p_user_id
-       and status = 'paid'
-       and created_at >= p_month_start)::bigint                     as revenue_mtd,
+       and status = 'paid')::bigint                                 as revenue_mtd,
     (select count(*)
      from public.invoices
      where freelancer_id = p_user_id)::bigint                       as total_invoices,

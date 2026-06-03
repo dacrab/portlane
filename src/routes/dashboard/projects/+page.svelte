@@ -7,24 +7,19 @@
 	import IconPlusRegular from 'phosphor-icons-svelte/IconPlusRegular.svelte';
 	import IconFolderOpenRegular from 'phosphor-icons-svelte/IconFolderOpenRegular.svelte';
 	import IconXRegular from 'phosphor-icons-svelte/IconXRegular.svelte';
-	import { fmtDate, today } from '$lib/fmt';
+	import { fmtDate, today, statusBadge, statusLabel } from '$lib/fmt';
+
+	import { page } from '$app/state';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
-	let open = $state(false);
+	let open = $state(page.url.searchParams.has('new'));
 	let loading = $state(false);
 
 	$effect(() => { if ((form as any)?.error) open = true; });
 
 	let showArchived = $state(false);
 
-	const statusBadge: Record<string, string> = {
-		in_progress: 'badge badge-accent', review: 'badge badge-yellow',
-		planning: 'badge badge-neutral', completed: 'badge badge-green', archived: 'badge badge-neutral',
-	};
-	const statusLabel: Record<string, string> = {
-		in_progress: 'In Progress', review: 'Review', planning: 'Planning', completed: 'Completed', archived: 'Archived',
-	};
 
 
 
@@ -119,6 +114,14 @@
 				</div>
 			</div>
 
+			<div>
+				<label for="client_email" class="mb-1.5 block text-xs font-medium text-muted">
+					Invite client <span class="text-faint">(optional)</span>
+				</label>
+				<input id="client_email" name="client_email" type="email" class="input" placeholder="client@company.com" />
+				<p class="mt-1 text-xs text-faint">They'll receive a magic link to access the portal.</p>
+			</div>
+
 			<div class="mt-auto flex gap-3 pt-4 divide-top">
 				<button type="submit" disabled={loading} class="btn btn-primary flex-1 justify-center">
 					{loading ? 'Creating…' : 'Create project'}
@@ -148,12 +151,12 @@
 				</button>
 			{/if}
 			<button onclick={() => open = true} class="btn btn-primary">
-				<IconPlusRegular class="h-[15px] w-[15px]" /><span class="hidden sm:inline"> New project</span>
+				<IconPlusRegular class="h-4 w-4" /><span class="hidden sm:inline"> New project</span>
 			</button>
 		</div>
 	</div>
 
-	<div class="overflow-hidden rounded-xl surface">
+	<div class="overflow-hidden rounded-xl card p-0">
 		{#if visible.length > 0}
 			<div class="hidden sm:grid px-6 py-2.5 text-xs font-medium divide-bottom text-faint"
 				style="grid-template-columns:1fr 120px 80px 100px">

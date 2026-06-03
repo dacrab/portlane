@@ -1,6 +1,6 @@
-/** Format cents to display string e.g. "$3,200.00" */
+/** Format cents to display string e.g. "$3,200" or "$3,200.50" */
 export const fmtMoney = (cents: number, currency = 'USD') =>
-	`${currency} ${(cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+	(cents / 100).toLocaleString('en-US', { style: 'currency', currency, minimumFractionDigits: cents % 100 === 0 ? 0 : 2 });
 
 /** Format date to short form e.g. "Jun 3" */
 export const fmtDate = (iso: string) =>
@@ -16,3 +16,38 @@ export const fmtDateTime = (iso: string) =>
 
 /** Today's ISO date string for overdue comparisons */
 export const today = () => new Date().toISOString().split('T')[0]!;
+
+/** Invoice/project status → badge CSS class */
+export const statusBadge: Record<string, string> = {
+	draft: 'badge badge-neutral', sent: 'badge badge-blue',
+	paid: 'badge badge-green',    overdue: 'badge badge-red',
+	planning: 'badge badge-neutral', in_progress: 'badge badge-accent',
+	review: 'badge badge-yellow',    completed: 'badge badge-green',
+	archived: 'badge badge-neutral',
+};
+
+/** Invoice/project status → human label */
+export const statusLabel: Record<string, string> = {
+	in_progress: 'In Progress', review: 'Review',
+	planning: 'Planning', completed: 'Completed', archived: 'Archived',
+};
+
+/** Download a file via signed URL */
+export async function downloadFile(path: string, name: string) {
+	const res = await fetch(`/api/file-url?path=${encodeURIComponent(path)}`);
+	const { url } = await res.json();
+	const a = document.createElement('a');
+	a.href = url; a.download = name; a.click();
+}
+
+/** Toast-based delete confirmation */
+export function confirmDelete(message: string, form: HTMLFormElement) {
+	import('svelte-sonner').then(({ toast }) => {
+		toast('Are you sure?', {
+			description: message,
+			action: { label: 'Delete', onClick: () => form.requestSubmit() },
+			cancel: { label: 'Cancel', onClick: () => {} },
+			duration: 8000,
+		});
+	});
+}

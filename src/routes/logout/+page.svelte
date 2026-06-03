@@ -1,13 +1,9 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { onMount } from 'svelte';
+
+	let formEl: HTMLFormElement;
+	onMount(() => formEl.requestSubmit());
 </script>
 
-<div class="auth-root">
-	<div class="w-full max-w-sm px-6 text-center">
-		<img src="/favicon.svg" alt="Portlane" class="mx-auto mb-6 h-10 w-10" />
-		<p class="text-sm text-muted">Signing you out…</p>
-		<form method="POST" class="mt-4" use:enhance>
-			<button type="submit" class="btn btn-primary">Sign out now</button>
-		</form>
-	</div>
-</div>
+<form method="POST" bind:this={formEl} use:enhance class="hidden"></form>

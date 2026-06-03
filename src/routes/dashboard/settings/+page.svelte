@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import Avatar from '$lib/components/Avatar.svelte';
 	import { toast } from 'svelte-sonner';
 	import type { PageData, ActionData } from './$types';
 
@@ -12,10 +13,6 @@
 		if ((form as any)?.password_error) toast.error((form as any).password_error);
 	});
 
-	const initials = $derived(
-		(data.profile?.full_name ?? data.email ?? '?')
-			.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase()
-	);
 
 	function confirmDeleteAccount(form: HTMLFormElement) {
 		toast('Delete your account?', {
@@ -27,7 +24,6 @@
 	}
 </script>
 
-<div class="space-y-8">
 	<div>
 		<p class="mb-1 text-xs font-semibold uppercase tracking-widest text-muted">Account</p>
 		<h1 class="page-title">Settings</h1>
@@ -39,8 +35,7 @@
 		<!-- Profile -->
 		<div class="card space-y-5">
 			<div class="flex items-center gap-4">
-				<div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-base font-semibold"
-					style="background:var(--color-accent-100);color:var(--color-accent-600)">{initials}</div>
+				<Avatar name={data.profile?.full_name ?? data.email ?? '?'} size={12} />
 				<div>
 					<p class="text-sm font-semibold text-heading">{data.profile?.full_name ?? 'No name set'}</p>
 					<p class="text-xs text-faint">{data.email}</p>
@@ -106,4 +101,3 @@
 			</button>
 		</form>
 	</div>
-</div>

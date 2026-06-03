@@ -12,7 +12,9 @@
 
 	<main class="flex-1 overflow-y-auto" style="background:var(--color-bg)">
 		<div class="mx-auto max-w-5xl px-4 py-8 pb-24 sm:px-8 lg:pb-8">
-			{@render children()}
+			<div class="space-y-8">
+				{@render children()}
+			</div>
 		</div>
 	</main>
 </div>

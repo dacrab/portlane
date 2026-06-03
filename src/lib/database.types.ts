@@ -7,52 +7,27 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       comments: {
         Row: {
           author_id: string
           body: string
-          created_at: string | null
+          created_at: string
           id: string
           project_id: string
         }
         Insert: {
           author_id: string
           body: string
-          created_at?: string | null
+          created_at?: string
           id?: string
           project_id: string
         }
         Update: {
           author_id?: string
           body?: string
-          created_at?: string | null
+          created_at?: string
           id?: string
           project_id?: string
         }
@@ -75,7 +50,7 @@ export type Database = {
       }
       files: {
         Row: {
-          created_at: string | null
+          created_at: string
           id: string
           name: string
           project_id: string
@@ -84,7 +59,7 @@ export type Database = {
           uploaded_by: string
         }
         Insert: {
-          created_at?: string | null
+          created_at?: string
           id?: string
           name: string
           project_id: string
@@ -93,7 +68,7 @@ export type Database = {
           uploaded_by: string
         }
         Update: {
-          created_at?: string | null
+          created_at?: string
           id?: string
           name?: string
           project_id?: string
@@ -122,7 +97,7 @@ export type Database = {
         Row: {
           amount_cents: number
           client_id: string
-          created_at: string | null
+          created_at: string
           currency: string
           due_date: string | null
           freelancer_id: string
@@ -133,7 +108,7 @@ export type Database = {
         Insert: {
           amount_cents: number
           client_id: string
-          created_at?: string | null
+          created_at?: string
           currency?: string
           due_date?: string | null
           freelancer_id: string
@@ -144,7 +119,7 @@ export type Database = {
         Update: {
           amount_cents?: number
           client_id?: string
-          created_at?: string | null
+          created_at?: string
           currency?: string
           due_date?: string | null
           freelancer_id?: string
@@ -179,7 +154,7 @@ export type Database = {
       milestones: {
         Row: {
           completed: boolean
-          created_at: string | null
+          created_at: string
           id: string
           name: string
           position: number
@@ -187,7 +162,7 @@ export type Database = {
         }
         Insert: {
           completed?: boolean
-          created_at?: string | null
+          created_at?: string
           id?: string
           name: string
           position?: number
@@ -195,7 +170,7 @@ export type Database = {
         }
         Update: {
           completed?: boolean
-          created_at?: string | null
+          created_at?: string
           id?: string
           name?: string
           position?: number
@@ -211,77 +186,10 @@ export type Database = {
           },
         ]
       }
-      project_notes: {
-        Row: {
-          body: string
-          id: string
-          project_id: string
-          updated_at: string | null
-        }
-        Insert: {
-          body: string
-          id?: string
-          project_id: string
-          updated_at?: string | null
-        }
-        Update: {
-          body?: string
-          id?: string
-          project_id?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "project_notes_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      time_entries: {
-        Row: {
-          created_at: string | null
-          description: string | null
-          id: string
-          logged_at: string
-          minutes: number
-          project_id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          logged_at?: string
-          minutes: number
-          project_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          logged_at?: string
-          minutes?: number
-          project_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "time_entries_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       profiles: {
         Row: {
           avatar_url: string | null
-          created_at: string | null
+          created_at: string
           full_name: string | null
           id: string
           last_read_comments_at: string | null
@@ -289,7 +197,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
-          created_at?: string | null
+          created_at?: string
           full_name?: string | null
           id: string
           last_read_comments_at?: string | null
@@ -297,7 +205,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
-          created_at?: string | null
+          created_at?: string
           full_name?: string | null
           id?: string
           last_read_comments_at?: string | null
@@ -335,9 +243,38 @@ export type Database = {
           },
         ]
       }
+      project_notes: {
+        Row: {
+          body: string
+          id: string
+          project_id: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          id?: string
+          project_id: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          id?: string
+          project_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_notes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
-          created_at: string | null
+          created_at: string
           description: string | null
           due_date: string | null
           freelancer_id: string
@@ -346,7 +283,7 @@ export type Database = {
           status: string
         }
         Insert: {
-          created_at?: string | null
+          created_at?: string
           description?: string | null
           due_date?: string | null
           freelancer_id: string
@@ -355,7 +292,7 @@ export type Database = {
           status?: string
         }
         Update: {
-          created_at?: string | null
+          created_at?: string
           description?: string | null
           due_date?: string | null
           freelancer_id?: string
@@ -373,35 +310,98 @@ export type Database = {
           },
         ]
       }
+      time_entries: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          logged_at: string
+          minutes: number
+          project_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          logged_at?: string
+          minutes: number
+          project_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          logged_at?: string
+          minutes?: number
+          project_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_entries_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      get_dashboard_stats: {
-        Args: { p_user_id: string; p_month_start: string }
-        Returns: { active_projects: number; completed_projects: number; review_projects: number; revenue_mtd: number; total_invoices: number; total_clients: number }[]
-      }
-      get_unread_comment_count: {
-        Args: { p_user_id: string }
-        Returns: number
-      }
       get_activity_feed: {
-        Args: { p_user_id: string; p_limit?: number }
-        Returns: { body: string; created_at: string; author_name: string; project_id: string; project_name: string }[]
+        Args: { p_limit?: number; p_user_id: string }
+        Returns: {
+          author_name: string
+          body: string
+          created_at: string
+          project_id: string
+          project_name: string
+        }[]
+      }
+      get_dashboard_stats: {
+        Args: { p_user_id: string }
+        Returns: {
+          active_projects: number
+          completed_projects: number
+          revenue_mtd: number
+          review_projects: number
+          total_clients: number
+          total_invoices: number
+        }[]
       }
       get_freelancer_clients: {
         Args: { p_user_id: string }
-        Returns: { client_id: string; full_name: string | null; projects: string[] }[]
+        Returns: {
+          client_id: string
+          full_name: string
+          projects: string[]
+        }[]
       }
+      get_unread_comment_count: { Args: { p_user_id: string }; Returns: number }
       get_unread_comments: {
         Args: { p_user_id: string }
-        Returns: { id: string; body: string; created_at: string; author_name: string; project_id: string; project_name: string }[]
+        Returns: {
+          author_name: string
+          body: string
+          created_at: string
+          id: string
+          project_id: string
+          project_name: string
+        }[]
       }
-      is_project_client: {
-        Args: { p_project_id: string }
-        Returns: boolean
-      }
+      is_project_client: { Args: { p_project_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
@@ -530,9 +530,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },

@@ -7,7 +7,7 @@
 	import IconArrowRightRegular from 'phosphor-icons-svelte/IconArrowRightRegular.svelte';
 	import IconTrashRegular from 'phosphor-icons-svelte/IconTrashRegular.svelte';
 	import IconFileTextRegular from 'phosphor-icons-svelte/IconFileTextRegular.svelte';
-	import { fmtMoney, fmtDate } from '$lib/fmt';
+	import { fmtMoney, fmtDate, statusBadge, confirmDelete } from '$lib/fmt';
 
 	let { data }: { data: PageData } = $props();
 	let showForm = $state(false);
@@ -20,10 +20,6 @@
 		return invoiceStatusOverrides[inv.id] ?? inv.status;
 	}
 
-	const statusBadge: Record<string, string> = {
-		draft: 'badge badge-neutral', sent: 'badge badge-blue',
-		paid:  'badge badge-green',   overdue: 'badge badge-red',
-	};
 
 	const clients = $derived(
 		(data.projects.find((p: any) => p.id === selectedProject)?.project_clients ?? [])
@@ -47,14 +43,6 @@
 		{ value: 'overdue', label: 'Overdue' },
 	];
 
-	function confirmDelete(form: HTMLFormElement) {
-		toast('Delete this invoice?', {
-			description: 'This action cannot be undone.',
-			action: { label: 'Delete', onClick: () => form.requestSubmit() },
-			cancel: { label: 'Cancel', onClick: () => {} },
-			duration: 8000,
-		});
-	}
 </script>
 
 <div class="space-y-8">
@@ -137,7 +125,7 @@
 	{/if}
 
 	<!-- Invoice table -->
-	<div class="overflow-hidden rounded-xl surface">
+	<div class="overflow-hidden rounded-xl card p-0">
 		{#if data.invoices.length === 0}
 			<div class="flex flex-col items-center justify-center px-6 py-20 text-center">
 				<div class="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-subtle">
@@ -176,7 +164,7 @@
 								items={statusItems}
 								onchange={(v) => {
 									invoiceStatusOverrides[inv.id] = v;
-									setTimeout(() => (document.getElementById(`inv-status-${inv.id}`) as HTMLFormElement)?.requestSubmit(), 0);
+									(document.getElementById(`inv-status-${inv.id}`) as HTMLFormElement)?.requestSubmit();
 								}}
 							/>
 						</form>
@@ -188,7 +176,7 @@
 						use:enhance={() => async ({ update }) => { await update(); toast.success('Invoice deleted'); }}>
 						<input type="hidden" name="id" value={inv.id} />
 						<button type="button" class="btn-icon shrink-0" title="Delete invoice"
-							onclick={(e) => confirmDelete((e.currentTarget as HTMLElement).closest('form') as HTMLFormElement)}>
+								onclick={(e) => confirmDelete('This will permanently delete the invoice.', (e.currentTarget as HTMLElement).closest('form') as HTMLFormElement)}>
 							<span class="text-faint"><IconTrashRegular class="h-3.5 w-3.5" /></span>
 						</button>
 					</form>
