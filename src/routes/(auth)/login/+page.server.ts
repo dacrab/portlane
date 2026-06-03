@@ -7,9 +7,10 @@ export const actions: Actions = {
 		const email = form.get('email') as string;
 		const password = form.get('password') as string;
 
-		const { error } = await locals.supabase.auth.signInWithPassword({ email, password });
+		const { data, error } = await locals.supabase.auth.signInWithPassword({ email, password });
 		if (error) return fail(400, { error: error.message });
 
-		redirect(303, '/dashboard');
+		const role = data.user?.user_metadata?.role;
+		redirect(303, role === 'client' ? '/portal' : '/dashboard');
 	},
 };
