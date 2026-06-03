@@ -32,6 +32,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	return {
 		projects: projects ?? [],
+		active: s.active_projects ?? (projects ?? []).filter((p: any) => !['completed','archived'].includes(p.status)).length,
 		completed: s.completed_projects ?? 0,
 		pending: s.review_projects ?? 0,
 		revenueMTD: s.revenue_mtd ?? 0,

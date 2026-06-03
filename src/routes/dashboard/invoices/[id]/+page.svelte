@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { toast } from 'svelte-sonner';
 	import type { PageData } from './$types';
 	let { data }: { data: PageData } = $props();
 
@@ -6,9 +7,11 @@
 	const project = $derived(inv.projects);
 	const freelancerName = $derived(inv.freelancer?.full_name ?? '—');
 	const clientName = $derived(inv.client?.full_name ?? '—');
+	const amount = $derived(`${inv.currency.toUpperCase()} ${(inv.amount_cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}`);
 
-	const statusColor: Record<string, string> = {
-		draft: '#6b7280', sent: '#1d4ed8', paid: '#15803d', overdue: '#b91c1c',
+	const statusBadge: Record<string, string> = {
+		draft: 'badge badge-neutral', sent: 'badge badge-blue',
+		paid: 'badge badge-green',    overdue: 'badge badge-red',
 	};
 
 	const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -28,7 +31,7 @@
 <div class="no-print mb-6 flex items-center gap-3">
 	<a href="/dashboard/invoices" class="text-sm text-faint">← Invoices</a>
 	<div class="ml-auto flex gap-2">
-		<button onclick={() => navigator.clipboard.writeText(window.location.href).then(() => alert('Link copied!'))}
+		<button onclick={() => navigator.clipboard.writeText(window.location.href).then(() => toast.success('Link copied!'))}
 			class="btn btn-ghost text-xs">Copy link</button>
 		<button onclick={() => window.print()} class="btn btn-primary text-xs">Print / Save PDF</button>
 	</div>
@@ -47,10 +50,7 @@
 			<p class="mt-1 text-xs font-mono text-faint">{inv.id.slice(0, 8).toUpperCase()}</p>
 		</div>
 		<div class="text-right">
-			<span class="inline-block rounded-full px-3 py-1 text-xs font-semibold capitalize"
-				style="background:{statusColor[inv.status]}18;color:{statusColor[inv.status]}">
-				{inv.status}
-			</span>
+			<span class="{statusBadge[inv.status] ?? 'badge badge-neutral'} capitalize">{inv.status}</span>
 			<p class="mt-3 text-xs text-faint">Issued {today}</p>
 			{#if inv.due_date}
 				<p class="text-xs text-faint">
@@ -85,9 +85,7 @@
 					<p class="mt-0.5 text-xs text-faint">{project.description}</p>
 				{/if}
 			</div>
-			<p class="text-sm font-semibold text-heading">
-				{inv.currency.toUpperCase()} {(inv.amount_cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-			</p>
+			<p class="text-sm font-semibold text-heading">{amount}</p>
 		</div>
 	</div>
 
@@ -96,9 +94,7 @@
 		<div class="w-48">
 			<div class="flex justify-between py-2 text-sm" style="border-top:2px solid var(--color-border)">
 				<span class="font-semibold text-heading">Total</span>
-				<span class="font-bold text-base text-heading">
-					{inv.currency.toUpperCase()} {(inv.amount_cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-				</span>
+				<span class="font-bold text-base text-heading">{amount}</span>
 			</div>
 		</div>
 	</div>

@@ -16,6 +16,8 @@
 	import IconExportRegular from 'phosphor-icons-svelte/IconExportRegular.svelte';
 	import type { PageData } from './$types';
 	import AppSelect from '$lib/components/AppSelect.svelte';
+	import { fmtDate, fmtDateLong } from '$lib/fmt';
+	import Avatar from '$lib/components/Avatar.svelte';
 
 	let { data }: { data: PageData } = $props();
 	let comment = $state('');
@@ -81,6 +83,7 @@
 	<div class="flex items-start gap-3">
 		<a href="/dashboard/projects" class="btn-icon mt-1 shrink-0"><IconArrowLeftRegular class="h-4 w-4" /></a>
 		<div class="flex-1 min-w-0">
+			<p class="mb-1 text-xs font-semibold uppercase tracking-widest text-muted">Project</p>
 			<div class="flex flex-wrap items-center gap-3">
 				<h1 class="page-title">{data.project.name}</h1>
 				<form id="status-form" method="POST" action="?/update_status"
@@ -107,7 +110,7 @@
 			{/if}
 			<div class="mt-2 flex flex-wrap items-center gap-4 text-xs text-faint">
 				{#if data.project.due_date}
-					<span>Due {new Date(data.project.due_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+					<span>Due {fmtDateLong(data.project.due_date)}</span>
 				{/if}
 				{#if totalMilestones > 0}
 					<span>{doneMilestones}/{totalMilestones} milestones · {progress}%</span>
@@ -161,7 +164,7 @@
 						{#each data.milestones as m}
 							<form method="POST" action="?/toggle_milestone"
 								use:enhance={() => async ({ update }) => { await update(); }}
-								class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-[var(--color-bg)]">
+								class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover-bg">
 								<input type="hidden" name="id" value={m.id} />
 								<input type="hidden" name="completed" value={m.completed} />
 								<button type="submit" class="shrink-0">
@@ -204,13 +207,13 @@
 				{#if (data.timeEntries as any[]).length === 0}
 					<p class="mb-4 text-sm text-faint">No time logged yet. Track your hours below.</p>
 				{:else}
-					<div class="mb-4 overflow-hidden rounded-lg border-subtle">
+					<div class="mb-4 overflow-hidden rounded-lg" style="border:1px solid var(--color-border-subtle)">
 						{#each data.timeEntries as e, i}
 							<div class="flex items-center gap-3 px-4 py-3" style="{i > 0 ? 'border-top:1px solid var(--color-border-subtle)' : ''}">
 								<span class="text-faint"><IconClockRegular class="h-3.5 w-3.5 shrink-0" /></span>
 								<span class="flex-1 text-sm text-body">{e.description ?? 'No description'}</span>
 								<span class="text-xs font-medium tabular-nums text-faint">{(e.minutes / 60).toFixed(1)}h</span>
-								<span class="text-xs text-faint">{new Date(e.logged_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+								<span class="text-xs text-faint">{fmtDate(e.logged_at)}</span>
 							</div>
 						{/each}
 					</div>
@@ -242,11 +245,8 @@
 					<div class="mb-4 space-y-3">
 						{#each data.comments as c}
 							<div class="flex items-start gap-3">
-								<div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold"
-									style="background:var(--color-accent-100);color:var(--color-accent-600)">
-									{((c.profiles as any)?.full_name ?? '?')[0].toUpperCase()}
-								</div>
-								<div class="flex-1 rounded-lg px-4 py-3 bg-base">
+								<Avatar name={(c.profiles as any)?.full_name ?? "?"} size={7} />
+								<div class="flex-1 rounded-lg px-4 py-3" style="background:var(--color-bg)">
 									<p class="mb-1 text-xs font-semibold text-faint">{(c.profiles as any)?.full_name ?? 'Unknown'}</p>
 									<p class="text-sm text-body">{c.body}</p>
 								</div>
@@ -277,11 +277,8 @@
 				{:else}
 					<div class="mb-4 space-y-2">
 						{#each data.clients as c}
-							<div class="flex items-center gap-2.5 rounded-lg px-3 py-2 bg-base">
-								<div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
-									style="background:var(--color-accent-100);color:var(--color-accent-600)">
-									{((c as any).full_name ?? '?')[0].toUpperCase()}
-								</div>
+							<div class="flex items-center gap-2.5 rounded-lg px-3 py-2" style="background:var(--color-bg)">
+								<Avatar name={(c as any).full_name ?? "?"} size={7} />
 								<div class="min-w-0 flex-1">
 									<p class="text-sm font-medium truncate text-body">{(c as any).full_name ?? '—'}</p>
 								</div>
@@ -336,7 +333,7 @@
 									<p class="truncate text-sm font-medium text-body">{f.name}</p>
 									<p class="mt-0.5 text-xs text-faint">
 										{f.size_bytes ? (f.size_bytes / 1024 / 1024).toFixed(1) + ' MB' : '—'} ·
-										{new Date(f.created_at!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+										{fmtDate(f.created_at!)}
 									</p>
 								</div>
 								<button onclick={() => download(f.storage_path, f.name)} class="btn-icon shrink-0" title="Download">

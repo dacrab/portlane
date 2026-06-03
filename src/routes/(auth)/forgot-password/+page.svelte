@@ -4,37 +4,32 @@
 	let { form }: { form: ActionData } = $props();
 </script>
 
-<div class="auth-page">
-	<div class="w-full max-w-sm px-6">
-		<a href="/" class="mb-8 flex items-center gap-2">
-			<img src="/favicon.svg" alt="Portlane" class="h-7 w-7" />
-			<span class="text-[15px] font-semibold tracking-tight text-heading">Portlane</span>
+<div class="auth-root">
+	<div class="auth-card">
+		<a href="/" class="auth-logo">
+			<img src="/favicon.svg" alt="Portlane" class="h-6 w-6" />
+			Portlane
 		</a>
-
-		<h1 class="page-title mb-1 text-[22px]">Reset password</h1>
-		<p class="mb-7 text-sm text-muted">We'll send you a reset link.</p>
-
 		{#if (form as any)?.sent}
-			<p class="rounded-md px-3 py-2.5 text-sm" style="background:#f0fdf4;color:#15803d">
-				Check your email for a reset link.
-			</p>
-			<p class="mt-4 text-center text-sm text-muted">
-				<a href="/login" class="text-accent">Back to login</a>
-			</p>
+			<div class="auth-header">
+				<h1>Check your email</h1>
+				<p>We sent a password reset link to your inbox.</p>
+			</div>
+			<a href="/login" class="btn btn-primary auth-submit" style="display:flex;justify-content:center">Back to login</a>
 		{:else}
-			<form method="POST" use:enhance class="space-y-3">
-				{#if form?.error}
-					<p class="form-error">{form.error}</p>
-				{/if}
-				<div>
-					<label for="email" class="mb-1.5 block text-xs font-medium text-label">Email</label>
+			<div class="auth-header">
+				<h1>Reset your password</h1>
+				<p>Enter your email and we'll send you a link.</p>
+			</div>
+			<form method="POST" use:enhance class="auth-form">
+				{#if form?.error}<p class="form-error">{form.error}</p>{/if}
+				<div class="auth-field">
+					<label for="email">Email</label>
 					<input id="email" name="email" type="email" required class="input" placeholder="you@example.com" />
 				</div>
-				<button type="submit" class="btn btn-primary w-full justify-center py-2.5">Send reset link</button>
+				<button type="submit" class="btn btn-primary auth-submit">Send reset link</button>
 			</form>
-			<p class="mt-5 text-center text-sm text-muted">
-				<a href="/login" class="text-accent">Back to login</a>
-			</p>
+			<p class="auth-footer"><a href="/login">Back to login</a></p>
 		{/if}
 	</div>
 </div>

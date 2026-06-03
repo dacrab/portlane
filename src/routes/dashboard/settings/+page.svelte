@@ -29,6 +29,7 @@
 
 <div class="space-y-8">
 	<div>
+		<p class="mb-1 text-xs font-semibold uppercase tracking-widest text-muted">Account</p>
 		<h1 class="page-title">Settings</h1>
 		<p class="mt-0.5 text-sm text-muted">Manage your account and preferences.</p>
 	</div>
@@ -50,11 +51,11 @@
 				use:enhance={() => async ({ update }) => { await update(); }}
 				class="space-y-4">
 				<div>
-					<label for="full_name" class="mb-1.5 block text-xs font-medium text-label">Full name</label>
+					<label for="full_name" class="mb-1.5 block text-xs font-medium text-muted">Full name</label>
 					<input id="full_name" name="full_name" type="text" value={data.profile?.full_name ?? ''} class="input" />
 				</div>
 				<div>
-					<label for="email_display" class="mb-1.5 block text-xs font-medium text-label">Email</label>
+					<label for="email_display" class="mb-1.5 block text-xs font-medium text-muted">Email</label>
 					<input id="email_display" type="email" disabled value={data.email} class="input" />
 					<p class="mt-1 text-xs text-faint">Email cannot be changed here.</p>
 				</div>
@@ -75,11 +76,11 @@
 				use:enhance={() => async ({ update }) => { await update(); }}
 				class="space-y-4">
 				<div>
-					<label for="password" class="mb-1.5 block text-xs font-medium text-label">New password</label>
+					<label for="password" class="mb-1.5 block text-xs font-medium text-muted">New password</label>
 					<input id="password" name="password" type="password" required minlength="8" autocomplete="new-password" class="input" placeholder="••••••••" />
 				</div>
 				<div>
-					<label for="confirm" class="mb-1.5 block text-xs font-medium text-label">Confirm password</label>
+					<label for="confirm" class="mb-1.5 block text-xs font-medium text-muted">Confirm password</label>
 					<input id="confirm" name="confirm" type="password" required minlength="8" autocomplete="new-password" class="input" placeholder="••••••••" />
 				</div>
 				<div class="pt-2 divide-top">

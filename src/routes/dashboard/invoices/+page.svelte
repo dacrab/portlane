@@ -7,6 +7,7 @@
 	import IconArrowRightRegular from 'phosphor-icons-svelte/IconArrowRightRegular.svelte';
 	import IconTrashRegular from 'phosphor-icons-svelte/IconTrashRegular.svelte';
 	import IconFileTextRegular from 'phosphor-icons-svelte/IconFileTextRegular.svelte';
+	import { fmtMoney, fmtDate } from '$lib/fmt';
 
 	let { data }: { data: PageData } = $props();
 	let showForm = $state(false);
@@ -38,9 +39,6 @@
 		overdue: data.invoices.filter((i: any) => i.status === 'overdue').length,
 	});
 
-	function fmt(cents: number) {
-		return '$' + (cents / 100).toLocaleString('en-US', { minimumFractionDigits: 0 });
-	}
 
 	const statusItems = [
 		{ value: 'draft', label: 'Draft' },
@@ -62,6 +60,7 @@
 <div class="space-y-8">
 	<div class="flex items-center justify-between">
 		<div>
+			<p class="mb-1 text-xs font-semibold uppercase tracking-widest text-muted">Billing</p>
 			<h1 class="page-title">Invoices</h1>
 			<p class="mt-0.5 text-sm text-muted">{stats.total} total</p>
 		</div>
@@ -73,11 +72,11 @@
 		<div class="grid grid-cols-3 gap-4">
 			<div class="card py-4">
 				<p class="text-xs font-medium text-faint">Outstanding</p>
-				<p class="mt-1 text-xl font-semibold tracking-tight" style="color:#b45309">{fmt(stats.outstanding)}</p>
+				<p class="mt-1 text-xl font-semibold tracking-tight text-warning">{fmtMoney(stats.outstanding)}</p>
 			</div>
 			<div class="card py-4">
 				<p class="text-xs font-medium text-faint">Paid</p>
-				<p class="mt-1 text-xl font-semibold tracking-tight" style="color:#15803d">{fmt(stats.paid)}</p>
+				<p class="mt-1 text-xl font-semibold tracking-tight text-success">{fmtMoney(stats.paid)}</p>
 			</div>
 			<div class="card py-4">
 				<p class="text-xs font-medium text-faint">Overdue</p>
@@ -99,7 +98,7 @@
 				}}
 				class="grid gap-4 sm:grid-cols-2">
 				<div>
-					<p class="mb-1.5 text-xs font-medium text-label">Project</p>
+					<p class="mb-1.5 text-xs font-medium text-muted">Project</p>
 					<AppSelect
 						name="project_id"
 						bind:value={selectedProject}
@@ -110,7 +109,7 @@
 					/>
 				</div>
 				<div>
-					<p class="mb-1.5 text-xs font-medium text-label">Client</p>
+					<p class="mb-1.5 text-xs font-medium text-muted">Client</p>
 					<AppSelect
 						name="client_id"
 						bind:value={selectedClient}
@@ -120,11 +119,11 @@
 					/>
 				</div>
 				<div>
-					<label for="inv_amount" class="mb-1.5 block text-xs font-medium text-label">Amount (USD)</label>
+					<label for="inv_amount" class="mb-1.5 block text-xs font-medium text-muted">Amount (USD)</label>
 					<input id="inv_amount" name="amount" type="number" min="0" step="0.01" required placeholder="500.00" class="input" />
 				</div>
 				<div>
-					<p class="mb-1.5 text-xs font-medium text-label">
+					<p class="mb-1.5 text-xs font-medium text-muted">
 						Due date <span class="text-faint">(optional)</span>
 					</p>
 					<AppDatePicker name="due_date" placeholder="Pick a due date" />
@@ -164,9 +163,9 @@
 						<p class="mt-0.5 text-xs text-faint">{(inv.profiles as any)?.full_name ?? '—'}</p>
 					</div>
 					<p class="hidden sm:block text-sm text-faint shrink-0">
-						{inv.due_date ? new Date(inv.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+						{inv.due_date ? fmtDate(inv.due_date) : '—'}
 					</p>
-					<p class="text-sm font-semibold text-heading shrink-0">${(inv.amount_cents / 100).toFixed(2)}</p>
+					<p class="text-sm font-semibold text-heading shrink-0">{fmtMoney(inv.amount_cents)}</p>
 					<div class="w-28 shrink-0">
 						<form id="inv-status-{inv.id}" method="POST" action="?/update_status"
 							use:enhance={() => async ({ update }) => { await update(); toast.success('Status updated'); }}>

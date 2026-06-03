@@ -7,6 +7,7 @@
 	import IconPlusRegular from 'phosphor-icons-svelte/IconPlusRegular.svelte';
 	import IconFolderOpenRegular from 'phosphor-icons-svelte/IconFolderOpenRegular.svelte';
 	import IconXRegular from 'phosphor-icons-svelte/IconXRegular.svelte';
+	import { fmtDate, today } from '$lib/fmt';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
@@ -25,7 +26,7 @@
 		in_progress: 'In Progress', review: 'Review', planning: 'Planning', completed: 'Completed', archived: 'Archived',
 	};
 
-	const today = new Date().toISOString().split('T').at(0) ?? '';
+
 
 	function progress(p: any) {
 		const ms = p.milestones ?? [];
@@ -88,12 +89,12 @@
 			{/if}
 
 			<div>
-				<label for="proj-name" class="mb-1.5 block text-xs font-medium text-label">Project name <span class="text-danger">*</span></label>
+				<label for="proj-name" class="mb-1.5 block text-xs font-medium text-muted">Project name <span class="text-danger">*</span></label>
 				<input id="proj-name" name="name" type="text" required use:focusOnMount class="input" placeholder="Brand Redesign" />
 			</div>
 
 			<div>
-				<label for="proj-desc" class="mb-1.5 block text-xs font-medium text-label">
+				<label for="proj-desc" class="mb-1.5 block text-xs font-medium text-muted">
 					Description <span class="text-faint">(optional)</span>
 				</label>
 				<textarea id="proj-desc" name="description" rows="3" class="input resize-none"
@@ -102,11 +103,11 @@
 
 			<div class="grid gap-4 sm:grid-cols-2">
 				<div>
-					<p class="mb-1.5 text-xs font-medium text-label">Due date <span class="text-faint">(optional)</span></p>
+					<p class="mb-1.5 text-xs font-medium text-muted">Due date <span class="text-faint">(optional)</span></p>
 					<AppDatePicker name="due_date" placeholder="Pick a date" />
 				</div>
 				<div>
-					<p class="mb-1.5 text-xs font-medium text-label">Status</p>
+					<p class="mb-1.5 text-xs font-medium text-muted">Status</p>
 					<AppSelect
 						name="status"
 						value="planning"
@@ -132,6 +133,7 @@
 <div class="space-y-8">
 	<div class="flex items-center justify-between">
 		<div>
+			<p class="mb-1 text-xs font-semibold uppercase tracking-widest text-muted">Workspace</p>
 			<h1 class="page-title">Projects</h1>
 			<p class="mt-0.5 text-sm text-muted">{visible.length} shown · {activeCount} active · {reviewCount} in review</p>
 		</div>
@@ -174,10 +176,10 @@
 		{:else}
 			{#each visible as p}
 				{@const pct = progress(p)}
-				{@const overdue = p.due_date && p.due_date < today && p.status !== 'completed'}
+				{@const overdue = p.due_date && p.due_date < today() && p.status !== 'completed'}
 				{@const clientCount = (p.project_clients as any)?.[0]?.count ?? 0}
 				<a href="/dashboard/projects/{p.id}"
-					class="flex items-center gap-4 px-6 py-4 transition-colors hover:bg-[var(--color-bg)] divide-bottom no-underline"
+					class="flex items-center gap-4 px-6 py-4 transition-colors hover-bg divide-bottom no-underline"
 					style="opacity:{p.status === 'archived' ? '0.6' : '1'}">
 					<div class="flex flex-1 items-center gap-3 min-w-0">
 						<div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold bg-accent-soft">
@@ -187,7 +189,7 @@
 							<p class="text-sm font-medium truncate text-body">{p.name}</p>
 							<p class="mt-0.5 text-xs" class:text-danger={overdue} class:text-faint={!overdue}>
 								{overdue ? '⚠ Overdue · ' : (p.due_date ? 'Due ' : '')}
-								{p.due_date ? new Date(p.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'No due date'}
+								{p.due_date ? fmtDate(p.due_date) : "No due date"}
 							</p>
 						</div>
 					</div>

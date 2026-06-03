@@ -3,7 +3,6 @@
 	import { toast } from 'svelte-sonner';
 	import { onMount, untrack } from 'svelte';
 	import { supabase } from '$lib/supabase';
-	import { Toaster } from 'svelte-sonner';
 	import IconCheckCircleBold from 'phosphor-icons-svelte/IconCheckCircleBold.svelte';
 	import IconCircleRegular from 'phosphor-icons-svelte/IconCircleRegular.svelte';
 	import IconDownloadSimpleRegular from 'phosphor-icons-svelte/IconDownloadSimpleRegular.svelte';
@@ -13,6 +12,8 @@
 	import IconArrowCounterClockwiseRegular from 'phosphor-icons-svelte/IconArrowCounterClockwiseRegular.svelte';
 	import IconFileRegular from 'phosphor-icons-svelte/IconFileRegular.svelte';
 	import type { PageData } from './$types';
+	import { fmtDate, fmtMoney, today } from '$lib/fmt';
+	import Avatar from '$lib/components/Avatar.svelte';
 
 	let { data }: { data: PageData } = $props();
 	let comment = $state('');
@@ -67,17 +68,16 @@
 		draft: 'badge badge-neutral', sent: 'badge badge-blue',
 		paid: 'badge badge-green',    overdue: 'badge badge-red',
 	};
-	const today = new Date().toISOString().split('T').at(0) ?? '';
+
 </script>
 
-<Toaster richColors position="bottom-right" />
 
-<div class="min-h-screen bg-base">
+<div class="min-h-screen" style="background:var(--color-bg)">
 	<header style="border-bottom:1px solid var(--color-border);background:var(--color-bg-elevated)">
 		<div class="mx-auto flex max-w-4xl items-center justify-between px-6 py-3.5">
 			<div class="flex items-center gap-2.5">
 				<img src="/favicon.svg" alt="Portlane" class="h-6 w-6" />
-				<span class="text-[13px] font-semibold text-heading">Portlane</span>
+				<span class="section-label">Portlane</span>
 			</div>
 			<div class="flex items-center gap-3">
 				{#if data.project}
@@ -112,7 +112,7 @@
 							<p class="text-sm font-semibold text-heading">{p.name}</p>
 							<p class="text-xs text-faint">
 								{(p.profiles as any)?.full_name ?? 'Freelancer'}
-								{#if p.due_date} · Due {new Date(p.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}{/if}
+								{#if p.due_date} · Due {fmtDate(p.due_date)}{/if}
 							</p>
 						</div>
 						<span class="badge badge-neutral shrink-0">{p.status.replace('_', ' ')}</span>
@@ -136,7 +136,7 @@
 					<div class="mb-1.5 flex items-center justify-between text-xs text-faint">
 						<span>Overall progress</span><span>{done}/{total} milestones · {progress}%</span>
 					</div>
-					<div class="h-2 rounded-full overflow-hidden bg-subtle">
+					<div class="h-2 rounded-full overflow-hidden" style="background:var(--color-border)">
 						<div class="h-full rounded-full transition-all" style="width:{progress}%;background:var(--color-accent-600)"></div>
 					</div>
 				</div>
@@ -182,12 +182,12 @@
 				{:else}
 					<div class="space-y-2">
 						{#each data.files as f}
-							<div class="flex items-center gap-3 rounded-lg px-3 py-2.5 border-subtle">
+							<div class="flex items-center gap-3 rounded-lg px-3 py-2.5" style="border:1px solid var(--color-border-subtle)">
 								<div class="flex-1 min-w-0">
 									<p class="truncate text-sm font-medium text-body">{f.name}</p>
 									<p class="text-xs text-faint">
 										{f.size_bytes ? (f.size_bytes / 1024 / 1024).toFixed(1) + ' MB' : '—'} ·
-										{new Date(f.created_at!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+										{fmtDate(f.created_at!)}
 									</p>
 								</div>
 								<button onclick={() => download(f.storage_path, f.name)} class="btn-icon shrink-0" title="Download">
@@ -206,18 +206,18 @@
 				<p class="card-label">Invoices</p>
 				<div class="space-y-2">
 					{#each data.invoices as inv}
-						<div class="flex items-center gap-4 rounded-lg px-3 py-3 border-subtle">
+						<div class="flex items-center gap-4 rounded-lg px-3 py-3" style="border:1px solid var(--color-border-subtle)">
 							<div class="flex-1 min-w-0">
 								<p class="text-sm font-medium text-body">
-									${(inv.amount_cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+									{fmtMoney(inv.amount_cents)}
 								</p>
 								{#if inv.due_date}
-									<p class="text-xs" class:text-danger={inv.due_date < today && inv.status !== 'paid'} class:text-faint={!(inv.due_date < today && inv.status !== 'paid')}>
-										Due {new Date(inv.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+									<p class="text-xs" class:text-danger={inv.due_date < today() && inv.status !== 'paid'} class:text-faint={!(inv.due_date < today() && inv.status !== 'paid')}>
+										Due {fmtDate(inv.due_date)}
 									</p>
 								{:else}
 									<p class="text-xs text-faint">
-										{new Date(inv.created_at!).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+										{fmtDate(inv.created_at!)}
 									</p>
 								{/if}
 							</div>
@@ -279,11 +279,8 @@
 				<div class="mb-4 space-y-3">
 					{#each comments as c (c.id)}
 						<div class="flex items-start gap-3">
-							<div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold"
-								style="background:var(--color-accent-100);color:var(--color-accent-600)">
-								{((c.profiles as any)?.full_name ?? '?')[0].toUpperCase()}
-							</div>
-							<div class="flex-1 rounded-lg px-4 py-3 bg-base">
+							<Avatar name={(c.profiles as any)?.full_name ?? "?"} size={7} />
+							<div class="flex-1 rounded-lg px-4 py-3" style="background:var(--color-bg)">
 								<p class="mb-1 text-xs font-semibold text-faint">{(c.profiles as any)?.full_name ?? 'Unknown'}</p>
 								<p class="text-sm text-body">{c.body}</p>
 							</div>

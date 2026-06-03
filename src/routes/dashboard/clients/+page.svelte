@@ -1,21 +1,15 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import IconUsersRegular from 'phosphor-icons-svelte/IconUsersRegular.svelte';
+	import Avatar from '$lib/components/Avatar.svelte';
 
 	let { data }: { data: PageData } = $props();
 
-	const colors = [
-		'var(--color-accent-600)', '#b45309', '#15803d', '#1d4ed8', '#7c3aed', '#b91c1c',
-	];
-	function color(name: string) {
-		let h = 0;
-		for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffff;
-		return colors[h % colors.length];
-	}
 </script>
 
 <div class="space-y-8">
 	<div>
+		<p class="mb-1 text-xs font-semibold uppercase tracking-widest text-muted">People</p>
 		<h1 class="page-title">Clients</h1>
 		<p class="mt-0.5 text-sm text-muted">{data.clients.length} total</p>
 	</div>
@@ -33,14 +27,9 @@
 		<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 			{#each data.clients as c}
 				{@const name = c.full_name ?? 'Unknown'}
-				{@const initials = name.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase()}
-				{@const accent = color(name)}
 				<div class="card flex flex-col gap-4">
 					<div class="flex items-center gap-3">
-						<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
-							style="background:{accent}18;color:{accent}">
-							{initials}
-						</div>
+						<Avatar {name} size={10} />
 						<div class="min-w-0">
 							<p class="text-sm font-semibold truncate text-heading">{name}</p>
 							<p class="text-xs text-faint">{c.projects.length} project{c.projects.length !== 1 ? 's' : ''}</p>
