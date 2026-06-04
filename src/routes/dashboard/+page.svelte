@@ -1,9 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import { enhance } from '$app/forms';
 	import { onMount } from 'svelte';
 	import { invalidateAll } from '$app/navigation';
-	import { toast } from 'svelte-sonner';
 	import { fmtDate, fmtDateTime, today, fmtMoney, statusBadge, statusLabel } from '$lib/fmt';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import IconPlusRegular from 'phosphor-icons-svelte/IconPlusRegular.svelte';
@@ -13,6 +11,7 @@
 	import IconCurrencyDollarRegular from 'phosphor-icons-svelte/IconCurrencyDollarRegular.svelte';
 	import IconCheckRegular from 'phosphor-icons-svelte/IconCheckRegular.svelte';
 	import IconXRegular from 'phosphor-icons-svelte/IconXRegular.svelte';
+	import EmptyState from '$lib/components/EmptyState.svelte';
 	import IconBellRegular from 'phosphor-icons-svelte/IconBellRegular.svelte';
 
 	let { data }: { data: PageData } = $props();
@@ -148,14 +147,7 @@
 				<a href="/dashboard/projects" class="text-xs font-medium text-accent hover:underline">View all →</a>
 			</div>
 			{#if data.projects.length === 0}
-				<div class="flex flex-col items-center justify-center px-6 py-16 text-center">
-					<div class="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-subtle">
-						<span class="text-faint"><IconFolderOpenRegular class="h-6 w-6" /></span>
-					</div>
-					<p class="text-sm font-medium text-body">No projects yet</p>
-					<p class="mt-1 text-xs text-faint">Create your first project to get started.</p>
-					<a href="/dashboard/projects" class="mt-4 btn btn-primary text-xs px-4">Create project</a>
-				</div>
+			<EmptyState icon={IconFolderOpenRegular} title="No projects yet" description="Create your first project to get started." compact action={{ label: 'Create project', href: '/dashboard/projects' }} />
 			{:else}
 				{#each data.projects as p}
 					<a href="/dashboard/projects/{p.id}" class="row-link divide-bottom">

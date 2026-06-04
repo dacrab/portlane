@@ -2,6 +2,7 @@
 	import type { PageData } from './$types';
 	import IconUsersRegular from 'phosphor-icons-svelte/IconUsersRegular.svelte';
 	import Avatar from '$lib/components/Avatar.svelte';
+	import EmptyState from '$lib/components/EmptyState.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -14,14 +15,7 @@
 	</div>
 
 	{#if data.clients.length === 0}
-		<div class="flex flex-col items-center justify-center rounded-xl px-6 py-20 text-center card">
-			<div class="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-subtle">
-				<span class="text-faint"><IconUsersRegular class="h-6 w-6" /></span>
-			</div>
-			<p class="text-sm font-medium text-body">No clients yet</p>
-			<p class="mt-1 text-xs text-faint">Invite clients from a project's detail page.</p>
-			<a href="/dashboard/projects" class="mt-4 btn btn-primary text-xs px-4">Go to projects</a>
-		</div>
+		<div class="card rounded-xl"><EmptyState icon={IconUsersRegular} title="No clients yet" description="Invite clients from a project's detail page." action={{ label: 'Go to projects', href: '/dashboard/projects' }} /></div>
 	{:else}
 		<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 			{#each data.clients as c}

@@ -4,11 +4,11 @@
 	import { fmtMoney, statusBadge } from '$lib/fmt';
 	let { data }: { data: PageData } = $props();
 
-	const inv = $derived(data.invoice as any);
-	const project = $derived(inv.projects);
-	const freelancerName = $derived(inv.freelancer?.full_name ?? '—');
-	const clientName = $derived(inv.client?.full_name ?? '—');
-	const amount = $derived(fmtMoney(inv.amount_cents, inv.currency?.toUpperCase()));
+	const inv = $derived(data.invoice);
+	const project = $derived(inv?.projects ?? {});
+	const freelancerName = $derived(inv?.freelancer?.full_name ?? '—');
+	const clientName = $derived(inv?.client?.full_name ?? '—');
+	const amount = $derived(inv?.amount_cents ? fmtMoney(inv.amount_cents, (inv as any)?.currency?.toUpperCase()) : '');
 
 
 	const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });

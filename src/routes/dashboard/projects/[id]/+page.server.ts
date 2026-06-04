@@ -1,60 +1,32 @@
 import { error, fail, redirect } from '@sveltejs/kit';
-import { PUBLIC_SUPABASE_URL } from '$env/static/public';
-import { SUPABASE_SECRET_KEY } from '$env/static/private';
 import type { PageServerLoad, Actions } from './$types';
 import { adminClient } from '$lib/admin';
+import { getProjectMilestones, getProjectFiles, getProjectComments, addComment, uploadProjectFile, inviteClientByEmail } from '$lib/server/project';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
 	const { user } = await locals.safeGetSession();
 
-	const [{ data: project }, { data: milestones }, { data: files }, { data: comments }, { data: clients }, { data: timeEntries }, { data: note }] = await Promise.all([
-		locals.supabase
-			.from('projects')
-			.select('*')
-			.eq('id', params.id)
-			.eq('freelancer_id', user!.id)
-			.single(),
-		locals.supabase
-			.from('milestones')
-			.select('*')
-			.eq('project_id', params.id)
-			.order('position'),
-		locals.supabase
-			.from('files')
-			.select('*')
-			.eq('project_id', params.id)
-			.order('created_at', { ascending: false }),
-		locals.supabase
-			.from('comments')
-			.select('*, profiles(full_name)')
-			.eq('project_id', params.id)
-			.order('created_at'),
-		locals.supabase
-			.from('project_clients')
-			.select('profiles(id, full_name)')
-			.eq('project_id', params.id),
-		locals.supabase
-			.from('time_entries')
-			.select('*')
-			.eq('project_id', params.id)
-			.order('logged_at', { ascending: false }),
-		locals.supabase
-			.from('project_notes')
-			.select('*')
-			.eq('project_id', params.id)
-			.maybeSingle(),
+	const [projectRes, milestonesRes, filesRes, commentsRes, clientsRes, timeEntriesRes, noteRes] = await Promise.all([
+		locals.supabase.from('projects').select('*').eq('id', params.id).eq('freelancer_id', user!.id).single(),
+		getProjectMilestones(locals.supabase, params.id),
+		getProjectFiles(locals.supabase, params.id),
+		getProjectComments(locals.supabase, params.id),
+		locals.supabase.from('project_clients').select('profiles(id, full_name)').eq('project_id', params.id),
+		locals.supabase.from('time_entries').select('*').eq('project_id', params.id).order('logged_at', { ascending: false }),
+		locals.supabase.from('project_notes').select('*').eq('project_id', params.id).maybeSingle(),
 	]);
 
+	const project = projectRes.data;
 	if (!project) error(404, 'Project not found');
 
 	return {
 		project,
-		milestones: milestones ?? [],
-		files: files ?? [],
-		comments: comments ?? [],
-		clients: clients?.map(c => c.profiles).filter(Boolean) ?? [],
-		timeEntries: timeEntries ?? [],
-		note: note?.body ?? '',
+		milestones: milestonesRes.data ?? [],
+		files: filesRes.data ?? [],
+		comments: commentsRes.data ?? [],
+		clients: (clientsRes.data ?? []).map(c => c.profiles).filter(Boolean) ?? [],
+		timeEntries: timeEntriesRes.data ?? [],
+		note: noteRes.data?.body ?? '',
 	};
 };
 
@@ -64,29 +36,24 @@ export const actions: Actions = {
 		const form = await request.formData();
 		const minutes = parseInt(form.get('minutes') as string);
 		const description = (form.get('description') as string | null)?.trim() || null;
-		if (!minutes || minutes <= 0) return;
+		if (!minutes || minutes <= 0) return fail(400, { error: 'Invalid minutes' });
 		await locals.supabase.from('time_entries').insert({
-			project_id: params.id,
-			user_id: user!.id,
-			minutes,
-			description,
+			project_id: params.id, user_id: user!.id, minutes, description,
 		});
 	},
 
 	save_note: async ({ locals, params, request }) => {
 		const form = await request.formData();
 		const body = (form.get('body') as string).trim();
-		await locals.supabase
-			.from('project_notes')
-			.upsert({ project_id: params.id, body }, { onConflict: 'project_id' });
+		await locals.supabase.from('project_notes').upsert({ project_id: params.id, body }, { onConflict: 'project_id' });
 	},
 
 	comment: async ({ locals, params, request }) => {
 		const { user } = await locals.safeGetSession();
 		const form = await request.formData();
 		const body = (form.get('body') as string).trim();
-		if (!body) return;
-		await locals.supabase.from('comments').insert({ project_id: params.id, author_id: user!.id, body });
+		if (!body) return fail(400, { error: 'Comment body is required' });
+		await addComment(locals.supabase, params.id, user!.id, body);
 	},
 
 	toggle_milestone: async ({ locals, request }) => {
@@ -99,37 +66,21 @@ export const actions: Actions = {
 	add_milestone: async ({ locals, params, request }) => {
 		const form = await request.formData();
 		const name = (form.get('name') as string).trim();
-		if (!name) return;
-		const { count } = await locals.supabase
-			.from('milestones')
-			.select('*', { count: 'exact', head: true })
-			.eq('project_id', params.id);
-		await locals.supabase.from('milestones').insert({
-			project_id: params.id,
-			name,
-			position: count ?? 0,
-		});
+		if (!name) return fail(400, { error: 'Name is required' });
+		const { count } = await locals.supabase.from('milestones').select('*', { count: 'exact', head: true }).eq('project_id', params.id);
+		await locals.supabase.from('milestones').insert({ project_id: params.id, name, position: count ?? 0 });
 	},
 
 	upload_file: async ({ locals, params, request }) => {
 		const { user } = await locals.safeGetSession();
 		const form = await request.formData();
 		const file = form.get('file') as File;
-		if (!file || !file.size) return;
-
-		const path = `${params.id}/${crypto.randomUUID()}-${file.name}`;
-		const { error: uploadErr } = await locals.supabase.storage
-			.from('project-files')
-			.upload(path, file);
-		if (uploadErr) error(500, uploadErr.message);
-
-		await locals.supabase.from('files').insert({
-			project_id: params.id,
-			uploaded_by: user!.id,
-			name: file.name,
-			storage_path: path,
-			size_bytes: file.size,
-		});
+		if (!file?.size) return fail(400, { error: 'No file provided' });
+		try {
+			await uploadProjectFile(locals.supabase, params.id, user!.id, file);
+		} catch (e: any) {
+			error(500, e.message);
+		}
 	},
 
 	delete_file: async ({ locals, request }) => {
@@ -154,24 +105,15 @@ export const actions: Actions = {
 	remove_client: async ({ locals, params, request }) => {
 		const form = await request.formData();
 		const client_id = form.get('client_id') as string;
-		await locals.supabase.from('project_clients').delete()
-			.eq('project_id', params.id)
-			.eq('client_id', client_id);
+		await locals.supabase.from('project_clients').delete().eq('project_id', params.id).eq('client_id', client_id);
 	},
 
-	invite_client: async ({ locals, params, request, url }) => {
+	invite_client: async ({ params, request, url }) => {
 		const form = await request.formData();
 		const email = (form.get('email') as string).trim().toLowerCase();
 		if (!email) return fail(400, { error: 'Email is required' });
 
-		const admin = adminClient;
-
-		const redirectTo = `${url.origin}/auth/callback?next=/portal?project=${params.id}`;
-		const { error: inviteErr } = await admin.auth.admin.inviteUserByEmail(email, {
-			data: { role: 'client' },
-			redirectTo,
-		});
-
+		const inviteErr = await inviteClientByEmail(adminClient, email, url.origin, params.id);
 		if (inviteErr) return fail(400, { error: inviteErr.message });
 	},
 };

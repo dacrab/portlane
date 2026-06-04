@@ -5,9 +5,11 @@
 	import AppSelect from '$lib/components/AppSelect.svelte';
 	import AppDatePicker from '$lib/components/AppDatePicker.svelte';
 	import IconArrowRightRegular from 'phosphor-icons-svelte/IconArrowRightRegular.svelte';
-	import IconTrashRegular from 'phosphor-icons-svelte/IconTrashRegular.svelte';
 	import IconFileTextRegular from 'phosphor-icons-svelte/IconFileTextRegular.svelte';
-	import { fmtMoney, fmtDate, statusBadge, confirmDelete } from '$lib/fmt';
+	import { fmtMoney, fmtDate } from '$lib/fmt';
+	import EmptyState from '$lib/components/EmptyState.svelte';
+	import SectionHeader from '$lib/components/SectionHeader.svelte';
+	import ActionDeleteButton from '$lib/components/ActionDeleteButton.svelte';
 
 	let { data }: { data: PageData } = $props();
 	let showForm = $state(false);
@@ -76,7 +78,7 @@
 	<!-- Create form -->
 	{#if showForm}
 		<div class="card">
-			<p class="card-label">Create invoice</p>
+			<SectionHeader title="Create invoice" />
 			<form method="POST" action="?/create"
 				use:enhance={() => async ({ result, update }) => {
 					showForm = false; selectedProject = ''; selectedClient = '';
@@ -127,14 +129,7 @@
 	<!-- Invoice table -->
 	<div class="overflow-hidden rounded-xl card p-0">
 		{#if data.invoices.length === 0}
-			<div class="flex flex-col items-center justify-center px-6 py-20 text-center">
-				<div class="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-subtle">
-					<span class="text-faint"><IconFileTextRegular class="h-6 w-6" /></span>
-				</div>
-				<p class="text-sm font-medium text-body">No invoices yet</p>
-				<p class="mt-1 text-xs text-faint">Create your first invoice to start tracking payments.</p>
-				<button onclick={() => showForm = true} class="mt-4 btn btn-primary text-xs px-4">Create invoice</button>
-			</div>
+			<EmptyState icon={IconFileTextRegular} title="No invoices yet" description="Create your first invoice to start tracking payments." action={{ label: 'Create invoice', onClick: () => showForm = true }} />
 		{:else}
 			<div class="hidden sm:grid px-4 py-2.5 text-xs font-medium divide-bottom text-faint"
 				style="grid-template-columns:1fr auto auto auto auto auto">
@@ -172,14 +167,7 @@
 					<a href="/dashboard/invoices/{inv.id}" class="btn-icon shrink-0" title="View invoice">
 						<IconArrowRightRegular class="h-3.5 w-3.5" />
 					</a>
-					<form method="POST" action="?/delete"
-						use:enhance={() => async ({ update }) => { await update(); toast.success('Invoice deleted'); }}>
-						<input type="hidden" name="id" value={inv.id} />
-						<button type="button" class="btn-icon shrink-0" title="Delete invoice"
-								onclick={(e) => confirmDelete('This will permanently delete the invoice.', (e.currentTarget as HTMLElement).closest('form') as HTMLFormElement)}>
-							<span class="text-faint"><IconTrashRegular class="h-3.5 w-3.5" /></span>
-						</button>
-					</form>
+				<ActionDeleteButton action="?/delete" id={inv.id} message="This will permanently delete the invoice." ondelete={() => toast.success('Invoice deleted')} />
 				</div>
 			{/each}
 		{/if}

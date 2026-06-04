@@ -14,6 +14,9 @@
 	import IconArrowCounterClockwiseRegular from 'phosphor-icons-svelte/IconArrowCounterClockwiseRegular.svelte';
 	import IconPlusRegular from 'phosphor-icons-svelte/IconPlusRegular.svelte';
 	import IconFileRegular from 'phosphor-icons-svelte/IconFileRegular.svelte';
+	import EmptyState from '$lib/components/EmptyState.svelte';
+	import ProgressBar from '$lib/components/ProgressBar.svelte';
+	import SectionHeader from '$lib/components/SectionHeader.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -43,7 +46,6 @@
 	const freelancerName = $derived((data.project?.profiles as any)?.full_name ?? 'Your freelancer');
 	const total = $derived(data.milestones.length);
 	const done = $derived(data.milestones.filter((m: any) => m.completed).length);
-	const progress = $derived(total ? Math.round((done / total) * 100) : 0);
 
 </script>
 
@@ -83,10 +85,7 @@
 					<h1 class="page-title">Your projects</h1>
 				</div>
 				{#if data.projects.length === 0}
-					<div class="card flex flex-col items-center py-16 text-center">
-						<p class="text-sm font-medium text-body">No projects yet</p>
-						<p class="mt-1 text-xs text-faint">Your freelancer hasn't added you to any projects yet.</p>
-					</div>
+					<div class="card"><EmptyState title="No projects yet" description="Your freelancer hasn't added you to any projects yet." compact /></div>
 				{:else}
 					<div class="space-y-3">
 						{#each data.projects as p}
@@ -124,22 +123,14 @@
 							<span class="badge badge-accent shrink-0 mt-1">{data.project.status.replace('_', ' ')}</span>
 						</div>
 						{#if total > 0}
-							<div>
-								<div class="mb-1.5 flex items-center justify-between text-xs text-faint">
-									<span>Progress</span>
-									<span>{done}/{total} · {progress}%</span>
-								</div>
-								<div class="h-1.5 rounded-full overflow-hidden" style="background:var(--color-border)">
-									<div class="h-full rounded-full transition-all" style="width:{progress}%;background:var(--color-accent-600)"></div>
-								</div>
-							</div>
+							<ProgressBar current={done} {total} />
 						{/if}
 					</div>
 
 					<!-- Timeline -->
 					{#if data.milestones.length > 0}
 						<div class="card">
-							<p class="card-label">Timeline</p>
+							<SectionHeader title="Timeline" />
 							<div class="space-y-1">
 								{#each data.milestones as m, i}
 									<div class="flex items-center gap-3 rounded-lg px-2 py-2">
@@ -163,7 +154,7 @@
 					<!-- Invoices -->
 					{#if data.invoices.length > 0}
 						<div class="card">
-							<p class="card-label">Invoices</p>
+							<SectionHeader title="Invoices" />
 							<div class="space-y-2">
 								{#each data.invoices as inv}
 									<div class="flex items-center justify-between rounded-lg px-3 py-3" style="border:1px solid var(--color-border-subtle)">
@@ -182,7 +173,7 @@
 
 					<!-- Approval -->
 					<div class="card">
-						<p class="card-label">Review &amp; Approval</p>
+							<SectionHeader title="Review &amp; Approval" />
 						<p class="mb-3 text-sm text-muted">Approve the work or request changes.</p>
 						<textarea bind:value={note} placeholder="Optional note for your freelancer…" rows="2" class="input mb-3 resize-none"></textarea>
 						<div class="flex gap-2">
@@ -213,7 +204,7 @@
 
 					<!-- Files -->
 					<div class="card">
-						<p class="card-label">Files</p>
+						<SectionHeader title="Files" />
 						{#if data.files.length === 0}
 							<div class="flex flex-col items-center py-8 text-center">
 								<span class="text-faint mb-2"><IconFileRegular class="h-7 w-7" /></span>
@@ -248,13 +239,7 @@
 
 					<!-- Comments -->
 					<div class="card">
-						<p class="card-label flex items-center gap-2">
-							<span class="text-faint"><IconChatTextRegular class="h-4 w-4" /></span>
-							Messages
-							{#if comments.length > 0}
-								<span class="ml-auto text-xs font-normal text-faint">{comments.length}</span>
-							{/if}
-						</p>
+						<SectionHeader title="Messages" icon={IconChatTextRegular} count={comments.length || undefined} />
 						{#if comments.length > 0}
 							<div class="space-y-3 mb-4 max-h-80 overflow-y-auto">
 								{#each comments as c (c.id)}

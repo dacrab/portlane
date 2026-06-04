@@ -1,6 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { adminClient } from '$lib/admin';
+import { inviteClientByEmail } from '$lib/server/project';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const { user } = await locals.safeGetSession();
@@ -33,10 +34,8 @@ export const actions: Actions = {
 		if (error) return fail(500, { error: error.message });
 
 		if (client_email) {
-			await adminClient.auth.admin.inviteUserByEmail(client_email, {
-				data: { role: 'client' },
-				redirectTo: `${url.origin}/auth/callback?next=/portal?project=${data.id}`,
-			});
+			const inviteErr = await inviteClientByEmail(adminClient, client_email, url.origin, data.id);
+			if (inviteErr) console.error('Invite failed:', inviteErr.message);
 		}
 
 		redirect(303, `/dashboard/projects/${data.id}`);

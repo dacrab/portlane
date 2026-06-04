@@ -6,8 +6,9 @@
 	import AppDatePicker from '$lib/components/AppDatePicker.svelte';
 	import IconPlusRegular from 'phosphor-icons-svelte/IconPlusRegular.svelte';
 	import IconFolderOpenRegular from 'phosphor-icons-svelte/IconFolderOpenRegular.svelte';
-	import IconXRegular from 'phosphor-icons-svelte/IconXRegular.svelte';
 	import { fmtDate, today, statusBadge, statusLabel } from '$lib/fmt';
+	import EmptyState from '$lib/components/EmptyState.svelte';
+	import SlideOver from '$lib/components/SlideOver.svelte';
 
 	import { page } from '$app/state';
 
@@ -37,100 +38,76 @@
 	const reviewCount = $derived(data.projects.filter((p: any) => p.status === 'review').length);
 
 	function focusOnMount(node: HTMLElement) { node.focus(); }
-	function closeOnBackdrop(e: MouseEvent) {
-		if (e.target === e.currentTarget) open = false;
-	}
 </script>
 
 <!-- Slide-over modal -->
-{#if open}
-	<!-- Backdrop -->
-	<div
-		role="presentation"
-		class="fixed inset-0 z-40"
-		style="background:rgba(0,0,0,0.4);backdrop-filter:blur(2px)"
-		onclick={closeOnBackdrop}
-	></div>
+<SlideOver bind:open title="New project" description="Fill in the details to get started.">
+	<form
+		method="POST"
+		action="?/create"
+		use:enhance={() => {
+			loading = true;
+			return async ({ result, update }) => {
+				loading = false;
+				if (result.type === 'failure') {
+					toast.error((result.data as any)?.error ?? 'Failed to create project');
+				}
+				await update();
+			};
+		}}
+		class="flex flex-1 flex-col gap-5 overflow-y-auto px-6 py-6"
+	>
+		{#if (form as any)?.error}
+			<p class="form-error">{(form as any).error}</p>
+		{/if}
 
-	<!-- Panel -->
-	<div class="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col shadow-2xl"
-		style="background:var(--color-bg-elevated);border-left:1px solid var(--color-border)">
-
-		<div class="flex items-center justify-between px-6 py-5" style="border-bottom:1px solid var(--color-border)">
-			<div>
-				<h2 class="text-base font-semibold text-heading">New project</h2>
-				<p class="mt-0.5 text-xs text-faint">Fill in the details to get started.</p>
-			</div>
-			<button onclick={() => open = false} class="btn-icon"><IconXRegular class="h-4 w-4" /></button>
+		<div>
+			<label for="proj-name" class="mb-1.5 block text-xs font-medium text-muted">Project name <span class="text-danger">*</span></label>
+			<input id="proj-name" name="name" type="text" required use:focusOnMount class="input" placeholder="Brand Redesign" />
 		</div>
 
-		<form
-			method="POST"
-			action="?/create"
-			use:enhance={() => {
-				loading = true;
-				return async ({ result, update }) => {
-					loading = false;
-					if (result.type === 'failure') {
-						toast.error((result.data as any)?.error ?? 'Failed to create project');
-					}
-					await update();
-				};
-			}}
-			class="flex flex-1 flex-col gap-5 overflow-y-auto px-6 py-6"
-		>
-			{#if (form as any)?.error}
-				<p class="form-error">{(form as any).error}</p>
-			{/if}
+		<div>
+			<label for="proj-desc" class="mb-1.5 block text-xs font-medium text-muted">
+				Description <span class="text-faint">(optional)</span>
+			</label>
+			<textarea id="proj-desc" name="description" rows="3" class="input resize-none"
+				placeholder="Brief description of the project scope and goals…"></textarea>
+		</div>
 
+		<div class="grid gap-4 sm:grid-cols-2">
 			<div>
-				<label for="proj-name" class="mb-1.5 block text-xs font-medium text-muted">Project name <span class="text-danger">*</span></label>
-				<input id="proj-name" name="name" type="text" required use:focusOnMount class="input" placeholder="Brand Redesign" />
+				<p class="mb-1.5 text-xs font-medium text-muted">Due date <span class="text-faint">(optional)</span></p>
+				<AppDatePicker name="due_date" placeholder="Pick a date" />
 			</div>
-
 			<div>
-				<label for="proj-desc" class="mb-1.5 block text-xs font-medium text-muted">
-					Description <span class="text-faint">(optional)</span>
-				</label>
-				<textarea id="proj-desc" name="description" rows="3" class="input resize-none"
-					placeholder="Brief description of the project scope and goals…"></textarea>
+				<p class="mb-1.5 text-xs font-medium text-muted">Status</p>
+				<AppSelect
+					name="status"
+					value="planning"
+					items={[
+						{ value: 'planning', label: 'Planning' },
+						{ value: 'in_progress', label: 'In Progress' },
+					]}
+				/>
 			</div>
+		</div>
 
-			<div class="grid gap-4 sm:grid-cols-2">
-				<div>
-					<p class="mb-1.5 text-xs font-medium text-muted">Due date <span class="text-faint">(optional)</span></p>
-					<AppDatePicker name="due_date" placeholder="Pick a date" />
-				</div>
-				<div>
-					<p class="mb-1.5 text-xs font-medium text-muted">Status</p>
-					<AppSelect
-						name="status"
-						value="planning"
-						items={[
-							{ value: 'planning', label: 'Planning' },
-							{ value: 'in_progress', label: 'In Progress' },
-						]}
-					/>
-				</div>
-			</div>
+		<div>
+			<label for="client_email" class="mb-1.5 block text-xs font-medium text-muted">
+				Invite client <span class="text-faint">(optional)</span>
+			</label>
+			<input id="client_email" name="client_email" type="email" class="input" placeholder="client@company.com" />
+			<p class="mt-1 text-xs text-faint">They'll receive a magic link to access the portal.</p>
+		</div>
 
-			<div>
-				<label for="client_email" class="mb-1.5 block text-xs font-medium text-muted">
-					Invite client <span class="text-faint">(optional)</span>
-				</label>
-				<input id="client_email" name="client_email" type="email" class="input" placeholder="client@company.com" />
-				<p class="mt-1 text-xs text-faint">They'll receive a magic link to access the portal.</p>
-			</div>
-
-			<div class="mt-auto flex gap-3 pt-4 divide-top">
-				<button type="submit" disabled={loading} class="btn btn-primary flex-1 justify-center">
-					{loading ? 'Creating…' : 'Create project'}
-				</button>
-				<button type="button" onclick={() => open = false} class="btn btn-ghost">Cancel</button>
-			</div>
-		</form>
-	</div>
-{/if}
+		<div class="mt-auto flex gap-3 pt-4 divide-top">
+			<button type="submit" disabled={loading} class="btn btn-primary flex-1 justify-center">
+				{loading ? 'Creating…' : 'Create project'}
+			</button>
+			<button type="button" onclick={() => open = false} class="btn btn-ghost">Cancel</button>
+		</div>
+	</form>
+</SlideOver>
 
 <!-- Page -->
 <div class="space-y-8">
@@ -168,14 +145,7 @@
 		{/if}
 
 		{#if visible.length === 0}
-			<div class="flex flex-col items-center justify-center px-6 py-20 text-center">
-				<div class="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-subtle">
-					<span class="text-faint"><IconFolderOpenRegular class="h-6 w-6" /></span>
-				</div>
-				<p class="text-sm font-medium text-body">No projects yet</p>
-				<p class="mt-1 text-xs text-faint">Create a project and invite your first client.</p>
-				<button onclick={() => open = true} class="mt-4 btn btn-primary text-xs px-4">Create project</button>
-			</div>
+			<EmptyState icon={IconFolderOpenRegular} title="No projects yet" description="Create a project and invite your first client." action={{ label: 'Create project', onClick: () => open = true }} />
 		{:else}
 			{#each visible as p}
 				{@const pct = progress(p)}

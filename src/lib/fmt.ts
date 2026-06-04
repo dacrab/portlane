@@ -17,7 +17,7 @@ export const fmtDateTime = (iso: string) =>
 /** Today's ISO date string for overdue comparisons */
 export const today = () => new Date().toISOString().split('T')[0]!;
 
-/** Invoice/project status → badge CSS class */
+/** Status → badge CSS class */
 export const statusBadge: Record<string, string> = {
 	draft: 'badge badge-neutral', sent: 'badge badge-blue',
 	paid: 'badge badge-green',    overdue: 'badge badge-red',
@@ -26,28 +26,31 @@ export const statusBadge: Record<string, string> = {
 	archived: 'badge badge-neutral',
 };
 
-/** Invoice/project status → human label */
+/** Status → human label */
 export const statusLabel: Record<string, string> = {
+	draft: 'Draft', sent: 'Sent', paid: 'Paid', overdue: 'Overdue',
 	in_progress: 'In Progress', review: 'Review',
 	planning: 'Planning', completed: 'Completed', archived: 'Archived',
 };
 
 /** Download a file via signed URL */
 export async function downloadFile(path: string, name: string) {
-	const res = await fetch(`/api/file-url?path=${encodeURIComponent(path)}`);
-	const { url } = await res.json();
-	const a = document.createElement('a');
-	a.href = url; a.download = name; a.click();
+	try {
+		const res = await fetch(`/api/file-url?path=${encodeURIComponent(path)}`);
+		if (!res.ok) return;
+		const { url } = await res.json();
+		const a = document.createElement('a');
+		a.href = url; a.download = name; a.click();
+	} catch { /* silent fail */ }
 }
 
 /** Toast-based delete confirmation */
-export function confirmDelete(message: string, form: HTMLFormElement) {
-	import('svelte-sonner').then(({ toast }) => {
-		toast('Are you sure?', {
-			description: message,
-			action: { label: 'Delete', onClick: () => form.requestSubmit() },
-			cancel: { label: 'Cancel', onClick: () => {} },
-			duration: 8000,
-		});
+export async function confirmDelete(message: string, form: HTMLFormElement) {
+	const { toast } = await import('svelte-sonner');
+	toast('Are you sure?', {
+		description: message,
+		action: { label: 'Delete', onClick: () => form.requestSubmit() },
+		cancel: { label: 'Cancel', onClick: () => {} },
+		duration: 8000,
 	});
 }

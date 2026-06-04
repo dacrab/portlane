@@ -1,5 +1,14 @@
 import type { PageServerLoad, Actions } from './$types';
 
+interface DashboardStats {
+	total_clients?: number;
+	total_invoices?: number;
+	active_projects?: number;
+	completed_projects?: number;
+	review_projects?: number;
+	revenue_mtd?: number;
+}
+
 export const load: PageServerLoad = async ({ locals }) => {
 	const { user } = await locals.safeGetSession();
 
@@ -20,7 +29,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 		locals.supabase.rpc('get_unread_comments', { p_user_id: user!.id }),
 	]);
 
-	const s = (stats as any[])?.[0] ?? {};
+	const s = (stats as DashboardStats[])?.[0] ?? {};
+
+	const activeFallback = (projects ?? []).filter(p => !['completed','archived'].includes(p.status)).length;
 
 	const onboarding = {
 		hasProject: (projects?.length ?? 0) > 0,
@@ -31,7 +42,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	return {
 		projects: projects ?? [],
-		active: s.active_projects ?? (projects ?? []).filter((p: any) => !['completed','archived'].includes(p.status)).length,
+		active: s.active_projects ?? activeFallback,
 		completed: s.completed_projects ?? 0,
 		pending: s.review_projects ?? 0,
 		revenueMTD: s.revenue_mtd ?? 0,

@@ -8,8 +8,8 @@
 	import IconArrowLeftRegular from 'phosphor-icons-svelte/IconArrowLeftRegular.svelte';
 	import IconPlusRegular from 'phosphor-icons-svelte/IconPlusRegular.svelte';
 	import IconUserPlusRegular from 'phosphor-icons-svelte/IconUserPlusRegular.svelte';
-	import IconTrashRegular from 'phosphor-icons-svelte/IconTrashRegular.svelte';
 	import IconDownloadSimpleRegular from 'phosphor-icons-svelte/IconDownloadSimpleRegular.svelte';
+	import IconTrashRegular from 'phosphor-icons-svelte/IconTrashRegular.svelte';
 	import IconClockRegular from 'phosphor-icons-svelte/IconClockRegular.svelte';
 	import IconLinkRegular from 'phosphor-icons-svelte/IconLinkRegular.svelte';
 	import IconNoteRegular from 'phosphor-icons-svelte/IconNoteRegular.svelte';
@@ -18,6 +18,9 @@
 	import AppSelect from '$lib/components/AppSelect.svelte';
 	import { fmtDate, fmtDateLong, downloadFile, confirmDelete } from '$lib/fmt';
 	import Avatar from '$lib/components/Avatar.svelte';
+	import SectionHeader from '$lib/components/SectionHeader.svelte';
+	import ProgressBar from '$lib/components/ProgressBar.svelte';
+	import ActionDeleteButton from '$lib/components/ActionDeleteButton.svelte';
 
 	let { data }: { data: PageData } = $props();
 	let comment = $state('');
@@ -109,7 +112,7 @@
 				<IconLinkRegular class="h-3.5 w-3.5" /><span class="hidden sm:inline">Copy portal link</span>
 			</button>
 			<form id="delete-project-form" method="POST" action="?/delete_project"
-				use:enhance={() => async ({ result, update }) => { await update(); }}>
+				use:enhance={() => async ({ update }) => { await update(); }}>
 				<button type="button" class="btn-icon" title="Delete project"
 					onclick={(e) => confirmDelete('This will permanently delete the project and all its data.', (e.currentTarget as HTMLElement).closest('form') as HTMLFormElement)}>
 					<span class="text-faint"><IconTrashRegular class="h-4 w-4" /></span>
@@ -120,14 +123,7 @@
 
 	<!-- Progress bar -->
 	{#if totalMilestones > 0}
-		<div>
-			<div class="mb-1.5 flex items-center justify-between text-xs text-faint">
-				<span>Overall progress</span><span>{progress}%</span>
-			</div>
-			<div class="h-1.5 rounded-full overflow-hidden" style="background:var(--color-border)">
-				<div class="h-full rounded-full transition-all" style="width:{progress}%;background:var(--color-accent-600)"></div>
-			</div>
-		</div>
+		<ProgressBar current={doneMilestones} total={totalMilestones} label="Overall progress" />
 	{/if}
 
 	<!-- Main grid -->
@@ -137,12 +133,7 @@
 
 			<!-- Milestones -->
 			<div class="card">
-				<div class="mb-4 flex items-center justify-between">
-					<p class="card-label mb-0">Milestones</p>
-					{#if totalMilestones > 0}
-						<span class="text-xs text-faint">{doneMilestones}/{totalMilestones} done</span>
-					{/if}
-				</div>
+				<SectionHeader title="Milestones" count={totalMilestones > 0 ? `${doneMilestones}/${totalMilestones} done` : undefined} />
 				{#if data.milestones.length === 0}
 					<p class="mb-4 text-sm text-faint">No milestones yet. Add one to track project progress.</p>
 				{:else}
@@ -219,12 +210,7 @@
 
 			<!-- Comments -->
 			<div class="card">
-				<p class="card-label flex items-center gap-2 mb-4">
-					<span class="text-faint"><IconChatTextRegular class="h-4 w-4" /></span> Comments
-					{#if data.comments.length > 0}
-						<span class="ml-auto text-xs font-normal text-faint">{data.comments.length}</span>
-					{/if}
-				</p>
+				<SectionHeader title="Comments" icon={IconChatTextRegular} count={data.comments.length || undefined} />
 				{#if data.comments.length === 0}
 					<p class="mb-4 text-sm text-faint">No comments yet.</p>
 				{:else}
@@ -253,7 +239,7 @@
 		<div class="space-y-5">
 			<!-- Clients -->
 			<div class="card">
-				<p class="card-label mb-4">Clients</p>
+				<SectionHeader title="Clients" />
 				{#if (data.clients as any[]).length === 0}
 					<p class="mb-4 text-sm text-faint">No clients yet. Invite one below.</p>
 				{:else}
@@ -264,14 +250,7 @@
 								<div class="min-w-0 flex-1">
 									<p class="text-sm font-medium truncate text-body">{(c as any).full_name ?? '—'}</p>
 								</div>
-								<form method="POST" action="?/remove_client"
-									use:enhance={() => async ({ update }) => { await update(); toast.success('Client removed'); }}>
-									<input type="hidden" name="client_id" value={(c as any).id} />
-									<button type="button" class="btn-icon shrink-0" title="Remove client"
-										onclick={(e) => confirmDelete('Remove this client from the project?', (e.currentTarget as HTMLElement).closest('form') as HTMLFormElement)}>
-										<span class="text-faint"><IconTrashRegular class="h-3.5 w-3.5" /></span>
-									</button>
-								</form>
+								<ActionDeleteButton action="?/remove_client" name="client_id" id={(c as any).id} message="Remove this client from the project?" ondelete={() => toast.success('Client removed')} />
 							</div>
 						{/each}
 					</div>
@@ -304,7 +283,7 @@
 
 			<!-- Files -->
 			<div class="card">
-				<p class="card-label mb-4">Files</p>
+				<SectionHeader title="Files" />
 				{#if data.files.length === 0}
 					<p class="mb-4 text-sm text-faint">No files uploaded yet.</p>
 				{:else}
@@ -321,14 +300,7 @@
 								<button onclick={() => downloadFile(f.storage_path, f.name)} class="btn-icon shrink-0" title="Download">
 									<IconDownloadSimpleRegular class="h-3.5 w-3.5" />
 								</button>
-								<form method="POST" action="?/delete_file"
-									use:enhance={() => async ({ update }) => { await update(); toast.success('File deleted'); }}>
-									<input type="hidden" name="id" value={f.id} />
-									<button type="button" class="btn-icon shrink-0" title="Delete file"
-										onclick={(e) => confirmDelete(`Delete "${f.name}"?`, (e.currentTarget as HTMLElement).closest('form') as HTMLFormElement)}>
-										<span class="text-faint"><IconTrashRegular class="h-3.5 w-3.5" /></span>
-									</button>
-								</form>
+								<ActionDeleteButton action="?/delete_file" id={f.id} message={`Delete "${f.name}"?`} ondelete={() => toast.success('File deleted')} />
 							</div>
 						{/each}
 					</div>
@@ -345,9 +317,7 @@
 
 			<!-- Internal notes -->
 			<div class="card">
-				<p class="card-label flex items-center gap-2 mb-4">
-					<span class="text-faint"><IconNoteRegular class="h-3.5 w-3.5" /></span> Internal notes
-				</p>
+				<SectionHeader title="Internal notes" icon={IconNoteRegular} />
 				<form method="POST" action="?/save_note"
 					use:enhance={() => async ({ update }) => { await update(); toast.success('Note saved'); }}>
 					<textarea name="body" bind:value={noteBody} rows="5" placeholder="Private notes — not visible to clients…"

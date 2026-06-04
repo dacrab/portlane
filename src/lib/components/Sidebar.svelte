@@ -1,38 +1,24 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { enhance } from '$app/forms';
-	import IconSquaresFourRegular from 'phosphor-icons-svelte/IconSquaresFourRegular.svelte';
-	import IconSquaresFourBold from 'phosphor-icons-svelte/IconSquaresFourBold.svelte';
-	import IconFolderOpenRegular from 'phosphor-icons-svelte/IconFolderOpenRegular.svelte';
-	import IconFolderOpenBold from 'phosphor-icons-svelte/IconFolderOpenBold.svelte';
-	import IconFileTextRegular from 'phosphor-icons-svelte/IconFileTextRegular.svelte';
-	import IconFileTextBold from 'phosphor-icons-svelte/IconFileTextBold.svelte';
-	import IconUsersRegular from 'phosphor-icons-svelte/IconUsersRegular.svelte';
-	import IconUsersBold from 'phosphor-icons-svelte/IconUsersBold.svelte';
 	import IconSignOutRegular from 'phosphor-icons-svelte/IconSignOutRegular.svelte';
 	import IconSidebarSimpleRegular from 'phosphor-icons-svelte/IconSidebarSimpleRegular.svelte';
-	import IconGearSixRegular from 'phosphor-icons-svelte/IconGearSixRegular.svelte';
-	import IconGearSixBold from 'phosphor-icons-svelte/IconGearSixBold.svelte';
 	import IconMoonRegular from 'phosphor-icons-svelte/IconMoonRegular.svelte';
 	import IconSunRegular from 'phosphor-icons-svelte/IconSunRegular.svelte';
 	import type { User } from '@supabase/supabase-js';
 	import { sidebarCollapsed } from '$lib/stores';
 	import { onMount } from 'svelte';
+	import { navItems } from '$lib/nav';
 
 	let { user, unreadComments = 0 }: { user: User | null; unreadComments?: number } = $props();
-
-	const nav = [
-		{ href: '/dashboard',          label: 'Dashboard', R: IconSquaresFourRegular, B: IconSquaresFourBold },
-		{ href: '/dashboard/projects', label: 'Projects',  R: IconFolderOpenRegular,  B: IconFolderOpenBold },
-		{ href: '/dashboard/invoices', label: 'Invoices',  R: IconFileTextRegular,    B: IconFileTextBold },
-		{ href: '/dashboard/clients',  label: 'Clients',   R: IconUsersRegular,       B: IconUsersBold },
-	];
 
 	let collapsed = $state(false);
 	let dark = $state(false);
 
-	const unsubscribe = sidebarCollapsed.subscribe(v => collapsed = v);
-	$effect(() => unsubscribe);
+	$effect(() => {
+		const unsub = sidebarCollapsed.subscribe(v => collapsed = v);
+		return unsub;
+	});
 	function toggle() { sidebarCollapsed.update(v => !v); }
 
 	onMount(() => {
@@ -50,7 +36,7 @@
 		}
 	}
 
-	const settingsActive = $derived(page.url.pathname.startsWith('/dashboard/settings'));
+	const settingsItem = navItems[4]!;
 
 	const initials = $derived(
 		(user?.user_metadata?.full_name ?? user?.email ?? '?')
@@ -79,7 +65,7 @@
 
 	<!-- Nav -->
 	<nav class="flex flex-1 flex-col gap-0.5 px-1.5 py-2.5">
-		{#each nav as item}
+		{#each navItems.slice(0, 4) as item}
 			{@const active = page.url.pathname === item.href || (item.href !== '/dashboard' && page.url.pathname.startsWith(item.href))}
 			<a href={item.href} class="nav-item relative {active ? 'active' : ''} {collapsed ? 'justify-center px-0' : ''}" title={collapsed ? item.label : ''}>
 				{#if active}<item.B class="h-[15px] w-[15px] shrink-0" />{:else}<item.R class="h-[15px] w-[15px] shrink-0" />{/if}
@@ -109,9 +95,9 @@
 					{#if !collapsed}<span class="whitespace-nowrap">Dark mode</span>{/if}
 				{/if}
 			</button>
-			<a href="/dashboard/settings" class="nav-item {settingsActive ? 'active' : ''} {collapsed ? 'justify-center px-0' : ''}" title={collapsed ? 'Settings' : ''}>
-				{#if settingsActive}<IconGearSixBold class="h-[15px] w-[15px] shrink-0" />{:else}<IconGearSixRegular class="h-[15px] w-[15px] shrink-0" />{/if}
-				{#if !collapsed}<span class="whitespace-nowrap">Settings</span>{/if}
+			<a href={settingsItem.href} class="nav-item {page.url.pathname === settingsItem.href ? 'active' : ''} {collapsed ? 'justify-center px-0' : ''}" title={collapsed ? settingsItem.label : ''}>
+				{#if page.url.pathname === settingsItem.href}<settingsItem.B class="h-[15px] w-[15px] shrink-0" />{:else}<settingsItem.R class="h-[15px] w-[15px] shrink-0" />{/if}
+				{#if !collapsed}<span class="whitespace-nowrap">{settingsItem.label}</span>{/if}
 			</a>
 			{#if collapsed}
 				<button onclick={toggle} class="nav-item w-full justify-center px-0" title="Expand">

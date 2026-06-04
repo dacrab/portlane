@@ -2,11 +2,18 @@ import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ url, locals }) => {
-	const { session } = await locals.safeGetSession();
+	const { session, user } = await locals.safeGetSession();
 	if (!session) error(401);
 
 	const path = url.searchParams.get('path');
 	if (!path) error(400, 'Missing path');
+
+	const projectId = path.split('/')[0];
+	if (!projectId) error(400, 'Invalid path');
+
+	const { data: access } = await locals.supabase.rpc('is_project_client', { p_project_id: projectId, p_user_id: user!.id });
+	const isOwner = await locals.supabase.from('projects').select('id').eq('id', projectId).eq('freelancer_id', user!.id).maybeSingle();
+	if (!access && !isOwner.data) error(403, 'Forbidden');
 
 	const { data, error: storageErr } = await locals.supabase.storage
 		.from('project-files')

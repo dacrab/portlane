@@ -31,25 +31,32 @@ export const actions: Actions = {
 
 		if (!project_id || !client_id || isNaN(amount)) return fail(400, { error: 'Missing fields' });
 
-		await locals.supabase.from('invoices').insert({
+		const { error: insertErr } = await locals.supabase.from('invoices').insert({
 			project_id,
 			client_id,
 			freelancer_id: user!.id,
 			amount_cents: Math.round(amount * 100),
 			due_date,
 		});
+		if (insertErr) return fail(500, { error: insertErr.message });
 	},
 
 	update_status: async ({ locals, request }) => {
+		const { user } = await locals.safeGetSession();
 		const form = await request.formData();
 		const id = form.get('id') as string;
 		const status = form.get('status') as string;
+		const { data: inv } = await locals.supabase.from('invoices').select('freelancer_id').eq('id', id).single();
+		if (inv?.freelancer_id !== user!.id) return fail(403, { error: 'Forbidden' });
 		await locals.supabase.from('invoices').update({ status }).eq('id', id);
 	},
 
 	delete: async ({ locals, request }) => {
+		const { user } = await locals.safeGetSession();
 		const form = await request.formData();
 		const id = form.get('id') as string;
+		const { data: inv } = await locals.supabase.from('invoices').select('freelancer_id').eq('id', id).single();
+		if (inv?.freelancer_id !== user!.id) return fail(403, { error: 'Forbidden' });
 		await locals.supabase.from('invoices').delete().eq('id', id);
 	},
 };

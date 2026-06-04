@@ -7,17 +7,19 @@
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
 	$effect(() => {
-		if ((form as any)?.profile_saved) toast.success('Profile updated');
-		if ((form as any)?.profile_error) toast.error((form as any).profile_error);
-		if ((form as any)?.password_saved) toast.success('Password updated');
-		if ((form as any)?.password_error) toast.error((form as any).password_error);
+		if (form?.profile_saved) toast.success('Profile updated');
+		if (form?.profile_error) toast.error(form.profile_error);
+		if (form?.password_saved) toast.success('Password updated');
+		if (form?.password_error) toast.error(form.password_error);
 	});
 
 
-	function confirmDeleteAccount(form: HTMLFormElement) {
+	let deleteForm: HTMLFormElement;
+
+	function confirmDeleteAccount() {
 		toast('Delete your account?', {
 			description: 'All projects, files, and data will be permanently removed. This cannot be undone.',
-			action: { label: 'Delete account', onClick: () => form.requestSubmit() },
+			action: { label: 'Delete account', onClick: () => deleteForm.requestSubmit() },
 			cancel: { label: 'Cancel', onClick: () => {} },
 			duration: 12000,
 		});
@@ -93,10 +95,9 @@
 				Permanently delete your account and all associated data. This cannot be undone.
 			</p>
 		</div>
-		<form method="POST" action="?/delete_account"
+		<form bind:this={deleteForm} method="POST" action="?/delete_account"
 			use:enhance={() => async ({ update }) => { await update(); }}>
-			<button type="button" class="btn btn-danger"
-				onclick={(e) => confirmDeleteAccount((e.currentTarget as HTMLElement).closest('form') as HTMLFormElement)}>
+			<button type="button" class="btn btn-danger" onclick={confirmDeleteAccount}>
 				Delete account
 			</button>
 		</form>
