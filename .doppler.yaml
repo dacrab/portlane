@@ -1,0 +1,3 @@
+setup:
+  project: portlane
+  config: dev_app
