@@ -3,7 +3,9 @@
   "private": true,
   "version": "0.0.1",
   "type": "module",
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "dev": "doppler run -- vite dev",
     "build": "vite build",
@@ -32,6 +34,7 @@
     "@supabase/supabase-js": "^2.106.2",
     "bits-ui": "^2.18.1",
     "phosphor-icons-svelte": "^2.1.0",
+    "stripe": "^22.2.0",
     "svelte-sonner": "^1.1.1"
   }
 }

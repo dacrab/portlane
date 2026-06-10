@@ -46,6 +46,7 @@
 	const freelancerName = $derived((data.project?.profiles as any)?.full_name ?? 'Your freelancer');
 	const total = $derived(data.milestones.length);
 	const done = $derived(data.milestones.filter((m: any) => m.completed).length);
+	const isClient = $derived(data.invoices.length > 0 && data.invoices[0]?.client_id === data.user?.id);
 
 </script>
 
@@ -157,7 +158,19 @@
 							<SectionHeader title="Invoices" />
 							<div class="space-y-2">
 								{#each data.invoices as inv}
-									<div class="flex items-center justify-between rounded-lg px-3 py-3" style="border:1px solid var(--color-border-subtle)">
+									<div class="relative flex items-center justify-between rounded-lg px-3 py-3" style="border:1px solid var(--color-border-subtle)">
+										{#if isClient && (inv.status === 'sent' || inv.status === 'overdue') && !inv.stripe_session_id}
+											<form method="POST" action="?/checkout" use:enhance={() => {
+												return async ({ result }) => {
+													if (result.type !== 'success') return;
+													const data = result.data as { url?: string } | undefined;
+													if (data?.url) window.location.href = data.url;
+												};
+												}}
+												class="absolute inset-0 z-10 cursor-pointer" style="background:transparent">
+												<input type="hidden" name="invoiceId" value={inv.id} />
+											</form>
+										{/if}
 										<div>
 											<p class="text-sm font-semibold text-heading">{fmtMoney(inv.amount_cents)}</p>
 											<p class="text-xs mt-0.5" class:text-danger={inv.due_date && inv.due_date < today() && inv.status !== 'paid'} class:text-faint={!(inv.due_date && inv.due_date < today() && inv.status !== 'paid')}>
@@ -165,6 +178,9 @@
 											</p>
 										</div>
 										<span class="{statusBadge[inv.status] ?? 'badge badge-neutral'}">{inv.status}</span>
+										{#if inv.status === 'paid'}
+											<span class="text-xs font-medium text-green-600 ml-2">Paid</span>
+										{/if}
 									</div>
 								{/each}
 							</div>

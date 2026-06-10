@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import { toast } from 'svelte-sonner';
 	import type { PageData } from './$types';
 	import { fmtMoney, statusBadge } from '$lib/fmt';
@@ -9,7 +10,7 @@
 	const freelancerName = $derived(inv?.freelancer?.full_name ?? '—');
 	const clientName = $derived(inv?.client?.full_name ?? '—');
 	const amount = $derived(inv?.amount_cents ? fmtMoney(inv.amount_cents, (inv as any)?.currency?.toUpperCase()) : '');
-
+	const isClient = $derived(inv?.client_id === data.user?.id);
 
 	const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 </script>
@@ -28,6 +29,19 @@
 <div class="no-print mb-6 flex items-center gap-3">
 	<a href="/dashboard/invoices" class="text-sm text-faint">← Invoices</a>
 	<div class="ml-auto flex gap-2">
+		{#if isClient && (inv.status === 'sent' || inv.status === 'overdue') && !inv.stripe_session_id}
+			<form method="POST" action="?/checkout" use:enhance={() => {
+				return async ({ result }) => {
+					if (result.type !== 'success') return;
+					const data = result.data as { url?: string } | undefined;
+					if (data?.url) window.location.href = data.url;
+				};
+			}}
+			>
+				<input type="hidden" name="invoiceId" value={inv.id} />
+				<button type="submit" class="btn btn-primary text-xs">Pay Now</button>
+			</form>
+		{/if}
 		<button onclick={() => navigator.clipboard.writeText(window.location.href).then(() => toast.success('Link copied!'))}
 			class="btn btn-ghost text-xs">Copy link</button>
 		<button onclick={() => window.print()} class="btn btn-primary text-xs">Print / Save PDF</button>
