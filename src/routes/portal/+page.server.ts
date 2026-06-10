@@ -1,7 +1,7 @@
 import { error, redirect, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { getProjectMilestones, getProjectFiles, getProjectComments, addComment, uploadProjectFile } from '$lib/server/project';
-import { stripe } from '$lib/server/stripe';
+import { getStripe } from '$lib/server/stripe';
 import { adminClient } from '$lib/admin';
 import type { Database } from '$lib/database.types';
 
@@ -104,7 +104,7 @@ export const actions: Actions = {
 		if (invoice.client_id !== user.id) return fail(403, { forbidden: true });
 		if (invoice.status === 'paid') return fail(400, { paid: true });
 
-		const session = await stripe.checkout.sessions.create({
+		const session = await getStripe().checkout.sessions.create({
 			mode: 'payment',
 			payment_method_types: ['card'],
 			line_items: [

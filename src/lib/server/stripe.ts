@@ -1,6 +1,12 @@
 import Stripe from 'stripe';
 
-const key = process.env.STRIPE_SECRET_KEY;
-if (!key) throw new Error('STRIPE_SECRET_KEY is not set');
+let _stripe: Stripe | undefined;
 
-export const stripe = new Stripe(key);
+export function getStripe(): Stripe {
+	if (!_stripe) {
+		const key = process.env.STRIPE_SECRET_KEY;
+		if (!key) throw new Error('STRIPE_SECRET_KEY is not set');
+		_stripe = new Stripe(key);
+	}
+	return _stripe;
+}

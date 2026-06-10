@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { stripe } from '$lib/server/stripe';
+import { getStripe } from '$lib/server/stripe';
 import { createClient } from '@supabase/supabase-js';
 
 export const POST: RequestHandler = async ({ locals, request }) => {
@@ -26,7 +26,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	if (invoice.client_id !== user.id) return json({ error: 'Forbidden' }, { status: 403 });
 	if (invoice.status === 'paid') return json({ error: 'Already paid' }, { status: 400 });
 
-	const session = await stripe.checkout.sessions.create({
+	const session = await getStripe().checkout.sessions.create({
 		mode: 'payment',
 		payment_method_types: ['card'],
 		line_items: [

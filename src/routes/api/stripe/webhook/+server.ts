@@ -1,6 +1,6 @@
 import { text } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { stripe } from '$lib/server/stripe';
+import { getStripe } from '$lib/server/stripe';
 import { createClient } from '@supabase/supabase-js';
 
 export const POST: RequestHandler = async ({ request }) => {
@@ -13,7 +13,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
 	let event;
 	try {
-		event = stripe.webhooks.constructEvent(body, sig, secret);
+		event = getStripe().webhooks.constructEvent(body, sig, secret);
 	} catch {
 		return text('Invalid signature', { status: 400 });
 	}

@@ -1,6 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
-import { stripe } from '$lib/server/stripe';
+import { getStripe } from '$lib/server/stripe';
 import { adminClient } from '$lib/admin';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -62,7 +62,7 @@ export const actions: Actions = {
 		if (invoice.client_id !== user.id) return fail(403, { error: 'Forbidden' });
 		if (invoice.status === 'paid') return fail(400, { error: 'Already paid' });
 
-		const session = await stripe.checkout.sessions.create({
+		const session = await getStripe().checkout.sessions.create({
 			mode: 'payment',
 			payment_method_types: ['card'],
 			line_items: [
