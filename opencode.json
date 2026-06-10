@@ -1,0 +1,15 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "stripe": {
+      "type": "remote",
+      "url": "https://mcp.stripe.com",
+      "enabled": true
+    },
+    "doppler": {
+      "type": "local",
+      "command": ["npx", "-y", "@dopplerhq/mcp-server"],
+      "enabled": true
+    }
+  }
+}
