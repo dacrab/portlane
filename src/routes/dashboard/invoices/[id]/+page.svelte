@@ -9,7 +9,8 @@
 	const project = $derived(inv?.projects ?? {});
 	const freelancerName = $derived(inv?.freelancer?.full_name ?? '—');
 	const clientName = $derived(inv?.client?.full_name ?? '—');
-	const amount = $derived(inv?.amount_cents ? fmtMoney(inv.amount_cents, (inv as any)?.currency?.toUpperCase()) : '');
+	const currency = $derived(inv?.currency?.toUpperCase());
+	const amount = $derived(inv?.amount_cents ? fmtMoney(inv.amount_cents, currency) : '');
 	const isClient = $derived(inv?.client_id === data.user?.id);
 
 	const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });

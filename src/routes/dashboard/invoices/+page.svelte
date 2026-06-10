@@ -2,7 +2,13 @@
 	import { enhance } from '$app/forms';
 	import { toast } from 'svelte-sonner';
 	import type { PageData } from './$types';
+	import type { Database } from '$lib/database.types';
 	import AppSelect from '$lib/components/AppSelect.svelte';
+
+	type InvoiceJoined = Database['public']['Tables']['invoices']['Row'] & {
+		projects: Pick<Database['public']['Tables']['projects']['Row'], 'name'> | null;
+		profiles: Pick<Database['public']['Tables']['profiles']['Row'], 'full_name'> | null;
+	};
 	import AppDatePicker from '$lib/components/AppDatePicker.svelte';
 	import IconArrowRightRegular from 'phosphor-icons-svelte/IconArrowRightRegular.svelte';
 	import IconFileTextRegular from 'phosphor-icons-svelte/IconFileTextRegular.svelte';
@@ -142,8 +148,8 @@
 			{#each data.invoices as inv}
 				<div class="flex items-center gap-4 px-6 py-4 divide-bottom">
 					<div class="flex-1 min-w-0">
-						<p class="text-sm font-medium text-body">{(inv.projects as any)?.name ?? '—'}</p>
-						<p class="mt-0.5 text-xs text-faint">{(inv.profiles as any)?.full_name ?? '—'}</p>
+						<p class="text-sm font-medium text-body">{(inv as InvoiceJoined).projects?.name ?? '—'}</p>
+						<p class="mt-0.5 text-xs text-faint">{(inv as InvoiceJoined).profiles?.full_name ?? '—'}</p>
 					</div>
 					<p class="hidden sm:block text-sm text-faint shrink-0">
 						{inv.due_date ? fmtDate(inv.due_date) : '—'}

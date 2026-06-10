@@ -2,13 +2,12 @@ import { error, redirect, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { getProjectMilestones, getProjectFiles, getProjectComments, addComment, uploadProjectFile } from '$lib/server/project';
 import { stripe } from '$lib/server/stripe';
-import { createClient } from '@supabase/supabase-js';
+import { adminClient } from '$lib/admin';
+import type { Database } from '$lib/database.types';
 
-const adminClient = createClient(
-	process.env.PUBLIC_SUPABASE_URL!,
-	process.env.SUPABASE_SECRET_KEY!,
-	{ auth: { autoRefreshToken: false, persistSession: false } },
-);
+type ProjectItem = Database['public']['Tables']['projects']['Row'] & {
+	profiles: Pick<Database['public']['Tables']['profiles']['Row'], 'full_name'> | null;
+};
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const { session, user } = await locals.safeGetSession();
@@ -22,7 +21,10 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			.select('projects(id, name, status, due_date, profiles!projects_freelancer_id_fkey(full_name))')
 			.eq('client_id', user!.id);
 
-		const projects = (rows ?? []).map((r: any) => r.projects).filter(Boolean);
+		const projects: ProjectItem[] = (rows ?? []).flatMap((r) => {
+			const p = (r as { projects: ProjectItem | null }).projects;
+			return p ? [p] : [];
+		});
 		return { project: null, projects, milestones: [], files: [], comments: [], invoices: [], user };
 	}
 
@@ -78,8 +80,8 @@ export const actions: Actions = {
 		if (!file?.size) return;
 		try {
 			await uploadProjectFile(locals.supabase, projectId, user.id, file);
-		} catch (e: any) {
-			error(500, e.message);
+		} catch (e) {
+			error(500, e instanceof Error ? e.message : 'Upload failed');
 		}
 	},
 

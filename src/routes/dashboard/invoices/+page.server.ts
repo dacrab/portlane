@@ -1,13 +1,7 @@
 import { fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { stripe } from '$lib/server/stripe';
-import { createClient } from '@supabase/supabase-js';
-
-const adminClient = createClient(
-	process.env.PUBLIC_SUPABASE_URL!,
-	process.env.SUPABASE_SECRET_KEY!,
-	{ auth: { autoRefreshToken: false, persistSession: false } },
-);
+import { adminClient } from '$lib/admin';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const { user } = await locals.safeGetSession();

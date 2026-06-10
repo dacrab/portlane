@@ -19,6 +19,8 @@
 	import SectionHeader from '$lib/components/SectionHeader.svelte';
 	import type { PageData } from './$types';
 
+	type WithProfile = { profiles: { full_name: string | null } | null };
+
 	let { data }: { data: PageData } = $props();
 	let comment = $state('');
 	let note = $state('');
@@ -35,7 +37,7 @@
 					if (row) {
 						comments = [...comments, row];
 						if (row.author_id !== data.user?.id)
-							toast.info(`New message from ${(row.profiles as any)?.full_name ?? 'someone'}`);
+							toast.info(`New message from ${(row as WithProfile).profiles?.full_name ?? 'someone'}`);
 					}
 				}
 			).subscribe();
@@ -43,9 +45,9 @@
 	});
 
 
-	const freelancerName = $derived((data.project?.profiles as any)?.full_name ?? 'Your freelancer');
+	const freelancerName = $derived((data.project as WithProfile | null)?.profiles?.full_name ?? 'Your freelancer');
 	const total = $derived(data.milestones.length);
-	const done = $derived(data.milestones.filter((m: any) => m.completed).length);
+	const done = $derived(data.milestones.filter((m: { completed: boolean }) => m.completed).length);
 	const isClient = $derived(data.invoices.length > 0 && data.invoices[0]?.client_id === data.user?.id);
 
 </script>
@@ -95,7 +97,7 @@
 								<div class="flex-1 min-w-0">
 									<p class="text-sm font-semibold text-heading">{p.name}</p>
 									<p class="text-xs text-faint">
-										{(p.profiles as any)?.full_name ?? 'Freelancer'}
+										{(p as WithProfile).profiles?.full_name ?? 'Freelancer'}
 										{#if p.due_date} · Due {fmtDate(p.due_date)}{/if}
 									</p>
 								</div>
@@ -261,7 +263,7 @@
 								{#each comments as c (c.id)}
 									{@const isMe = c.author_id === data.user?.id}
 									<div class="flex items-start gap-2.5" class:flex-row-reverse={isMe}>
-										<Avatar name={(c.profiles as any)?.full_name ?? '?'} size={7} />
+										<Avatar name={(c as WithProfile).profiles?.full_name ?? '?'} size={7} />
 										<div class="rounded-lg px-3 py-2.5 max-w-[85%]"
 											style="background:{isMe ? 'var(--color-accent-50)' : 'var(--color-bg)'}">
 											<p class="text-sm" style="color:{isMe ? 'var(--color-accent-700)' : 'var(--color-text)'}">{c.body}</p>
