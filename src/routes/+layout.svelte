@@ -8,12 +8,6 @@
 	let { children, data } = $props();
 
 	onMount(() => {
-		// Dark mode init
-		const saved = localStorage.getItem('theme');
-		if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-			document.documentElement.classList.add('dark');
-		}
-
 		const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
 			if (session?.expires_at !== data.sessionExpiresAt) {
 				invalidate('supabase:auth');

@@ -4,9 +4,9 @@ import type { Actions } from './$types';
 export const actions: Actions = {
 	default: async ({ request, locals }) => {
 		const form = await request.formData();
-		const email = (form.get('email') as string).trim().toLowerCase();
-		const password = form.get('password') as string;
-		const full_name = (form.get('full_name') as string).trim();
+		const email = String(form.get('email') ?? '').trim().toLowerCase();
+		const password = String(form.get('password') ?? '');
+		const full_name = String(form.get('full_name') ?? '').trim();
 
 		if (password.length < 8) return fail(400, { error: 'Password must be at least 8 characters' });
 

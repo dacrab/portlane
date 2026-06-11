@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '$lib/database.types';
+import type { adminClient } from '$lib/server/admin';
 
 export const getProjectMilestones = (supabase: SupabaseClient<Database>, projectId: string) =>
 	supabase.from('milestones').select('*').eq('project_id', projectId).order('position');
@@ -33,13 +34,13 @@ export const uploadProjectFile = async (
 	});
 };
 
-export const inviteClientByEmail = async (adminClient: { auth: { admin: { inviteUserByEmail: (email: string, options: Record<string, unknown>) => Promise<{ error?: { message: string } | null }> } } }, email: string, origin: string, projectId: string) => {
+export const inviteClientByEmail = async (admin: typeof adminClient, email: string, origin: string, projectId: string) => {
 	const redirectTo = `${origin}/auth/callback?next=/portal?project=${projectId}`;
-	const { error } = await adminClient.auth.admin.inviteUserByEmail(email, {
+	const { error } = await admin.auth.admin.inviteUserByEmail(email, {
 		data: { role: 'client' },
 		redirectTo,
 	});
-	return error ?? null;
+	return error;
 };
 
 export const getHomeRoute = (role: string | undefined) =>

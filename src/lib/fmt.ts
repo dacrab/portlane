@@ -35,13 +35,11 @@ export const statusLabel: Record<string, string> = {
 
 /** Download a file via signed URL */
 export async function downloadFile(path: string, name: string) {
-	try {
-		const res = await fetch(`/api/file-url?path=${encodeURIComponent(path)}`);
-		if (!res.ok) return;
-		const { url } = await res.json();
-		const a = document.createElement('a');
-		a.href = url; a.download = name; a.click();
-	} catch { /* silent fail */ }
+	const res = await fetch(`/api/file-url?path=${encodeURIComponent(path)}`);
+	if (!res.ok) throw new Error('Download failed');
+	const { url } = await res.json();
+	const a = document.createElement('a');
+	a.href = url; a.download = name; a.click();
 }
 
 /** Toast-based delete confirmation */
@@ -50,7 +48,6 @@ export async function confirmDelete(message: string, form: HTMLFormElement) {
 	toast('Are you sure?', {
 		description: message,
 		action: { label: 'Delete', onClick: () => form.requestSubmit() },
-		cancel: { label: 'Cancel', onClick: () => {} },
 		duration: 8000,
 	});
 }

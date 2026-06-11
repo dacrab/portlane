@@ -33,9 +33,9 @@
 	let projectStatus = $state(untrack(() => data.project.status));
 
 	const totalMilestones = $derived(data.milestones.length);
-	const doneMilestones = $derived(data.milestones.filter((m: any) => m.completed).length);
+	const doneMilestones = $derived(data.milestones.filter((m) => m.completed).length);
 	const progress = $derived(totalMilestones ? Math.round((doneMilestones / totalMilestones) * 100) : 0);
-	const totalMinutes = $derived((data.timeEntries as any[]).reduce((s: number, e: any) => s + e.minutes, 0));
+	const totalMinutes = $derived(data.timeEntries.reduce((s, e) => s + e.minutes, 0));
 	const totalHours = $derived((totalMinutes / 60).toFixed(1));
 
 	function copyPortalLink() {
@@ -46,7 +46,7 @@
 	function exportTimeCSV() {
 		const rows = [
 			['Date', 'Description', 'Minutes', 'Hours'],
-			...(data.timeEntries as any[]).map((e: any) => [
+			...data.timeEntries.map((e) => [
 				e.logged_at,
 				e.description ?? '',
 				e.minutes,
@@ -174,14 +174,14 @@
 					<p class="card-label mb-0">Time tracking</p>
 					<div class="flex items-center gap-2">
 						<span class="text-sm font-semibold text-heading">{totalHours}h total</span>
-						{#if (data.timeEntries as any[]).length > 0}
+						{#if data.timeEntries.length > 0}
 							<button onclick={exportTimeCSV} class="btn btn-ghost text-xs px-2 py-1 gap-1" title="Export CSV">
 								<IconExportRegular class="h-3.5 w-3.5" /> CSV
 							</button>
 						{/if}
 					</div>
 				</div>
-				{#if (data.timeEntries as any[]).length === 0}
+				{#if data.timeEntries.length === 0}
 					<p class="mb-4 text-sm text-faint">No time logged yet. Track your hours below.</p>
 				{:else}
 					<div class="mb-4 overflow-hidden rounded-lg" style="border:1px solid var(--color-border-subtle)">
@@ -217,9 +217,9 @@
 					<div class="mb-4 space-y-3 max-h-80 overflow-y-auto">
 						{#each data.comments as c}
 							<div class="flex items-start gap-3">
-								<Avatar name={(c.profiles as any)?.full_name ?? "?"} size={7} />
+								<Avatar name={c.profiles?.full_name ?? "?"} size={7} />
 								<div class="rounded-lg px-3 py-2.5 max-w-[85%]" style="background:var(--color-bg)">
-									<p class="mb-0.5 text-xs font-semibold text-faint">{(c.profiles as any)?.full_name ?? 'Unknown'}</p>
+									<p class="mb-0.5 text-xs font-semibold text-faint">{c.profiles?.full_name ?? 'Unknown'}</p>
 									<p class="text-sm text-body">{c.body}</p>
 								</div>
 							</div>
@@ -240,17 +240,17 @@
 			<!-- Clients -->
 			<div class="card">
 				<SectionHeader title="Clients" />
-				{#if (data.clients as any[]).length === 0}
+				{#if data.clients.length === 0}
 					<p class="mb-4 text-sm text-faint">No clients yet. Invite one below.</p>
 				{:else}
 					<div class="mb-4 space-y-2">
 						{#each data.clients as c}
 							<div class="flex items-center gap-2.5 rounded-lg px-3 py-2" style="background:var(--color-bg)">
-								<Avatar name={(c as any).full_name ?? "?"} size={7} />
+								<Avatar name={c.full_name ?? "?"} size={7} />
 								<div class="min-w-0 flex-1">
-									<p class="text-sm font-medium truncate text-body">{(c as any).full_name ?? '—'}</p>
+									<p class="text-sm font-medium truncate text-body">{c.full_name ?? '—'}</p>
 								</div>
-								<ActionDeleteButton action="?/remove_client" name="client_id" id={(c as any).id} message="Remove this client from the project?" ondelete={() => toast.success('Client removed')} />
+								<ActionDeleteButton action="?/remove_client" name="client_id" id={c.id} message="Remove this client from the project?" ondelete={() => toast.success('Client removed')} />
 							</div>
 						{/each}
 					</div>
@@ -263,7 +263,7 @@
 							inviteEmail = '';
 							await update();
 							if (result.type === 'failure') {
-								toast.error((result.data as any)?.error ?? 'Invitation failed');
+								toast.error((result.data as { error?: string }).error ?? 'Invitation failed');
 							} else {
 								toast.success('Invitation sent', { description: 'The client will receive a magic link to access the portal.' });
 							}

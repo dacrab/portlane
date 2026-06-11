@@ -17,25 +17,25 @@
 	let open = $state(page.url.searchParams.has('new'));
 	let loading = $state(false);
 
-	$effect(() => { if ((form as any)?.error) open = true; });
+	$effect(() => { if (form?.error) open = true; });
 
 	let showArchived = $state(false);
 
 
 
 
-	function progress(p: any) {
+	function progress(p: { milestones: { completed: boolean }[] | null }) {
 		const ms = p.milestones ?? [];
 		if (!ms.length) return null;
-		return Math.round((ms.filter((m: any) => m.completed).length / ms.length) * 100);
+		return Math.round((ms.filter((m: { completed: boolean }) => m.completed).length / ms.length) * 100);
 	}
 
 	const visible = $derived(
-		showArchived ? data.projects : data.projects.filter((p: any) => p.status !== 'archived')
+		showArchived ? data.projects : data.projects.filter((p) => p.status !== 'archived')
 	);
-	const archivedCount = $derived(data.projects.filter((p: any) => p.status === 'archived').length);
-	const activeCount = $derived(data.projects.filter((p: any) => !['completed', 'archived'].includes(p.status)).length);
-	const reviewCount = $derived(data.projects.filter((p: any) => p.status === 'review').length);
+	const archivedCount = $derived(data.projects.filter((p) => p.status === 'archived').length);
+	const activeCount = $derived(data.projects.filter((p) => !['completed', 'archived'].includes(p.status)).length);
+	const reviewCount = $derived(data.projects.filter((p) => p.status === 'review').length);
 
 	function focusOnMount(node: HTMLElement) { node.focus(); }
 </script>
@@ -50,15 +50,15 @@
 			return async ({ result, update }) => {
 				loading = false;
 				if (result.type === 'failure') {
-					toast.error((result.data as any)?.error ?? 'Failed to create project');
+					toast.error((result.data as { error?: string }).error ?? 'Failed to create project');
 				}
 				await update();
 			};
 		}}
 		class="flex flex-1 flex-col gap-5 overflow-y-auto px-6 py-6"
 	>
-		{#if (form as any)?.error}
-			<p class="form-error">{(form as any).error}</p>
+		{#if form?.error}
+			<p class="form-error">{(form as { error: string }).error}</p>
 		{/if}
 
 		<div>
@@ -150,7 +150,7 @@
 			{#each visible as p}
 				{@const pct = progress(p)}
 				{@const overdue = p.due_date && p.due_date < today() && p.status !== 'completed'}
-				{@const clientCount = (p.project_clients as any)?.[0]?.count ?? 0}
+				{@const clientCount = p.project_clients?.[0]?.count ?? 0}
 				<a href="/dashboard/projects/{p.id}"
 					class="flex items-center gap-4 px-6 py-4 transition-colors hover-bg divide-bottom no-underline"
 					style="opacity:{p.status === 'archived' ? '0.6' : '1'}">

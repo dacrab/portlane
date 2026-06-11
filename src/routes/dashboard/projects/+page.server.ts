@@ -1,6 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
-import { adminClient } from '$lib/admin';
+import { adminClient } from '$lib/server/admin';
 import { inviteClientByEmail } from '$lib/server/project';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -18,10 +18,10 @@ export const actions: Actions = {
 		const { user } = await locals.safeGetSession();
 		const form = await request.formData();
 		const name = (form.get('name') as string).trim();
-		const description = (form.get('description') as string | null)?.trim() || null;
-		const due_date = (form.get('due_date') as string | null) || null;
+		const description = (form.get('description') as string | null)?.trim() ?? null;
+		const due_date = (form.get('due_date') as string | null) ?? null;
 		const status = (form.get('status') as string) || 'planning';
-		const client_email = (form.get('client_email') as string | null)?.trim().toLowerCase() || null;
+		const client_email = (form.get('client_email') as string | null)?.trim().toLowerCase() ?? null;
 
 		if (!name) return fail(400, { error: 'Name is required' });
 

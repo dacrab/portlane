@@ -20,6 +20,10 @@
 				<label for="password">New password</label>
 				<input id="password" name="password" type="password" required minlength="8" autocomplete="new-password" class="input" placeholder="••••••••" />
 			</div>
+			<div class="auth-field">
+				<label for="confirm">Confirm password</label>
+				<input id="confirm" name="confirm" type="password" required minlength="8" autocomplete="new-password" class="input" placeholder="••••••••" />
+			</div>
 			<button type="submit" class="btn btn-primary auth-submit">Update password</button>
 		</form>
 	</div>

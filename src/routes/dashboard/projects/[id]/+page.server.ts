@@ -1,6 +1,6 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
-import { adminClient } from '$lib/admin';
+import { adminClient } from '$lib/server/admin';
 import { getProjectMilestones, getProjectFiles, getProjectComments, addComment, uploadProjectFile, inviteClientByEmail } from '$lib/server/project';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
@@ -24,7 +24,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		milestones: milestonesRes.data ?? [],
 		files: filesRes.data ?? [],
 		comments: commentsRes.data ?? [],
-		clients: (clientsRes.data ?? []).map(c => c.profiles).filter(Boolean) ?? [],
+		clients: (clientsRes.data ?? []).map(c => c.profiles).filter(Boolean),
 		timeEntries: timeEntriesRes.data ?? [],
 		note: noteRes.data?.body ?? '',
 	};
@@ -35,7 +35,7 @@ export const actions: Actions = {
 		const { user } = await locals.safeGetSession();
 		const form = await request.formData();
 		const minutes = parseInt(form.get('minutes') as string);
-		const description = (form.get('description') as string | null)?.trim() || null;
+		const description = (form.get('description') as string | null)?.trim() ?? null;
 		if (!minutes || minutes <= 0) return fail(400, { error: 'Invalid minutes' });
 		await locals.supabase.from('time_entries').insert({
 			project_id: params.id, user_id: user!.id, minutes, description,
@@ -78,8 +78,8 @@ export const actions: Actions = {
 		if (!file?.size) return fail(400, { error: 'No file provided' });
 		try {
 			await uploadProjectFile(locals.supabase, params.id, user!.id, file);
-		} catch (e: any) {
-			error(500, e.message);
+		} catch (e) {
+			error(500, (e as Error).message);
 		}
 	},
 

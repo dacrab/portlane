@@ -10,10 +10,10 @@
     "dev": "doppler run -- vite dev",
     "build": "vite build",
     "preview": "vite preview",
-    "prepare": "svelte-kit sync || echo ''",
+    "prepare": "svelte-kit sync",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-    "typecheck": "bun run check && bun run build",
+    "typecheck": "svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
     "db:reset": "supabase db reset",
     "db:seed": "bun supabase/seed.ts"
   },
@@ -32,6 +32,7 @@
   "dependencies": {
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.2",
+    "@internationalized/date": "^3.8.0",
     "bits-ui": "^2.18.1",
     "phosphor-icons-svelte": "^2.1.0",
     "stripe": "^22.2.0",

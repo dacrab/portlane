@@ -126,7 +126,7 @@ async function seed() {
 	console.log('   Freelancer: alex@portlane.dev / password123');
 	console.log('   Client 1:   sarah@acmecorp.com / password123');
 	console.log('   Client 2:   james@startupxyz.com / password123');
-	console.log(`   Portal URL: http://localhost:5173/portal?project=${brandProject.id}`);
+	console.log(`   Portal URL: http://localhost:3000/portal?project=${brandProject.id}`);
 }
 
 seed().catch((e) => { console.error('❌', e.message); process.exit(1); });

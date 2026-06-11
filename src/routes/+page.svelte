@@ -10,77 +10,70 @@
 	];
 </script>
 
-<div class="page">
+<div class="min-h-screen" style="background:var(--color-bg);color:var(--color-text)">
 
 	<!-- Nav -->
-	<header class="nav">
-		<div class="nav-inner">
-			<a href="/" class="logo">
-				<img src="/favicon.svg" alt="" class="logo-img" />
+	<header class="sticky top-0 z-40" style="background:color-mix(in srgb, var(--color-bg-elevated) 85%, transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--color-border)">
+		<div class="mx-auto flex h-14 max-w-[68rem] items-center gap-8 px-8">
+			<a href="/" class="mr-auto flex items-center gap-2 text-[0.9375rem] font-bold -tracking-[0.02em] no-underline" style="color:var(--color-text-heading)">
+				<img src="/favicon.svg" alt="" class="h-[1.375rem] w-[1.375rem]" />
 				Portlane
 			</a>
-			<nav class="nav-links">
-				<a href="#how">How it works</a>
-				<a href="#reviews">Reviews</a>
-				<a href="/login">Log in</a>
+			<nav class="flex items-center gap-7 max-md:hidden">
+				<a href="#how" class="text-sm no-underline" style="color:var(--color-text-muted)">How it works</a>
+				<a href="#reviews" class="text-sm no-underline" style="color:var(--color-text-muted)">Reviews</a>
+				<a href="/login" class="text-sm no-underline" style="color:var(--color-text-muted)">Log in</a>
 			</nav>
-			<a href="/dashboard" class="btn-primary">Start free trial</a>
+			<a href="/signup" class="btn-primary">Start free trial</a>
 		</div>
 	</header>
 
 	<!-- Hero -->
-	<section class="hero">
-		<div class="hero-inner">
-			<div class="hero-text">
-				<h1>Client work,<br>finally organized.</h1>
-				<p class="hero-sub">Portlane gives every project a private workspace — timeline, files, invoices, and approvals in one place. Your clients will actually use it.</p>
-				<div class="hero-actions">
-					<a href="/dashboard" class="btn-primary btn-lg">
-						Start free trial <IconArrowRightRegular class="btn-icon" />
+	<section class="border-b px-8 py-20 md:py-24" style="border-color:var(--color-border)">
+		<div class="mx-auto grid max-w-[68rem] items-center gap-16 md:grid-cols-2">
+			<div>
+				<h1 class="m-0 mb-5 text-[clamp(2.25rem,4.5vw,3.25rem)] font-extrabold leading-[1.08] -tracking-[0.04em]" style="color:var(--color-text-heading)">Client work,<br>finally organized.</h1>
+				<p class="m-0 mb-8 max-w-[38ch] leading-[1.7]" style="font-size:1.0625rem;color:var(--color-text-muted)">Portlane gives every project a private workspace — timeline, files, invoices, and approvals in one place. Your clients will actually use it.</p>
+				<div class="mb-6 flex flex-wrap items-center gap-5">
+					<a href="/signup" class="btn-primary btn-lg">
+						Start free trial <IconArrowRightRegular class="h-[0.875rem] w-[0.875rem] shrink-0" />
 					</a>
-					<span class="hero-note">Free forever for 1 project · No credit card</span>
+					<span class="text-xs" style="color:var(--color-text-faint)">Free forever for 1 project · No credit card</span>
 				</div>
-				<!-- Social proof -->
-				<div class="stars-row">
+				<div class="flex items-center gap-1" style="color:#f59e0b">
 					{#each Array(5) as _}
-						<IconStarFill class="star" />
+						<IconStarFill class="h-[0.875rem] w-[0.875rem]" />
 					{/each}
-					<span class="stars-label">Loved by 800+ freelancers</span>
+					<span class="ml-1 text-xs" style="color:var(--color-text-muted)">Loved by 800+ freelancers</span>
 				</div>
 			</div>
 
 			<!-- UI preview -->
-			<div class="hero-preview">
-				<div class="preview-card">
-					<div class="preview-topbar">
-						<div class="preview-circles">
-							<span style="background:#ef4444"></span>
-							<span style="background:#f59e0b"></span>
-							<span style="background:#22c55e"></span>
+			<div class="flex justify-end max-md:justify-start">
+				<div class="w-full max-w-[22rem] overflow-hidden rounded-xl shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_8px_24px_rgba(0,0,0,0.08)]" style="background:var(--color-bg-elevated);border:1px solid var(--color-border)">
+					<div class="flex items-center gap-3 border-b px-4 py-3" style="background:var(--color-bg-subtle);border-color:var(--color-border)">
+						<div class="flex gap-[0.3rem]">
+							<span class="block h-2 w-2 rounded-full" style="background:#ef4444"></span>
+							<span class="block h-2 w-2 rounded-full" style="background:#f59e0b"></span>
+							<span class="block h-2 w-2 rounded-full" style="background:#22c55e"></span>
 						</div>
-						<span class="preview-title">Acme Corp · Website Redesign</span>
+						<span class="text-xs font-medium" style="color:var(--color-text-muted)">Acme Corp · Website Redesign</span>
 					</div>
-					<div class="preview-body">
-						<!-- Milestone timeline -->
-						<div class="preview-section-label">Milestones</div>
+					<div class="p-5">
+						<div class="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.05em]" style="color:var(--color-text-faint)">Milestones</div>
 						{#each [['Discovery', true],['Design', true],['Development', false],['Launch', false]] as [m, done]}
-							<div class="milestone-row">
-								<span class="m-check" class:done>{#if done}<IconCheckRegular class="check-icon" />{/if}</span>
-								<span class="m-label" class:done>{m}</span>
+							<div class="flex items-center gap-[0.625rem] py-[0.3rem]">
+								<span class="flex h-[1.125rem] w-[1.125rem] shrink-0 items-center justify-center rounded-full border" class:done style="border:1.5px solid var(--color-border);color:var(--color-bg-elevated);background:{done ? 'var(--color-ink)' : 'transparent'};border-color:{done ? 'var(--color-ink)' : 'var(--color-border)'}">
+									{#if done}<IconCheckRegular class="h-[0.625rem] w-[0.625rem]" />{/if}
+								</span>
+								<span class="text-sm" class:done style="color:{(done ? 'var(--color-text-faint)' : 'var(--color-text)')};text-decoration:{done ? 'line-through' : 'none'}">{m}</span>
 							</div>
 						{/each}
-						<div class="preview-divider"></div>
-						<!-- Invoice -->
-						<div class="preview-section-label">Invoice #003</div>
-						<div class="invoice-row">
-							<span class="inv-desc">Design phase — 20h</span>
-							<span class="inv-amount">$3,200</span>
-						</div>
-						<div class="invoice-row inv-total-row">
-							<span>Total due</span>
-							<span class="inv-total">$3,200</span>
-						</div>
-						<button class="pay-btn">Pay now</button>
+						<div class="my-4 h-px" style="background:var(--color-border-subtle)"></div>
+						<div class="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.05em]" style="color:var(--color-text-faint)">Invoice #003</div>
+						<div class="flex items-center justify-between py-1 text-sm" style="color:var(--color-text)"><span style="color:var(--color-text-muted)">Design phase — 20h</span><span>$3,200</span></div>
+						<div class="mt-1 flex items-center justify-between border-t pt-2 text-sm font-semibold" style="border-color:var(--color-border-subtle)"><span>Total due</span><span class="text-base" style="color:var(--color-text-heading)">$3,200</span></div>
+						<button class="mt-[0.875rem] w-full cursor-pointer rounded-[0.375rem] border-none px-2 py-2 text-sm font-medium transition-colors duration-150" style="background:var(--color-ink);color:var(--color-bg-elevated)">Pay now</button>
 					</div>
 				</div>
 			</div>
@@ -88,69 +81,61 @@
 	</section>
 
 	<!-- Logos / trust strip -->
-	<div class="trust-strip">
+	<div class="mx-auto flex max-w-[68rem] flex-wrap items-center gap-6 border-b px-8 py-6 text-xs" style="color:var(--color-text-faint);border-color:var(--color-border)">
 		<span>Used by freelancers at</span>
 		{#each ['Figma', 'Shopify', 'Stripe', 'Webflow', 'Vercel'] as co}
-			<span class="trust-co">{co}</span>
+			<span class="font-semibold -tracking-[0.01em]" style="color:var(--color-border)">{co}</span>
 		{/each}
 	</div>
 
 	<!-- How it works -->
-	<section id="how" class="section section-alt">
-		<div class="section-inner">
-			<p class="section-eyebrow">How it works</p>
-			<h2>Less back-and-forth.<br>More done.</h2>
-
-			<div class="steps">
-				<div class="step">
-					<span class="step-n">01</span>
-					<div>
-						<h3>Invite your client with one link</h3>
-						<p>No account needed on their end. A magic link lands in their inbox and they're in — straight to their project.</p>
-					</div>
+	<section id="how" class="px-8 py-20" style="background:var(--color-bg-elevated)">
+		<div class="mx-auto max-w-[68rem]">
+			<p class="m-0 mb-3 text-[0.75rem] font-semibold uppercase tracking-[0.07em]" style="color:var(--color-text-heading)">How it works</p>
+			<h2 class="m-0 mb-12 text-[clamp(1.75rem,3.5vw,2.5rem)] font-extrabold leading-[1.1] -tracking-[0.035em]" style="color:var(--color-text-heading)">Less back-and-forth.<br>More done.</h2>
+			<div class="grid gap-12 md:grid-cols-3">
+				<div class="flex flex-col gap-[0.875rem]">
+					<span class="text-[0.6875rem] font-bold tracking-[0.06em]" style="color:var(--color-border)">01</span>
+					<h3 class="m-0 mb-2 text-[1.0625rem] font-semibold -tracking-[0.02em]" style="color:var(--color-text-heading)">Invite your client with one link</h3>
+					<p class="m-0 text-[0.9375rem] leading-[1.65]" style="color:var(--color-text-muted)">No account needed on their end. A magic link lands in their inbox and they're in — straight to their project.</p>
 				</div>
-				<div class="step">
-					<span class="step-n">02</span>
-					<div>
-						<h3>Everything in one place</h3>
-						<p>Files, milestones, comments, and invoices — all in a clean timeline. Clients stop asking, you stop repeating yourself.</p>
-					</div>
+				<div class="flex flex-col gap-[0.875rem]">
+					<span class="text-[0.6875rem] font-bold tracking-[0.06em]" style="color:var(--color-border)">02</span>
+					<h3 class="m-0 mb-2 text-[1.0625rem] font-semibold -tracking-[0.02em]" style="color:var(--color-text-heading)">Everything in one place</h3>
+					<p class="m-0 text-[0.9375rem] leading-[1.65]" style="color:var(--color-text-muted)">Files, milestones, comments, and invoices — all in a clean timeline. Clients stop asking, you stop repeating yourself.</p>
 				</div>
-				<div class="step">
-					<span class="step-n">03</span>
-					<div>
-						<h3>Approve, pay, move on</h3>
-						<p>Clients approve work and pay invoices in the same portal. No email chains. No "did you get my payment?" messages.</p>
-					</div>
+				<div class="flex flex-col gap-[0.875rem]">
+					<span class="text-[0.6875rem] font-bold tracking-[0.06em]" style="color:var(--color-border)">03</span>
+					<h3 class="m-0 mb-2 text-[1.0625rem] font-semibold -tracking-[0.02em]" style="color:var(--color-text-heading)">Approve, pay, move on</h3>
+					<p class="m-0 text-[0.9375rem] leading-[1.65]" style="color:var(--color-text-muted)">Clients approve work and pay invoices in the same portal. No email chains. No "did you get my payment?" messages.</p>
 				</div>
 			</div>
 		</div>
 	</section>
 
 	<!-- Feature highlight -->
-	<section class="section">
-		<div class="section-inner split">
-			<div class="split-text">
-				<p class="section-eyebrow">Invoicing</p>
-				<h2>Get paid faster.</h2>
-				<p class="split-body">Create an invoice in seconds, send it inside the portal, and let clients pay in one click. No PDFs flying around in email.</p>
-				<ul class="check-list">
+	<section class="px-8 py-20">
+		<div class="mx-auto grid max-w-[68rem] items-center gap-20 md:grid-cols-2">
+			<div>
+				<p class="m-0 mb-3 text-[0.75rem] font-semibold uppercase tracking-[0.07em]" style="color:var(--color-text-heading)">Invoicing</p>
+				<h2 class="mb-4 text-[clamp(1.75rem,3.5vw,2.5rem)] font-extrabold leading-[1.1] -tracking-[0.035em]" style="color:var(--color-text-heading)">Get paid faster.</h2>
+				<p class="m-0 mb-6 text-base leading-[1.7]" style="color:var(--color-text-muted)">Create an invoice in seconds, send it inside the portal, and let clients pay in one click. No PDFs flying around in email.</p>
+				<ul class="m-0 flex list-none flex-col gap-[0.625rem] p-0">
 					{#each ['Draft → sent → paid tracking','Clients pay without an account','Attach invoices to milestones'] as item}
-						<li><IconCheckRegular class="li-check" />{item}</li>
+						<li class="flex items-center gap-2 text-[0.9375rem]" style="color:var(--color-text)"><span style="color:var(--color-text-heading)"><IconCheckRegular class="h-4 w-4 shrink-0" /></span>{item}</li>
 					{/each}
 				</ul>
 			</div>
-			<!-- Invoice preview widget -->
-			<div class="split-visual">
-				<div class="widget">
-					<div class="widget-head">Invoices</div>
+			<div class="flex justify-center">
+				<div class="w-full max-w-[22rem] overflow-hidden rounded-xl shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_8px_24px_rgba(0,0,0,0.08)]" style="background:var(--color-bg-elevated);border:1px solid var(--color-border)">
+					<div class="border-b px-5 py-[0.875rem] text-[0.8125rem] font-semibold" style="color:var(--color-text-heading);border-color:var(--color-border);background:var(--color-bg-subtle)">Invoices</div>
 					{#each [['Website Redesign','$3,200','Paid'],['Brand Identity','$1,800','Sent'],['Monthly Retainer','$900','Draft']] as row}
-						<div class="widget-row">
+						<div class="flex items-center justify-between border-b px-5 py-[0.875rem]" style="border-color:var(--color-border-subtle)">
 							<div>
-								<div class="wr-title">{row[0]}</div>
-								<div class="wr-amt">{row[1]}</div>
+								<div class="mb-[0.125rem] text-sm font-medium" style="color:var(--color-text-heading)">{row[0]}</div>
+								<div class="text-xs" style="color:var(--color-text-faint)">{row[1]}</div>
 							</div>
-							<span class="wr-badge {(row[2] ?? '').toLowerCase()}">{row[2]}</span>
+							<span class="rounded-full px-2 py-[0.2rem] text-[0.6875rem] font-semibold" style="background:{(row[2] === 'Paid' ? 'rgba(21,128,61,0.10)' : row[2] === 'Sent' ? 'rgba(180,83,9,0.10)' : 'var(--color-bg-subtle)')};color:{(row[2] === 'Paid' ? '#15803d' : row[2] === 'Sent' ? '#b45309' : 'var(--color-text-muted)')}">{row[2]}</span>
 						</div>
 					{/each}
 				</div>
@@ -159,20 +144,20 @@
 	</section>
 
 	<!-- Reviews -->
-	<section id="reviews" class="section section-alt">
-		<div class="section-inner">
-			<p class="section-eyebrow">Reviews</p>
-			<h2>Built for the work you do.</h2>
-			<div class="reviews-grid">
+	<section id="reviews" class="px-8 py-20" style="background:var(--color-bg-elevated)">
+		<div class="mx-auto max-w-[68rem]">
+			<p class="m-0 mb-3 text-[0.75rem] font-semibold uppercase tracking-[0.07em]" style="color:var(--color-text-heading)">Reviews</p>
+			<h2 class="m-0 mb-12 text-[clamp(1.75rem,3.5vw,2.5rem)] font-extrabold leading-[1.1] -tracking-[0.035em]" style="color:var(--color-text-heading)">Built for the work you do.</h2>
+			<div class="grid gap-6 md:grid-cols-3">
 				{#each reviews as { quote, name, role }}
-					<div class="review-card">
-						<div class="review-stars">
-							{#each Array(5) as _}<IconStarFill class="star-sm" />{/each}
+					<div class="flex flex-col gap-4 rounded-xl border p-6" style="background:var(--color-bg-elevated);border-color:var(--color-border)">
+						<div class="flex gap-[0.2rem]" style="color:#f59e0b">
+							{#each Array(5) as _}<IconStarFill class="h-[0.8125rem] w-[0.8125rem]" />{/each}
 						</div>
-						<p class="review-quote">{quote}</p>
-						<div class="review-author">
-							<span class="review-name">{name}</span>
-							<span class="review-role">{role}</span>
+						<p class="m-0 flex-1 text-[0.9375rem] leading-[1.6]" style="color:var(--color-text)">{quote}</p>
+						<div class="flex flex-col gap-[0.125rem]">
+							<span class="text-sm font-semibold" style="color:var(--color-text-heading)">{name}</span>
+							<span class="text-xs" style="color:var(--color-text-faint)">{role}</span>
 						</div>
 					</div>
 				{/each}
@@ -181,281 +166,28 @@
 	</section>
 
 	<!-- CTA -->
-	<section class="cta-section">
-		<div class="cta-inner">
-			<h2>Ready to impress your clients?</h2>
-			<p>Set up your first project in under 5 minutes.</p>
-			<a href="/dashboard" class="btn-primary btn-lg">
-				Start free trial <IconArrowRightRegular class="btn-icon" />
+	<section class="border-t px-8 py-24" style="border-color:var(--color-border)">
+		<div class="mx-auto flex max-w-[68rem] flex-col items-center gap-4 text-center">
+			<h2 class="m-0 text-[clamp(1.75rem,3.5vw,2.5rem)] font-extrabold -tracking-[0.035em]" style="color:var(--color-text-heading)">Ready to impress your clients?</h2>
+			<p class="m-0 mb-2 text-base" style="color:var(--color-text-muted)">Set up your first project in under 5 minutes.</p>
+			<a href="/signup" class="btn-primary btn-lg">
+				Start free trial <IconArrowRightRegular class="h-[0.875rem] w-[0.875rem] shrink-0" />
 			</a>
 		</div>
 	</section>
 
-	<footer class="footer">
-		<div class="footer-inner">
-			<a href="/" class="logo" style="opacity:0.5">
-				<img src="/favicon.svg" alt="" class="logo-img" />
+	<footer style="background:var(--color-bg-elevated);border-top:1px solid var(--color-border)">
+		<div class="mx-auto flex max-w-[68rem] flex-wrap items-center justify-between gap-4 px-8 py-6">
+			<a href="/" class="flex items-center gap-2 text-[0.9375rem] font-bold -tracking-[0.02em] no-underline" style="color:var(--color-text-heading);opacity:0.5">
+				<img src="/favicon.svg" alt="" class="h-[1.375rem] w-[1.375rem]" />
 				Portlane
 			</a>
-			<p class="footer-copy">© 2026 Portlane</p>
-			<div class="footer-links">
-				<a href="/login">Log in</a>
-				<a href="/dashboard">Sign up</a>
+			<p class="m-0 text-xs" style="color:var(--color-text-faint)">© 2026 Portlane</p>
+			<div class="flex gap-5">
+				<a href="/login" class="text-xs no-underline" style="color:var(--color-text-faint)">Log in</a>
+				<a href="/signup" class="text-xs no-underline" style="color:var(--color-text-faint)">Sign up</a>
 			</div>
 		</div>
 	</footer>
 
 </div>
-
-<style>
-.page {
-	background: var(--color-bg);
-	color: var(--color-text);
-	font-family: var(--font-sans);
-	min-height: 100vh;
-}
-
-.nav {
-	position: sticky;
-	top: 0;
-	z-index: 40;
-	background: color-mix(in srgb, var(--color-bg-elevated) 85%, transparent);
-	backdrop-filter: blur(12px);
-	border-bottom: 1px solid var(--color-border);
-}
-.nav-inner {
-	max-width: 68rem;
-	margin: 0 auto;
-	padding: 0 2rem;
-	height: 3.5rem;
-	display: flex;
-	align-items: center;
-	gap: 2rem;
-}
-.logo {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-	font-size: 0.9375rem;
-	font-weight: 700;
-	letter-spacing: -0.02em;
-	color: var(--color-text-heading);
-	text-decoration: none;
-	margin-right: auto;
-}
-.logo-img { width: 1.375rem; height: 1.375rem; }
-.nav-links { display: flex; align-items: center; gap: 1.75rem; }
-.nav-links a { font-size: 0.875rem; color: var(--color-text-muted); text-decoration: none; transition: color 0.15s; }
-.nav-links a:hover { color: var(--color-text-heading); }
-
-.btn-primary {
-	display: inline-flex;
-	align-items: center;
-	gap: 0.375rem;
-	background: var(--color-ink);
-	color: var(--color-bg-elevated);
-	font-size: 0.875rem;
-	font-weight: 500;
-	padding: 0.5rem 1rem;
-	border-radius: var(--radius-sm);
-	text-decoration: none;
-	white-space: nowrap;
-	transition: background 0.15s;
-}
-.btn-primary:hover { background: var(--color-ink-hover); }
-.btn-lg { font-size: 0.9375rem; padding: 0.6875rem 1.375rem; }
-.btn-icon { width: 0.875rem; height: 0.875rem; flex-shrink: 0; }
-
-.hero { border-bottom: 1px solid var(--color-border); padding: 5rem 2rem 4rem; }
-.hero-inner {
-	max-width: 68rem;
-	margin: 0 auto;
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: 4rem;
-	align-items: center;
-}
-.hero-text h1 {
-	font-size: clamp(2.25rem, 4.5vw, 3.25rem);
-	font-weight: 800;
-	letter-spacing: -0.04em;
-	line-height: 1.08;
-	color: var(--color-text-heading);
-	margin: 0 0 1.25rem;
-}
-.hero-sub { font-size: 1.0625rem; line-height: 1.7; color: var(--color-text-muted); margin: 0 0 2rem; max-width: 38ch; }
-.hero-actions { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
-.hero-note { font-size: 0.8125rem; color: var(--color-text-faint); }
-.stars-row { display: flex; align-items: center; gap: 0.25rem; }
-.stars-row :global(.star) { width: 0.875rem; height: 0.875rem; color: #f59e0b; }
-.stars-label { margin-left: 0.375rem; font-size: 0.8125rem; color: var(--color-text-muted); }
-
-.hero-preview { display: flex; justify-content: flex-end; }
-.preview-card {
-	width: 100%;
-	max-width: 22rem;
-	background: var(--color-bg-elevated);
-	border: 1px solid var(--color-border);
-	border-radius: var(--radius-lg);
-	box-shadow: var(--shadow-pop);
-	overflow: hidden;
-}
-.preview-topbar {
-	display: flex;
-	align-items: center;
-	gap: 0.75rem;
-	padding: 0.75rem 1rem;
-	background: var(--color-bg-subtle);
-	border-bottom: 1px solid var(--color-border);
-}
-.preview-circles { display: flex; gap: 0.3rem; }
-.preview-circles span { width: 0.5rem; height: 0.5rem; border-radius: 50%; display: block; }
-.preview-title { font-size: 0.75rem; font-weight: 500; color: var(--color-text-muted); }
-.preview-body { padding: 1.25rem; }
-.preview-section-label {
-	font-size: 0.6875rem;
-	font-weight: 600;
-	letter-spacing: 0.05em;
-	text-transform: uppercase;
-	color: var(--color-text-faint);
-	margin-bottom: 0.75rem;
-}
-.milestone-row { display: flex; align-items: center; gap: 0.625rem; padding: 0.3rem 0; }
-.m-check {
-	width: 1.125rem;
-	height: 1.125rem;
-	border-radius: 50%;
-	border: 1.5px solid var(--color-border);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	flex-shrink: 0;
-	color: var(--color-bg-elevated);
-}
-.m-check.done { background: var(--color-ink); border-color: var(--color-ink); }
-.m-check :global(.check-icon) { width: 0.625rem; height: 0.625rem; }
-.m-label { font-size: 0.875rem; color: var(--color-text); }
-.m-label.done { color: var(--color-text-faint); text-decoration: line-through; }
-.preview-divider { height: 1px; background: var(--color-border-subtle); margin: 1rem 0; }
-.invoice-row { display: flex; justify-content: space-between; align-items: center; padding: 0.25rem 0; font-size: 0.875rem; color: var(--color-text); }
-.inv-desc { color: var(--color-text-muted); }
-.inv-total-row { border-top: 1px solid var(--color-border-subtle); padding-top: 0.5rem; margin-top: 0.25rem; font-weight: 600; }
-.inv-total { font-size: 1rem; color: var(--color-text-heading); }
-.pay-btn {
-	margin-top: 0.875rem;
-	width: 100%;
-	background: var(--color-ink);
-	color: var(--color-bg-elevated);
-	border: none;
-	border-radius: var(--radius-sm);
-	padding: 0.5rem;
-	font-size: 0.875rem;
-	font-weight: 500;
-	cursor: pointer;
-	transition: background 0.15s;
-}
-.pay-btn:hover { background: var(--color-ink-hover); }
-
-.trust-strip {
-	max-width: 68rem;
-	margin: 0 auto;
-	padding: 1.5rem 2rem;
-	display: flex;
-	align-items: center;
-	gap: 1.5rem;
-	flex-wrap: wrap;
-	font-size: 0.8125rem;
-	color: var(--color-text-faint);
-	border-bottom: 1px solid var(--color-border);
-}
-.trust-co { font-weight: 600; color: var(--color-border); letter-spacing: -0.01em; }
-
-.section { padding: 5rem 2rem; }
-.section-alt { background: var(--color-bg-elevated); }
-.section-inner { max-width: 68rem; margin: 0 auto; }
-.section-eyebrow {
-	font-size: 0.75rem;
-	font-weight: 600;
-	letter-spacing: 0.07em;
-	text-transform: uppercase;
-	color: var(--color-text-heading);
-	margin: 0 0 0.75rem;
-}
-.section-inner > h2 {
-	font-size: clamp(1.75rem, 3.5vw, 2.5rem);
-	font-weight: 800;
-	letter-spacing: -0.035em;
-	line-height: 1.1;
-	color: var(--color-text-heading);
-	margin: 0 0 3rem;
-}
-
-.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3rem; }
-.step { display: flex; flex-direction: column; gap: 0.875rem; }
-.step-n { font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.06em; color: var(--color-border); }
-.step h3 { font-size: 1.0625rem; font-weight: 600; letter-spacing: -0.02em; color: var(--color-text-heading); margin: 0 0 0.5rem; }
-.step p { font-size: 0.9375rem; line-height: 1.65; color: var(--color-text-muted); margin: 0; }
-
-.split { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center; }
-.split-text h2 { margin-bottom: 1rem; }
-.split-body { font-size: 1rem; line-height: 1.7; color: var(--color-text-muted); margin: 0 0 1.5rem; }
-.check-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.625rem; }
-.check-list li { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9375rem; color: var(--color-text); }
-.check-list :global(.li-check) { width: 1rem; height: 1rem; color: var(--color-text-heading); flex-shrink: 0; }
-
-.split-visual { display: flex; justify-content: center; }
-.widget {
-	width: 100%;
-	max-width: 22rem;
-	background: var(--color-bg-elevated);
-	border: 1px solid var(--color-border);
-	border-radius: var(--radius-lg);
-	box-shadow: var(--shadow-pop);
-	overflow: hidden;
-}
-.widget-head { padding: 0.875rem 1.25rem; font-size: 0.8125rem; font-weight: 600; color: var(--color-text-heading); border-bottom: 1px solid var(--color-border); background: var(--color-bg-subtle); }
-.widget-row { display: flex; align-items: center; justify-content: space-between; padding: 0.875rem 1.25rem; border-bottom: 1px solid var(--color-border-subtle); }
-.wr-title { font-size: 0.875rem; font-weight: 500; color: var(--color-text-heading); margin-bottom: 0.125rem; }
-.wr-amt { font-size: 0.8125rem; color: var(--color-text-faint); }
-.wr-badge { font-size: 0.6875rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 9999px; }
-.wr-badge.paid  { background: rgba(21,128,61,0.10);  color: #15803d; }
-.wr-badge.sent  { background: rgba(180,83,9,0.10);   color: #b45309; }
-.wr-badge.draft { background: var(--color-bg-subtle); color: var(--color-text-muted); }
-
-.reviews-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
-.review-card {
-	background: var(--color-bg-elevated);
-	border: 1px solid var(--color-border);
-	border-radius: var(--radius-lg);
-	padding: 1.5rem;
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
-}
-.review-stars { display: flex; gap: 0.2rem; }
-.review-stars :global(.star-sm) { width: 0.8125rem; height: 0.8125rem; color: #f59e0b; }
-.review-quote { font-size: 0.9375rem; line-height: 1.6; color: var(--color-text); flex: 1; margin: 0; }
-.review-author { display: flex; flex-direction: column; gap: 0.125rem; }
-.review-name { font-size: 0.875rem; font-weight: 600; color: var(--color-text-heading); }
-.review-role { font-size: 0.8125rem; color: var(--color-text-faint); }
-
-.cta-section { padding: 6rem 2rem; border-top: 1px solid var(--color-border); }
-.cta-inner { max-width: 68rem; margin: 0 auto; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 1rem; }
-.cta-inner h2 { font-size: clamp(1.75rem, 3.5vw, 2.5rem); font-weight: 800; letter-spacing: -0.035em; color: var(--color-text-heading); margin: 0; }
-.cta-inner p { font-size: 1rem; color: var(--color-text-muted); margin: 0 0 0.5rem; }
-
-.footer { background: var(--color-bg-elevated); border-top: 1px solid var(--color-border); }
-.footer-inner { max-width: 68rem; margin: 0 auto; padding: 1.5rem 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
-.footer-copy { font-size: 0.8125rem; color: var(--color-text-faint); margin: 0; }
-.footer-links { display: flex; gap: 1.25rem; }
-.footer-links a { font-size: 0.8125rem; color: var(--color-text-faint); text-decoration: none; }
-.footer-links a:hover { color: var(--color-text-heading); }
-
-@media (max-width: 768px) {
-	.hero-inner, .split { grid-template-columns: 1fr; gap: 2.5rem; }
-	.hero-preview { justify-content: flex-start; }
-	.steps, .reviews-grid { grid-template-columns: 1fr; gap: 2rem; }
-	.nav-links { display: none; }
-	.trust-strip { gap: 1rem; }
-}
-</style>

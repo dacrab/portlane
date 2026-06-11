@@ -4,7 +4,7 @@ import type { Actions } from './$types';
 export const actions: Actions = {
 	default: async ({ request, locals, url }) => {
 		const form = await request.formData();
-		const email = (form.get('email') as string).trim();
+		const email = (form.get('email') as string).trim().toLowerCase();
 		const { error } = await locals.supabase.auth.resetPasswordForEmail(email, {
 			redirectTo: `${url.origin}/auth/callback?next=/reset-password`,
 		});

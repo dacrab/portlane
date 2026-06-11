@@ -1,7 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
-import { getStripe } from '$lib/server/stripe';
-import { adminClient } from '$lib/admin';
+import { createCheckoutSession } from '$lib/server/stripe';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const { user } = await locals.safeGetSession();
@@ -29,7 +28,7 @@ export const actions: Actions = {
 		const project_id = form.get('project_id') as string;
 		const client_id = form.get('client_id') as string;
 		const amount = parseFloat(form.get('amount') as string);
-		const due_date = (form.get('due_date') as string) || null;
+		const due_date = (form.get('due_date') as string) ?? null;
 
 		if (!project_id || !client_id || isNaN(amount)) return fail(400, { error: 'Missing fields' });
 
@@ -49,43 +48,11 @@ export const actions: Actions = {
 
 		const form = await request.formData();
 		const invoiceId = form.get('invoiceId') as string;
-
 		if (!invoiceId) return fail(400, { error: 'Invoice ID required' });
 
-		const { data: invoice } = await adminClient
-			.from('invoices')
-			.select('*, projects!inner(name)')
-			.eq('id', invoiceId)
-			.single();
-
-		if (!invoice) return fail(404, { error: 'Invoice not found' });
-		if (invoice.client_id !== user.id) return fail(403, { error: 'Forbidden' });
-		if (invoice.status === 'paid') return fail(400, { error: 'Already paid' });
-
-		const session = await getStripe().checkout.sessions.create({
-			mode: 'payment',
-			payment_method_types: ['card'],
-			line_items: [
-				{
-					price_data: {
-						currency: invoice.currency,
-						product_data: {
-							name: `Invoice — ${invoice.projects?.name ?? 'Project'}`,
-						},
-						unit_amount: invoice.amount_cents,
-					},
-					quantity: 1,
-				},
-			],
-			client_reference_id: invoiceId,
-			metadata: { invoiceId },
-			success_url: `${process.env.PUBLIC_APP_URL}/dashboard/invoices/${invoiceId}?payment=success`,
-			cancel_url: `${process.env.PUBLIC_APP_URL}/dashboard/invoices/${invoiceId}?payment=canceled`,
-		});
-
-		await adminClient.from('invoices').update({ stripe_session_id: session.id }).eq('id', invoiceId);
-
-		return { url: session.url };
+		const result = await createCheckoutSession(invoiceId, user.id, '', `/dashboard/invoices/${invoiceId}`);
+		if (result.error) return fail(result.status, { error: result.error });
+		return { url: result.url };
 	},
 
 	update_status: async ({ locals, request }) => {
