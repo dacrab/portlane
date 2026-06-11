@@ -1,7 +1,7 @@
 import { text } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getStripe, getWebhookSecret } from '$lib/server/stripe';
-import { adminClient } from '$lib/server/admin';
+import { getAdminClient } from '$lib/server/admin';
 
 export const POST: RequestHandler = async ({ request }) => {
 	const body = await request.text();
@@ -23,7 +23,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	const invoiceId = session.client_reference_id ?? session.metadata?.invoiceId;
 	if (!invoiceId) return text('No invoice ID', { status: 200 });
 
-	await adminClient
+	await getAdminClient()
 		.from('invoices')
 		.update({
 			status: 'paid',

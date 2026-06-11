@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 import { STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET } from '$env/static/private';
 import { PUBLIC_APP_URL } from '$env/static/public';
-import { adminClient } from '$lib/server/admin';
+import { getAdminClient } from '$lib/server/admin';
 
 let _stripe: Stripe | undefined;
 
@@ -15,7 +15,7 @@ function stripe(): Stripe {
 export { stripe as getStripe };
 
 export async function createCheckoutSession(invoiceId: string, userId: string, origin?: string, returnPath?: string) {
-	const { data: invoice } = await adminClient
+	const { data: invoice } = await getAdminClient()
 		.from('invoices')
 		.select('*, projects!inner(name)')
 		.eq('id', invoiceId)
@@ -50,7 +50,7 @@ export async function createCheckoutSession(invoiceId: string, userId: string, o
 		cancel_url: `${base}${path}${sep}payment=canceled`,
 	});
 
-	await adminClient.from('invoices').update({ stripe_session_id: session.id }).eq('id', invoiceId);
+	await getAdminClient().from('invoices').update({ stripe_session_id: session.id }).eq('id', invoiceId);
 
 	return { url: session.url, project_id: invoice.project_id, status: 200 as const };
 }
