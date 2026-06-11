@@ -35,12 +35,10 @@ jobs:
           STRIPE_SECRET_KEY: placeholder
           STRIPE_WEBHOOK_SECRET: placeholder
 
+      - uses: dopplerhq/action-setup@3ce597e0e8a91e2f9e3bb1b0af8c95a37a138f8f # v1.3.0
+
       - name: Build
-        run: bun run build
+        run: doppler run -- bun run build
         env:
-          PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
-          PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
-          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
-          PUBLIC_APP_URL: ${{ secrets.PUBLIC_APP_URL }}
-          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          DOPPLER_CONFIG: prd_app
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}

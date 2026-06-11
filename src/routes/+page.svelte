@@ -24,7 +24,7 @@
 				<a href="#reviews" class="text-sm no-underline" style="color:var(--color-text-muted)">Reviews</a>
 				<a href="/login" class="text-sm no-underline" style="color:var(--color-text-muted)">Log in</a>
 			</nav>
-			<a href="/signup" class="btn-primary">Start free trial</a>
+			<a href="/signup" class="btn btn-primary">Start free trial</a>
 		</div>
 	</header>
 
@@ -35,9 +35,9 @@
 				<h1 class="m-0 mb-5 text-[clamp(2.25rem,4.5vw,3.25rem)] font-extrabold leading-[1.08] -tracking-[0.04em]" style="color:var(--color-text-heading)">Client work,<br>finally organized.</h1>
 				<p class="m-0 mb-8 max-w-[38ch] leading-[1.7]" style="font-size:1.0625rem;color:var(--color-text-muted)">Portlane gives every project a private workspace — timeline, files, invoices, and approvals in one place. Your clients will actually use it.</p>
 				<div class="mb-6 flex flex-wrap items-center gap-5">
-					<a href="/signup" class="btn-primary btn-lg">
-						Start free trial <IconArrowRightRegular class="h-[0.875rem] w-[0.875rem] shrink-0" />
-					</a>
+				<a href="/signup" class="btn btn-primary btn-lg">
+					Start free trial <IconArrowRightRegular class="h-[0.875rem] w-[0.875rem] shrink-0" />
+				</a>
 					<span class="text-xs" style="color:var(--color-text-faint)">Free forever for 1 project · No credit card</span>
 				</div>
 				<div class="flex items-center gap-1" style="color:#f59e0b">
@@ -170,7 +170,7 @@
 		<div class="mx-auto flex max-w-[68rem] flex-col items-center gap-4 text-center">
 			<h2 class="m-0 text-[clamp(1.75rem,3.5vw,2.5rem)] font-extrabold -tracking-[0.035em]" style="color:var(--color-text-heading)">Ready to impress your clients?</h2>
 			<p class="m-0 mb-2 text-base" style="color:var(--color-text-muted)">Set up your first project in under 5 minutes.</p>
-			<a href="/signup" class="btn-primary btn-lg">
+			<a href="/signup" class="btn btn-primary btn-lg">
 				Start free trial <IconArrowRightRegular class="h-[0.875rem] w-[0.875rem] shrink-0" />
 			</a>
 		</div>

@@ -126,6 +126,7 @@
 		white-space: nowrap;
 	}
 	.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+	.btn-lg { padding: 0.75rem 1.25rem; font-size: 0.9375rem; }
 	.btn-primary { background: var(--color-ink); color: var(--color-bg-elevated); }
 	.btn-primary:hover:not(:disabled) { background: var(--color-ink-hover); }
 	.btn-accent  { background: var(--color-accent-600); color: #fff; }
