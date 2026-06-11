@@ -1,13 +1,13 @@
 import Stripe from 'stripe';
-import { STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET } from '$env/static/private';
-import { PUBLIC_APP_URL } from '$env/static/public';
+import { env as privateEnv } from '$env/dynamic/private';
+import { env } from '$env/dynamic/public';
 import { getAdminClient } from '$lib/server/admin';
 
 let _stripe: Stripe | undefined;
 
 function stripe(): Stripe {
 	if (!_stripe) {
-		_stripe = new Stripe(STRIPE_SECRET_KEY);
+		_stripe = new Stripe(privateEnv.STRIPE_SECRET_KEY);
 	}
 	return _stripe;
 }
@@ -27,7 +27,7 @@ export async function createCheckoutSession(invoiceId: string, userId: string, o
 
 	const path = returnPath || `/dashboard/invoices/${invoiceId}`;
 	const sep = path.includes('?') ? '&' : '?';
-	const base = origin || PUBLIC_APP_URL;
+	const base = origin || env.PUBLIC_APP_URL;
 
 	const session = await stripe().checkout.sessions.create({
 		mode: 'payment',
@@ -55,4 +55,4 @@ export async function createCheckoutSession(invoiceId: string, userId: string, o
 	return { url: session.url, project_id: invoice.project_id, status: 200 as const };
 }
 
-export function getWebhookSecret(): string { return STRIPE_WEBHOOK_SECRET; }
+export function getWebhookSecret(): string { return privateEnv.STRIPE_WEBHOOK_SECRET; }
