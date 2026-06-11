@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: DopplerHQ/cli-action@4819d80694e35a3b2e06c5c94ef966853c73c489 # v4
+      - uses: DopplerHQ/cli-action@v4
 
       - run: >
           doppler run -- curl -fsS '$PUBLIC_SUPABASE_URL/rest/v1/'

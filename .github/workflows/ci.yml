@@ -35,7 +35,7 @@ jobs:
           STRIPE_SECRET_KEY: placeholder
           STRIPE_WEBHOOK_SECRET: placeholder
 
-      - uses: DopplerHQ/cli-action@4819d80694e35a3b2e06c5c94ef966853c73c489 # v4
+      - uses: DopplerHQ/cli-action@v4
 
       - name: Build
         run: doppler run -- bun run build
