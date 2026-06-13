@@ -3,16 +3,9 @@ import { env as privateEnv } from '$env/dynamic/private';
 import { env } from '$env/dynamic/public';
 import { getAdminClient } from '$lib/server/admin';
 
-let _stripe: Stripe | undefined;
-
-function stripe(): Stripe {
-	if (!_stripe) {
-		_stripe = new Stripe(privateEnv.STRIPE_SECRET_KEY);
-	}
-	return _stripe;
+export function getStripe() {
+	return new Stripe(privateEnv.STRIPE_SECRET_KEY);
 }
-
-export { stripe as getStripe };
 
 export async function createCheckoutSession(invoiceId: string, userId: string, origin?: string, returnPath?: string) {
 	const { data: invoice } = await getAdminClient()
@@ -29,7 +22,7 @@ export async function createCheckoutSession(invoiceId: string, userId: string, o
 	const sep = path.includes('?') ? '&' : '?';
 	const base = origin || env.PUBLIC_APP_URL;
 
-	const session = await stripe().checkout.sessions.create({
+	const session = await getStripe().checkout.sessions.create({
 		mode: 'payment',
 		payment_method_types: ['card'],
 		line_items: [

@@ -1,8 +1,9 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import { onMount } from 'svelte';
-	import { invalidateAll } from '$app/navigation';
-	import { fmtDate, fmtDateTime, today, fmtMoney, statusBadge, statusLabel } from '$lib/fmt';
+import { browser } from '$app/environment';
+import { onMount } from 'svelte';
+import { invalidateAll } from '$app/navigation';
+import { fmtDate, fmtDateTime, today, fmtMoney, statusBadge, statusLabel } from '$lib/fmt';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import IconPlusRegular from 'phosphor-icons-svelte/IconPlusRegular.svelte';
 	import IconFolderOpenRegular from 'phosphor-icons-svelte/IconFolderOpenRegular.svelte';
@@ -25,7 +26,7 @@
 	});
 
 	let onboardingDismissed = $state(
-		typeof localStorage !== 'undefined' && localStorage.getItem('onboarding_dismissed') === '1'
+		browser && localStorage.getItem('onboarding_dismissed') === '1'
 	);
 	function dismissOnboarding() {
 		localStorage.setItem('onboarding_dismissed', '1');

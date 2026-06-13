@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { page } from '$app/state';
 	import { toast } from 'svelte-sonner';
 	import type { PageData } from './$types';
 	import { fmtMoney, statusBadge } from '$lib/fmt';
@@ -43,7 +44,7 @@
 				<button type="submit" class="btn btn-primary text-xs">Pay Now</button>
 			</form>
 		{/if}
-		<button onclick={() => navigator.clipboard.writeText(window.location.href).then(() => toast.success('Link copied!'))}
+		<button onclick={() => navigator.clipboard.writeText(page.url.href).then(() => toast.success('Link copied!'))}
 			class="btn btn-ghost text-xs">Copy link</button>
 		<button onclick={() => window.print()} class="btn btn-primary text-xs">Print / Save PDF</button>
 	</div>

@@ -43,8 +43,8 @@ export async function downloadFile(path: string, name: string) {
 }
 
 /** Toast-based delete confirmation */
-export async function confirmDelete(message: string, form: HTMLFormElement) {
-	const { toast } = await import('svelte-sonner');
+import { toast } from 'svelte-sonner';
+export function confirmDelete(message: string, form: HTMLFormElement) {
 	toast('Are you sure?', {
 		description: message,
 		action: { label: 'Delete', onClick: () => form.requestSubmit() },

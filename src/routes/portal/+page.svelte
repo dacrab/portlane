@@ -52,10 +52,11 @@
 
 </script>
 
-<div class="root">
+<div class="min-h-screen" style="background:var(--color-bg);font-family:var(--font-sans)">
 	<!-- Nav -->
-	<header class="nav">
-		<div class="nav-inner">
+	<header class="sticky top-0 z-40"
+		style="background:color-mix(in srgb, var(--color-bg-elevated) 90%, transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--color-border)">
+		<div class="mx-auto flex h-13 max-w-[72rem] items-center justify-between px-6">
 			<div class="flex items-center gap-2">
 				<img src="/favicon.svg" alt="Portlane" class="h-5 w-5" />
 				<span class="text-sm font-semibold tracking-tight text-heading">Portlane</span>
@@ -78,11 +79,11 @@
 		</div>
 	</header>
 
-	<div class="body">
+	<div class="mx-auto max-w-[72rem] px-6 py-8">
 
 		{#if !data.project}
 			<!-- Project list -->
-			<div class="narrow">
+			<div class="max-w-[40rem]">
 				<div class="mb-6">
 					<p class="mb-1 text-xs font-semibold uppercase tracking-widest text-muted">Client Portal</p>
 					<h1 class="page-title">Your projects</h1>
@@ -110,10 +111,10 @@
 
 		{:else}
 			<!-- Project detail: two-column -->
-			<div class="grid">
+			<div class="grid grid-cols-[1fr_22rem] gap-6 items-start max-md:grid-cols-1">
 
 				<!-- Left -->
-				<div class="col space-y-5">
+				<div class="flex flex-col space-y-5">
 
 					<!-- Hero -->
 					<div class="card">
@@ -218,7 +219,7 @@
 				</div>
 
 				<!-- Right -->
-				<div class="col space-y-5">
+				<div class="flex flex-col space-y-5">
 
 					<!-- Files -->
 					<div class="card">
@@ -288,32 +289,3 @@
 
 	</div>
 </div>
-
-<style>
-.root { min-height: 100vh; background: var(--color-bg); font-family: var(--font-sans); }
-
-.nav {
-	position: sticky; top: 0; z-index: 40;
-	background: color-mix(in srgb, var(--color-bg-elevated) 90%, transparent);
-	backdrop-filter: blur(12px);
-	border-bottom: 1px solid var(--color-border);
-}
-.nav-inner {
-	max-width: 72rem; margin: 0 auto; padding: 0 1.5rem;
-	height: 3.25rem; display: flex; align-items: center; justify-content: space-between;
-}
-.body { max-width: 72rem; margin: 0 auto; padding: 2rem 1.5rem; }
-.narrow { max-width: 40rem; }
-
-.grid {
-	display: grid;
-	grid-template-columns: 1fr 22rem;
-	gap: 1.5rem;
-	align-items: start;
-}
-.col { display: flex; flex-direction: column; }
-
-@media (max-width: 768px) {
-	.grid { grid-template-columns: 1fr; }
-}
-</style>

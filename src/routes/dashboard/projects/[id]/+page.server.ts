@@ -1,6 +1,5 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
-import { getAdminClient } from '$lib/server/admin';
 import { getProjectMilestones, getProjectFiles, getProjectComments, addComment, uploadProjectFile, inviteClientByEmail } from '$lib/server/project';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
@@ -113,7 +112,7 @@ export const actions: Actions = {
 		const email = (form.get('email') as string).trim().toLowerCase();
 		if (!email) return fail(400, { error: 'Email is required' });
 
-		const inviteErr = await inviteClientByEmail(getAdminClient(), email, url.origin, params.id);
+		const inviteErr = await inviteClientByEmail(email, url.origin, params.id);
 		if (inviteErr) return fail(400, { error: inviteErr.message });
 	},
 };

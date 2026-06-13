@@ -5,11 +5,12 @@
 	import type { Database } from '$lib/database.types';
 	import AppSelect from '$lib/components/AppSelect.svelte';
 
+	import AppDatePicker from '$lib/components/AppDatePicker.svelte';
+
 	type InvoiceJoined = Database['public']['Tables']['invoices']['Row'] & {
 		projects: Pick<Database['public']['Tables']['projects']['Row'], 'name'> | null;
 		profiles: Pick<Database['public']['Tables']['profiles']['Row'], 'full_name'> | null;
 	};
-	import AppDatePicker from '$lib/components/AppDatePicker.svelte';
 	import IconArrowRightRegular from 'phosphor-icons-svelte/IconArrowRightRegular.svelte';
 	import IconFileTextRegular from 'phosphor-icons-svelte/IconFileTextRegular.svelte';
 	import { fmtMoney, fmtDate } from '$lib/fmt';
@@ -24,23 +25,28 @@
 
 	let invoiceStatusOverrides = $state<Record<string, string>>({});
 
-	function getStatus(inv: any) {
+	type ProjectLight = {
+		id: string; name: string;
+		project_clients: { profiles: { id: string; full_name: string | null } | null }[] | null;
+	};
+
+	function getStatus(inv: { id: string; status: string }) {
 		return invoiceStatusOverrides[inv.id] ?? inv.status;
 	}
 
 
 	const clients = $derived(
-		(data.projects.find((p: any) => p.id === selectedProject)?.project_clients ?? [])
-			.map((pc: any) => pc.profiles).filter(Boolean)
+		((data.projects as ProjectLight[]).find((p) => p.id === selectedProject)?.project_clients ?? [])
+			.map((pc) => pc.profiles).filter((c): c is NonNullable<typeof c> => c != null)
 	);
 
-	const clientItems = $derived(clients.map((c: any) => ({ value: c.id, label: c.full_name ?? c.id })));
+	const clientItems = $derived(clients.map((c) => ({ value: c.id, label: c.full_name ?? c.id })));
 
 	const stats = $derived({
 		total: data.invoices.length,
-		outstanding: data.invoices.filter((i: any) => i.status === 'sent').reduce((s: number, i: any) => s + i.amount_cents, 0),
-		paid: data.invoices.filter((i: any) => i.status === 'paid').reduce((s: number, i: any) => s + i.amount_cents, 0),
-		overdue: data.invoices.filter((i: any) => i.status === 'overdue').length,
+		outstanding: data.invoices.filter((i: InvoiceJoined) => i.status === 'sent').reduce((s: number, i: InvoiceJoined) => s + i.amount_cents, 0),
+		paid: data.invoices.filter((i: InvoiceJoined) => i.status === 'paid').reduce((s: number, i: InvoiceJoined) => s + i.amount_cents, 0),
+		overdue: data.invoices.filter((i: InvoiceJoined) => i.status === 'overdue').length,
 	});
 
 
@@ -98,7 +104,7 @@
 					<AppSelect
 						name="project_id"
 						bind:value={selectedProject}
-						items={data.projects.map((p: any) => ({ value: p.id, label: p.name }))}
+						items={data.projects.map((p: ProjectLight) => ({ value: p.id, label: p.name }))}
 						placeholder="Select project…"
 						required
 						onchange={() => { selectedClient = ''; }}
