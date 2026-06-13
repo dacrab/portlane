@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - run: >
-          curl -fsS '${{ secrets.PUBLIC_SUPABASE_URL }}/rest/v1/'
-          -H "apikey: ${{ secrets.SUPABASE_SECRET_KEY }}"
+      - uses: DopplerHQ/cli-action@v3
+      - run: doppler run -- curl -fsS "$PUBLIC_SUPABASE_URL/rest/v1/" -H "apikey: $SUPABASE_SECRET_KEY"
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
