@@ -27,6 +27,13 @@ jobs:
 
       - name: Check
         run: bun run check
+        env:
+          PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          PUBLIC_SUPABASE_PUBLISHABLE_KEY: placeholder
+          SUPABASE_SECRET_KEY: placeholder
+          PUBLIC_APP_URL: http://localhost:3000
+          STRIPE_SECRET_KEY: placeholder
+          STRIPE_WEBHOOK_SECRET: placeholder
 
       - uses: dopplerhq/cli-action@v4
 
