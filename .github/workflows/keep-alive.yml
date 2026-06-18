@@ -11,6 +11,6 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: dopplerhq/cli-action@v4
-      - run: doppler run -- sh -c 'curl -sS -o /dev/null "$PUBLIC_SUPABASE_URL/rest/v1/" -H "apikey: $PUBLIC_SUPABASE_PUBLISHABLE_KEY"'
+      - run: 'doppler run -- curl -sS -o /dev/null "$PUBLIC_SUPABASE_URL/rest/v1/" -H "apikey: $PUBLIC_SUPABASE_PUBLISHABLE_KEY"'
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
