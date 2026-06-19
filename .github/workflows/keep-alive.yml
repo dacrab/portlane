@@ -10,4 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - run: curl -sS -o /dev/null "https://ggwnsckppgusiotrcqwf.supabase.co/rest/v1/profiles?select=id&limit=1" -H "apikey: sb_publishable_Iu7smBLknH8AISRBABgKjA_oqS2kuvt"
+      - uses: dopplerhq/cli-action@v4
+      - run: |
+          URL="$(doppler secrets get PUBLIC_SUPABASE_URL --plain)"
+          KEY="$(doppler secrets get PUBLIC_SUPABASE_PUBLISHABLE_KEY --plain)"
+          curl -sS -o /dev/null "$URL/rest/v1/profiles?select=id&limit=1" -H "apikey: $KEY"
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
