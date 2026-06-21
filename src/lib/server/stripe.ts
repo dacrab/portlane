@@ -4,13 +4,13 @@ import { env } from '$env/dynamic/public';
 import { getAdminClient } from '$lib/server/admin';
 
 export function getStripe() {
-	return new Stripe(privateEnv.STRIPE_SECRET_KEY);
+	return new Stripe(privateEnv.STRIPE_SECRET_KEY!);
 }
 
 export async function createCheckoutSession(invoiceId: string, userId: string, origin?: string, returnPath?: string) {
 	const { data: invoice } = await getAdminClient()
 		.from('invoices')
-		.select('*, projects!inner(name)')
+		.select('*, projects(name)')
 		.eq('id', invoiceId)
 		.single();
 
@@ -20,7 +20,7 @@ export async function createCheckoutSession(invoiceId: string, userId: string, o
 
 	const path = returnPath || `/dashboard/invoices/${invoiceId}`;
 	const sep = path.includes('?') ? '&' : '?';
-	const base = origin || env.PUBLIC_APP_URL;
+	const base = origin || env.PUBLIC_APP_URL!;
 
 	const session = await getStripe().checkout.sessions.create({
 		mode: 'payment',
@@ -48,4 +48,4 @@ export async function createCheckoutSession(invoiceId: string, userId: string, o
 	return { url: session.url, project_id: invoice.project_id, status: 200 as const };
 }
 
-export function getWebhookSecret(): string { return privateEnv.STRIPE_WEBHOOK_SECRET; }
+export function getWebhookSecret(): string { return privateEnv.STRIPE_WEBHOOK_SECRET!; }

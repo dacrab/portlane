@@ -28,9 +28,9 @@ export const POST: RequestHandler = async ({ request }) => {
 		.update({
 			status: 'paid',
 			stripe_payment_intent_id: String(session.payment_intent ?? ''),
-		})
-		.eq('id', invoiceId)
-		.eq('stripe_session_id', session.id);
+		} as never)
+		.eq('id' as never, invoiceId)
+		.eq('stripe_session_id' as never, session.id);
 
 	return text('Received', { status: 200 });
 };

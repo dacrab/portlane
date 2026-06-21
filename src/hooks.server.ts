@@ -5,14 +5,15 @@ import type { Database } from '$lib/database.types';
 
 export const handle: Handle = async ({ event, resolve }) => {
 	event.locals.supabase = createServerClient<Database>(
-		env.PUBLIC_SUPABASE_URL,
-		env.PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+		env.PUBLIC_SUPABASE_URL!,
+		env.PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
 		{
 			cookies: {
 				getAll: () => event.cookies.getAll(),
-				setAll: (cookies) => cookies.forEach(({ name, value, options }) =>
-					event.cookies.set(name, value, { ...options, path: '/' })
-				),
+				setAll: (cookies) =>
+					cookies.forEach(({ name, value, options }: { name: string; value: string; options: Record<string, string | boolean> }) =>
+						event.cookies.set(name, value, { ...options, path: '/' })
+					),
 			},
 		}
 	);
