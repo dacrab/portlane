@@ -30,7 +30,6 @@ jobs:
       - name: Check
         run: bun run check
       - name: Build
-        if: github.actor != 'dependabot[bot]'
         run: doppler run -- bun run build
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
