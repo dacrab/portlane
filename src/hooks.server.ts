@@ -11,9 +11,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 			cookies: {
 				getAll: () => event.cookies.getAll(),
 				setAll: (cookies) =>
-					cookies.forEach(({ name, value, options }: { name: string; value: string; options: Record<string, string | boolean> }) =>
+					cookies.forEach(({ name, value, options }) => {
 						event.cookies.set(name, value, { ...options, path: '/' })
-					),
+					}),
 			},
 		}
 	);
