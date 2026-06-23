@@ -55,10 +55,6 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 export const actions: Actions = {
 	mark_read: async ({ locals }) => {
-		const { user } = await locals.safeGetSession();
-		await locals.supabase
-			.from('profiles')
-			.update({ last_read_comments_at: new Date().toISOString() })
-			.eq('id', user!.id);
+		await locals.supabase.rpc('mark_comments_read');
 	},
 };

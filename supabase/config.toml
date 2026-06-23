@@ -100,8 +100,8 @@ enroll_enabled = false
 verify_enabled = false
 
 [edge_runtime]
-# No Edge Functions in this project
-enabled = false
+enabled = true
+policy = "per_worker"
 
 [analytics]
 # Not needed locally

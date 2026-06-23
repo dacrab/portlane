@@ -63,10 +63,10 @@
 						<div class="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.05em]" style="color:var(--color-text-faint)">Milestones</div>
 						{#each [['Discovery', true],['Design', true],['Development', false],['Launch', false]] as [m, done]}
 							<div class="flex items-center gap-[0.625rem] py-[0.3rem]">
-								<span class="flex h-[1.125rem] w-[1.125rem] shrink-0 items-center justify-center rounded-full border" class:done style="border:1.5px solid var(--color-border);color:var(--color-bg-elevated);background:{done ? 'var(--color-ink)' : 'transparent'};border-color:{done ? 'var(--color-ink)' : 'var(--color-border)'}">
+								<span class="flex h-[1.125rem] w-[1.125rem] shrink-0 items-center justify-center rounded-full border" style="border:1.5px solid var(--color-border);color:var(--color-bg-elevated);background:{done ? 'var(--color-ink)' : 'transparent'};border-color:{done ? 'var(--color-ink)' : 'var(--color-border)'}">
 									{#if done}<IconCheckRegular class="h-[0.625rem] w-[0.625rem]" />{/if}
 								</span>
-								<span class="text-sm" class:done style="color:{(done ? 'var(--color-text-faint)' : 'var(--color-text)')};text-decoration:{done ? 'line-through' : 'none'}">{m}</span>
+								<span class="text-sm" style="color:{(done ? 'var(--color-text-faint)' : 'var(--color-text)')};text-decoration:{done ? 'line-through' : 'none'}">{m}</span>
 							</div>
 						{/each}
 						<div class="my-4 h-px" style="background:var(--color-border-subtle)"></div>

@@ -1,3 +1,5 @@
+import { toast } from 'svelte-sonner';
+
 /** Format cents to display string e.g. "$3,200" or "$3,200.50" */
 export const fmtMoney = (cents: number, currency = 'USD') =>
 	(cents / 100).toLocaleString('en-US', { style: 'currency', currency, minimumFractionDigits: cents % 100 === 0 ? 0 : 2 });
@@ -43,7 +45,6 @@ export async function downloadFile(path: string, name: string) {
 }
 
 /** Toast-based delete confirmation */
-import { toast } from 'svelte-sonner';
 export function confirmDelete(message: string, form: HTMLFormElement) {
 	toast('Are you sure?', {
 		description: message,

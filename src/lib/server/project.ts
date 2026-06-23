@@ -1,6 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '$lib/database.types';
-import { getAdminClient } from '$lib/server/admin';
+import { env } from '$env/dynamic/public';
+
+const EDGE_FN_BASE = env.PUBLIC_SUPABASE_URL.replace(/\/$/, '') + '/functions/v1';
 
 export const getProjectMilestones = (supabase: SupabaseClient<Database>, projectId: string) =>
 	supabase.from('milestones').select('*').eq('project_id', projectId).order('position');
@@ -34,14 +36,21 @@ export const uploadProjectFile = async (
 	});
 };
 
-export const inviteClientByEmail = async (email: string, origin: string, projectId: string) => {
-	const admin = getAdminClient();
-	const redirectTo = `${origin}/auth/callback?next=/portal?project=${projectId}`;
-	const { error } = await admin.auth.admin.inviteUserByEmail(email, {
-		data: { role: 'client' },
-		redirectTo,
+export const inviteClientByEmail = async (accessToken: string, email: string, projectId: string) => {
+	const res = await fetch(`${EDGE_FN_BASE}/invite-client`, {
+		method: 'POST',
+		headers: {
+			Authorization: `Bearer ${accessToken}`,
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify({ email, projectId }),
 	});
-	return error;
+
+	if (!res.ok) {
+		const body = await res.json().catch(() => ({}));
+		return new Error((body as { error?: string }).error || 'Invitation failed');
+	}
+	return null;
 };
 
 export const getHomeRoute = (role: string | undefined) =>

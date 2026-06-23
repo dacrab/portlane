@@ -13,8 +13,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 
 export const actions: Actions = {
-	create: async ({ locals, request, url }) => {
-		const { user } = await locals.safeGetSession();
+	create: async ({ locals, request }) => {
+		const { session, user } = await locals.safeGetSession();
 		const form = await request.formData();
 		const name = (form.get('name') as string).trim();
 		const description = (form.get('description') as string | null)?.trim() ?? null;
@@ -33,7 +33,7 @@ export const actions: Actions = {
 		if (error) return fail(500, { error: error.message });
 
 		if (client_email) {
-			const inviteErr = await inviteClientByEmail(client_email, url.origin, data.id);
+			const inviteErr = await inviteClientByEmail(session!.access_token, client_email, data.id);
 			if (inviteErr) console.error('Invite failed:', inviteErr.message);
 		}
 

@@ -129,8 +129,6 @@
 	.btn-lg { padding: 0.75rem 1.25rem; font-size: 0.9375rem; }
 	.btn-primary { background: var(--color-ink); color: var(--color-bg-elevated); }
 	.btn-primary:hover:not(:disabled) { background: var(--color-ink-hover); }
-	.btn-accent  { background: var(--color-accent-600); color: #fff; }
-	.btn-accent:hover:not(:disabled)  { background: var(--color-accent-700); }
 	.btn-ghost   { background: transparent; border: 1px solid var(--color-border); color: var(--color-text-muted); }
 	.btn-ghost:hover:not(:disabled)   { background: var(--color-bg-subtle); color: var(--color-text-heading); }
 	.btn-danger  { background: rgba(185,28,28,0.08); color: #dc2626; border: 1px solid rgba(185,28,28,0.2); }
@@ -169,8 +167,6 @@
 	.bg-accent-pill { background: var(--color-accent-600); color: #fff; }
 
 	/* Surfaces */
-	.surface      { border: 1px solid var(--color-border); background: var(--color-bg-elevated); box-shadow: var(--shadow-card); }
-	.divider      { height: 1px; background: var(--color-border); }
 	.divide-top   { border-top: 1px solid var(--color-border-subtle); }
 	.divide-bottom{ border-bottom: 1px solid var(--color-border-subtle); }
 	.bg-subtle    { background: var(--color-bg-subtle); }

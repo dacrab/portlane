@@ -1,51 +1,27 @@
-import Stripe from 'stripe';
-import { env as privateEnv } from '$env/dynamic/private';
 import { env } from '$env/dynamic/public';
-import { getAdminClient } from '$lib/server/admin';
 
-export function getStripe() {
-	return new Stripe(privateEnv.STRIPE_SECRET_KEY!);
-}
+const EDGE_FN_BASE = env.PUBLIC_SUPABASE_URL.replace(/\/$/, '') + '/functions/v1';
 
-export async function createCheckoutSession(invoiceId: string, userId: string, origin?: string, returnPath?: string) {
-	const { data: invoice } = await getAdminClient()
-		.from('invoices')
-		.select('*, projects(name)')
-		.eq('id', invoiceId)
-		.single();
-
-	if (!invoice) return { error: 'Invoice not found', status: 404 as const };
-	if (invoice.client_id !== userId) return { error: 'Forbidden', status: 403 as const };
-	if (invoice.status === 'paid') return { error: 'Already paid', status: 400 as const };
-
-	const path = returnPath || `/dashboard/invoices/${invoiceId}`;
-	const sep = path.includes('?') ? '&' : '?';
-	const base = origin || env.PUBLIC_APP_URL!;
-
-	const session = await getStripe().checkout.sessions.create({
-		mode: 'payment',
-		payment_method_types: ['card'],
-		line_items: [
-			{
-				price_data: {
-					currency: invoice.currency,
-					product_data: {
-						name: `Invoice — ${invoice.projects?.name ?? 'Project'}`,
-					},
-					unit_amount: invoice.amount_cents,
-				},
-				quantity: 1,
-			},
-		],
-		client_reference_id: invoiceId,
-		metadata: { invoiceId },
-		success_url: `${base}${path}${sep}payment=success`,
-		cancel_url: `${base}${path}${sep}payment=canceled`,
+export async function createCheckoutSessionViaEdge(
+	invoiceId: string,
+	accessToken: string,
+	origin: string,
+	returnPath?: string,
+): Promise<{ url: string } | { error: string; status: number }> {
+	const res = await fetch(`${EDGE_FN_BASE}/create-checkout-session`, {
+		method: 'POST',
+		headers: {
+			Authorization: `Bearer ${accessToken}`,
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify({ invoiceId, origin, returnPath }),
 	});
 
-	await getAdminClient().from('invoices').update({ stripe_session_id: session.id }).eq('id', invoiceId);
+	if (!res.ok) {
+		const text = await res.text();
+		return { error: text || 'Checkout session creation failed', status: res.status };
+	}
 
-	return { url: session.url, project_id: invoice.project_id, status: 200 as const };
+	const data = await res.json();
+	return { url: data.url };
 }
-
-export function getWebhookSecret(): string { return privateEnv.STRIPE_WEBHOOK_SECRET!; }

@@ -55,19 +55,18 @@ export const actions: Actions = {
 		await addComment(locals.supabase, params.id, user!.id, body);
 	},
 
-	toggle_milestone: async ({ locals, request }) => {
+	toggle_milestone: async ({ locals, params, request }) => {
 		const form = await request.formData();
 		const id = form.get('id') as string;
 		const completed = form.get('completed') === 'true';
-		await locals.supabase.from('milestones').update({ completed: !completed }).eq('id', id);
+		await locals.supabase.from('milestones').update({ completed: !completed }).eq('id', id).eq('project_id', params.id);
 	},
 
 	add_milestone: async ({ locals, params, request }) => {
 		const form = await request.formData();
 		const name = (form.get('name') as string).trim();
 		if (!name) return fail(400, { error: 'Name is required' });
-		const { count } = await locals.supabase.from('milestones').select('*', { count: 'exact', head: true }).eq('project_id', params.id);
-		await locals.supabase.from('milestones').insert({ project_id: params.id, name, position: count ?? 0 });
+		await locals.supabase.rpc('add_milestone', { p_project_id: params.id, p_name: name });
 	},
 
 	upload_file: async ({ locals, params, request }) => {
@@ -107,12 +106,13 @@ export const actions: Actions = {
 		await locals.supabase.from('project_clients').delete().eq('project_id', params.id).eq('client_id', client_id);
 	},
 
-	invite_client: async ({ params, request, url }) => {
+	invite_client: async ({ locals, params, request }) => {
+		const { session } = await locals.safeGetSession();
 		const form = await request.formData();
 		const email = (form.get('email') as string).trim().toLowerCase();
 		if (!email) return fail(400, { error: 'Email is required' });
 
-		const inviteErr = await inviteClientByEmail(email, url.origin, params.id);
+		const inviteErr = await inviteClientByEmail(session!.access_token, email, params.id);
 		if (inviteErr) return fail(400, { error: inviteErr.message });
 	},
 };

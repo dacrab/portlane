@@ -1,7 +1,7 @@
 import { error, redirect, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { getProjectMilestones, getProjectFiles, getProjectComments, addComment, uploadProjectFile } from '$lib/server/project';
-import { createCheckoutSession } from '$lib/server/stripe';
+import { createCheckoutSessionViaEdge } from '$lib/server/stripe';
 import type { Database } from '$lib/database.types';
 
 type ProjectItem = Database['public']['Tables']['projects']['Row'] & {
@@ -26,6 +26,14 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		});
 		return { project: null, projects, milestones: [], files: [], comments: [], invoices: [], user };
 	}
+
+	const { data: membership } = await locals.supabase
+		.from('project_clients')
+		.select('project_id')
+		.eq('project_id', projectId)
+		.eq('client_id', user!.id)
+		.maybeSingle();
+	if (!membership) error(403, 'Forbidden');
 
 	const [projectRes, milestonesRes, filesRes, commentsRes, invoicesRes] = await Promise.all([
 		locals.supabase.from('projects').select('*, profiles!projects_freelancer_id_fkey(full_name)').eq('id', projectId).single(),
@@ -57,8 +65,7 @@ export const actions: Actions = {
 		if (!user) error(401);
 		const projectId = url.searchParams.get('project')!;
 		const note = ((await request.formData()).get('note') as string | null)?.trim();
-		await addComment(locals.supabase, projectId, user.id, note ? `✅ Approved — ${note}` : '✅ Approved');
-		await locals.supabase.from('projects').update({ status: 'completed' }).eq('id', projectId);
+		await locals.supabase.rpc('approve_project', { p_project_id: projectId, p_note: note || undefined });
 	},
 
 	request_revision: async ({ locals, url, request }) => {
@@ -66,8 +73,7 @@ export const actions: Actions = {
 		if (!user) error(401);
 		const projectId = url.searchParams.get('project')!;
 		const note = ((await request.formData()).get('note') as string | null)?.trim();
-		await addComment(locals.supabase, projectId, user.id, note ? `🔄 Revision requested — ${note}` : '🔄 Revision requested');
-		await locals.supabase.from('projects').update({ status: 'review' }).eq('id', projectId);
+		await locals.supabase.rpc('request_revision', { p_project_id: projectId, p_note: note || undefined });
 	},
 
 	upload_file: async ({ locals, url, request }) => {
@@ -84,16 +90,16 @@ export const actions: Actions = {
 		}
 	},
 
-	checkout: async ({ locals, request }) => {
-		const { user } = await locals.safeGetSession();
+	checkout: async ({ locals, request, url: reqUrl }) => {
+		const { session, user } = await locals.safeGetSession();
 		if (!user) error(401);
 
 		const form = await request.formData();
 		const invoiceId = form.get('invoiceId') as string;
 		if (!invoiceId) return fail(400, { missing: true });
 
-		const result = await createCheckoutSession(invoiceId, user.id);
-		if (result.error) return fail(result.status, { error: result.error });
+		const result = await createCheckoutSessionViaEdge(invoiceId, session!.access_token, reqUrl.origin);
+		if ('error' in result) return fail(result.status, { error: result.error });
 		return { url: result.url };
 	},
 };

@@ -1,6 +1,6 @@
 import { error, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
-import { createCheckoutSession } from '$lib/server/stripe';
+import { createCheckoutSessionViaEdge } from '$lib/server/stripe';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
 	const { user } = await locals.safeGetSession();
@@ -21,16 +21,18 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 };
 
 export const actions: Actions = {
-	checkout: async ({ locals, request }) => {
-		const { user } = await locals.safeGetSession();
+	checkout: async ({ locals, request, url: reqUrl }) => {
+		const { session, user } = await locals.safeGetSession();
 		if (!user) error(401);
 
 		const form = await request.formData();
 		const invoiceId = form.get('invoiceId') as string;
 		if (!invoiceId) return fail(400, { missing: true });
 
-		const result = await createCheckoutSession(invoiceId, user.id, '', `/dashboard/invoices/${invoiceId}`);
-		if (result.error) return fail(result.status, { error: result.error });
+		const result = await createCheckoutSessionViaEdge(
+			invoiceId, session!.access_token, reqUrl.origin, `/dashboard/invoices/${invoiceId}`,
+		);
+		if ('error' in result) return fail(result.status, { error: result.error });
 		return { url: result.url };
 	},
 };
