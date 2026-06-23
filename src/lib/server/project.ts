@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '$lib/database.types';
 import { env } from '$env/dynamic/public';
 
-const EDGE_FN_BASE = env.PUBLIC_SUPABASE_URL.replace(/\/$/, '') + '/functions/v1';
+const EDGE_FN_BASE = env.PUBLIC_SUPABASE_URL!.replace(/\/$/, '') + '/functions/v1';
 
 export const getProjectMilestones = (supabase: SupabaseClient<Database>, projectId: string) =>
 	supabase.from('milestones').select('*').eq('project_id', projectId).order('position');

@@ -1,6 +1,6 @@
 import { env } from '$env/dynamic/public';
 
-const EDGE_FN_BASE = env.PUBLIC_SUPABASE_URL.replace(/\/$/, '') + '/functions/v1';
+const EDGE_FN_BASE = env.PUBLIC_SUPABASE_URL!.replace(/\/$/, '') + '/functions/v1';
 
 export async function createCheckoutSessionViaEdge(
 	invoiceId: string,
