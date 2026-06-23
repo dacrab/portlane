@@ -11,3 +11,4 @@ jobs:
     timeout-minutes: 5
     steps:
       - run: "curl -sS -o /dev/null \"${{ secrets.SUPABASE_URL }}/rest/v1/profiles?select=id&limit=1\" -H \"apikey: ${{ secrets.SUPABASE_ANON_KEY }}\""
+      - run: "curl -sS -o /dev/null -X POST \"${{ secrets.SUPABASE_URL }}/functions/v1/send-reminders\" -H \"apikey: ${{ secrets.SUPABASE_ANON_KEY }}\""
