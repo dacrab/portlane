@@ -6,20 +6,16 @@
 	import IconMoonRegular from 'phosphor-icons-svelte/IconMoonRegular.svelte';
 	import IconSunRegular from 'phosphor-icons-svelte/IconSunRegular.svelte';
 	import type { User } from '@supabase/supabase-js';
-	import { sidebarCollapsed } from '$lib/stores';
+	import { sidebarCollapsed } from '$lib/stores.svelte';
 	import { onMount } from 'svelte';
 	import { navItems } from '$lib/nav';
 
 	let { user, unreadComments = 0 }: { user: User | null; unreadComments?: number } = $props();
 
-	let collapsed = $state(false);
+	let collapsed = $derived(sidebarCollapsed.value);
 	let dark = $state(false);
 
-	$effect(() => {
-		const unsub = sidebarCollapsed.subscribe(v => collapsed = v);
-		return unsub;
-	});
-	function toggle() { sidebarCollapsed.update(v => !v); }
+	function toggle() { sidebarCollapsed.toggle(); }
 
 	onMount(() => {
 		dark = document.documentElement.classList.contains('dark');
