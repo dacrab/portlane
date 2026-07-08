@@ -1,6 +1,8 @@
 <script lang="ts">
+	import type { Component } from 'svelte';
+
 	let { icon: Icon, title, description, action, compact = false }: {
-		icon?: any;
+		icon?: Component;
 		title: string;
 		description: string;
 		action?: { label: string; onClick?: () => void; href?: string };

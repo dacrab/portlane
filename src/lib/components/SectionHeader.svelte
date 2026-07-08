@@ -1,8 +1,10 @@
 <script lang="ts">
+	import type { Component } from 'svelte';
+
 	let { title, count, icon: Icon, compact = false }: {
 		title: string;
 		count?: string | number;
-		icon?: any;
+		icon?: Component;
 		compact?: boolean;
 	} = $props();
 </script>
