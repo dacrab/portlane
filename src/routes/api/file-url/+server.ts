@@ -4,6 +4,7 @@ import type { RequestHandler } from './$types';
 export const GET: RequestHandler = async ({ url, locals }) => {
 	const { session, user } = await locals.safeGetSession();
 	if (!session) error(401);
+	if (!user) error(401);
 
 	const path = url.searchParams.get('path');
 	if (!path) error(400, 'Missing path');
@@ -11,8 +12,8 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 	const projectId = path.split('/')[0];
 	if (!projectId) error(400, 'Invalid path');
 
-	const { data: access } = await locals.supabase.from('project_clients').select('client_id').eq('project_id', projectId).eq('client_id', user!.id).maybeSingle();
-	const isOwner = await locals.supabase.from('projects').select('id').eq('id', projectId).eq('freelancer_id', user!.id).maybeSingle();
+	const { data: access } = await locals.supabase.from('project_clients').select('client_id').eq('project_id', projectId).eq('client_id', user.id).maybeSingle();
+	const isOwner = await locals.supabase.from('projects').select('id').eq('id', projectId).eq('freelancer_id', user.id).maybeSingle();
 	if (!access && !isOwner.data) error(403, 'Forbidden');
 
 	const { data, error: storageErr } = await locals.supabase.storage

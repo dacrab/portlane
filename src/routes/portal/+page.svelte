@@ -177,7 +177,7 @@
 										<div>
 											<p class="text-sm font-semibold text-heading">{fmtMoney(inv.amount_cents)}</p>
 											<p class="text-xs mt-0.5" class:text-danger={inv.due_date && inv.due_date < today() && inv.status !== 'paid'} class:text-faint={!(inv.due_date && inv.due_date < today() && inv.status !== 'paid')}>
-												{inv.due_date ? `Due ${fmtDate(inv.due_date)}` : fmtDate(inv.created_at!)}
+												{inv.due_date ? `Due ${fmtDate(inv.due_date)}` : fmtDate(inv.created_at ?? '')}
 											</p>
 										</div>
 										<span class="{statusBadge[inv.status] ?? 'badge badge-neutral'}">{inv.status}</span>
@@ -236,7 +236,7 @@
 										<div class="flex-1 min-w-0">
 											<p class="truncate text-sm font-medium text-body">{f.name}</p>
 											<p class="text-xs text-faint mt-0.5">
-												{f.size_bytes ? (f.size_bytes / 1024 / 1024).toFixed(1) + ' MB' : '—'} · {fmtDate(f.created_at!)}
+												{f.size_bytes ? (f.size_bytes / 1024 / 1024).toFixed(1) + ' MB' : '—'} · {fmtDate(f.created_at ?? '')}
 											</p>
 										</div>
 										<button onclick={() => downloadFile(f.storage_path, f.name)} class="btn-icon shrink-0" title="Download">

@@ -1,3 +1,4 @@
+import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 interface ClientRow {
@@ -8,7 +9,8 @@ interface ClientRow {
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const { user } = await locals.safeGetSession();
-	const { data } = await locals.supabase.rpc('get_freelancer_clients', { p_user_id: user!.id });
+	if (!user) error(401);
+	const { data } = await locals.supabase.rpc('get_freelancer_clients', { p_user_id: user.id });
 
 	return {
 		clients: ((data ?? []) as ClientRow[]).map(r => ({

@@ -294,7 +294,7 @@
 									<p class="truncate text-sm font-medium text-body">{f.name}</p>
 									<p class="mt-0.5 text-xs text-faint">
 										{f.size_bytes ? (f.size_bytes / 1024 / 1024).toFixed(1) + ' MB' : '—'} ·
-										{fmtDate(f.created_at!)}
+										{fmtDate(f.created_at ?? '')}
 									</p>
 								</div>
 								<button onclick={() => downloadFile(f.storage_path, f.name)} class="btn-icon shrink-0" title="Download">

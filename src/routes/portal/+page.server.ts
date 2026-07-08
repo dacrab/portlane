@@ -11,6 +11,7 @@ type ProjectItem = Database['public']['Tables']['projects']['Row'] & {
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const { session, user } = await locals.safeGetSession();
 	if (!session) redirect(303, '/login');
+	if (!user) redirect(303, '/login');
 
 	const projectId = url.searchParams.get('project');
 
@@ -18,7 +19,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		const { data: rows } = await locals.supabase
 			.from('project_clients')
 			.select('projects(id, name, status, due_date, profiles!projects_freelancer_id_fkey(full_name))')
-			.eq('client_id', user!.id);
+			.eq('client_id', user.id);
 
 		const projects: ProjectItem[] = (rows ?? []).flatMap((r) => {
 			const p = (r as { projects: ProjectItem | null }).projects;
@@ -31,7 +32,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		.from('project_clients')
 		.select('project_id')
 		.eq('project_id', projectId)
-		.eq('client_id', user!.id)
+		.eq('client_id', user.id)
 		.maybeSingle();
 	if (!membership) error(403, 'Forbidden');
 
@@ -40,7 +41,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		getProjectMilestones(locals.supabase, projectId),
 		getProjectFiles(locals.supabase, projectId),
 		getProjectComments(locals.supabase, projectId),
-		locals.supabase.from('invoices').select('*').eq('project_id', projectId).eq('client_id', user!.id).order('created_at', { ascending: false }),
+		locals.supabase.from('invoices').select('*').eq('project_id', projectId).eq('client_id', user.id).order('created_at', { ascending: false }),
 	]);
 
 	const project = projectRes.data;
@@ -53,9 +54,11 @@ export const actions: Actions = {
 	comment: async ({ locals, url, request }) => {
 		const { user } = await locals.safeGetSession();
 		if (!user) error(401);
-		const projectId = url.searchParams.get('project')!;
+		const projectId = url.searchParams.get('project');
+		if (!projectId) error(400, 'Missing project');
 		const form = await request.formData();
-		const body = (form.get('body') as string).trim();
+		const body_val = form.get('body');
+		const body = typeof body_val === 'string' ? body_val.trim() : '';
 		if (!body) return;
 		await addComment(locals.supabase, projectId, user.id, body);
 	},
@@ -63,26 +66,31 @@ export const actions: Actions = {
 	approve: async ({ locals, url, request }) => {
 		const { user } = await locals.safeGetSession();
 		if (!user) error(401);
-		const projectId = url.searchParams.get('project')!;
-		const note = ((await request.formData()).get('note') as string | null)?.trim();
+		const projectId = url.searchParams.get('project');
+		if (!projectId) error(400, 'Missing project');
+		const note_val = (await request.formData()).get('note');
+		const note = typeof note_val === 'string' ? note_val.trim() : null;
 		await locals.supabase.rpc('approve_project', { p_project_id: projectId, p_note: note || undefined });
 	},
 
 	request_revision: async ({ locals, url, request }) => {
 		const { user } = await locals.safeGetSession();
 		if (!user) error(401);
-		const projectId = url.searchParams.get('project')!;
-		const note = ((await request.formData()).get('note') as string | null)?.trim();
+		const projectId = url.searchParams.get('project');
+		if (!projectId) error(400, 'Missing project');
+		const note_val = (await request.formData()).get('note');
+		const note = typeof note_val === 'string' ? note_val.trim() : null;
 		await locals.supabase.rpc('request_revision', { p_project_id: projectId, p_note: note || undefined });
 	},
 
 	upload_file: async ({ locals, url, request }) => {
 		const { user } = await locals.safeGetSession();
 		if (!user) error(401);
-		const projectId = url.searchParams.get('project')!;
+		const projectId = url.searchParams.get('project');
+		if (!projectId) error(400, 'Missing project');
 		const form = await request.formData();
-		const file = form.get('file') as File;
-		if (!file?.size) return;
+		const file = form.get('file');
+		if (!(file instanceof File) || !file.size) return;
 		try {
 			await uploadProjectFile(locals.supabase, projectId, user.id, file);
 		} catch (e) {
@@ -93,12 +101,14 @@ export const actions: Actions = {
 	checkout: async ({ locals, request, url: reqUrl }) => {
 		const { session, user } = await locals.safeGetSession();
 		if (!user) error(401);
+		if (!session) error(401);
 
 		const form = await request.formData();
-		const invoiceId = form.get('invoiceId') as string;
+		const invoiceId_val = form.get('invoiceId');
+		const invoiceId = typeof invoiceId_val === 'string' ? invoiceId_val : '';
 		if (!invoiceId) return fail(400, { missing: true });
 
-		const result = await createCheckoutSessionViaEdge(invoiceId, session!.access_token, reqUrl.origin);
+		const result = await createCheckoutSessionViaEdge(invoiceId, session.access_token, reqUrl.origin);
 		if ('error' in result) return fail(result.status, { error: result.error });
 		return { url: result.url };
 	},

@@ -17,7 +17,7 @@ export const fmtDateTime = (iso: string) =>
 	new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
 /** Today's ISO date string for overdue comparisons */
-export const today = () => new Date().toISOString().split('T')[0]!;
+export const today = () => new Date().toISOString().split('T')[0] ?? '';
 
 /** Status → badge CSS class */
 export const statusBadge: Record<string, string> = {

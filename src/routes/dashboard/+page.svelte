@@ -88,7 +88,7 @@ import { fmtDate, fmtDateTime, today, fmtMoney, statusBadge, statusLabel } from 
 								<span class="font-medium text-body">{c.project_name}</span>
 							</p>
 							<p class="mt-0.5 text-sm truncate text-body">{c.body}</p>
-							<p class="mt-0.5 text-xs text-faint">{fmtDateTime(c.created_at!)}</p>
+							<p class="mt-0.5 text-xs text-faint">{fmtDateTime(c.created_at ?? '')}</p>
 						</div>
 					</a>
 				{/each}
@@ -192,7 +192,7 @@ import { fmtDate, fmtDateTime, today, fmtMoney, statusBadge, statusLabel } from 
 										on <span class="text-body">{a.project_name}</span>
 									</p>
 									<p class="mt-0.5 text-sm truncate text-body">{a.body}</p>
-									<p class="mt-0.5 text-xs text-faint">{fmtDateTime(a.created_at!)}</p>
+									<p class="mt-0.5 text-xs text-faint">{fmtDateTime(a.created_at ?? '')}</p>
 								</div>
 							</div>
 						</div>

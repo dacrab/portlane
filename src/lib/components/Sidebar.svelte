@@ -32,6 +32,7 @@
 		}
 	}
 
+	// biome-ignore lint/style/noNonNullAssertion: navItems has 5 static entries, index 4 is always Settings
 	const settingsItem = navItems[4]!;
 
 	const initials = $derived(
