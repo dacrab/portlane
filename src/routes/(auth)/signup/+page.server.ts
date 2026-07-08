@@ -1,5 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
+import { MIN_PASSWORD_LENGTH } from '$lib/server/form';
 
 export const actions: Actions = {
 	default: async ({ request, locals }) => {
@@ -8,7 +9,7 @@ export const actions: Actions = {
 		const password = String(form.get('password') ?? '');
 		const full_name = String(form.get('full_name') ?? '').trim();
 
-		if (password.length < 8) return fail(400, { error: 'Password must be at least 8 characters' });
+		if (password.length < MIN_PASSWORD_LENGTH) return fail(400, { error: 'Password must be at least 8 characters' });
 
 		const { error } = await locals.supabase.auth.signUp({
 			email,

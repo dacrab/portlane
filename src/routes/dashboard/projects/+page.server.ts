@@ -1,6 +1,7 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { inviteClientByEmail } from '$lib/server/project';
+import { str } from '$lib/server/form';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const { user } = await locals.safeGetSession();
@@ -19,16 +20,11 @@ export const actions: Actions = {
 		if (!user) error(401);
 		if (!session) error(401);
 		const form = await request.formData();
-		const name_val = form.get('name');
-		const description_val = form.get('description');
-		const due_date_val = form.get('due_date');
-		const status_val = form.get('status');
-		const client_email_val = form.get('client_email');
-		const name = typeof name_val === 'string' ? name_val.trim() : '';
-		const description = typeof description_val === 'string' ? description_val.trim() : null;
-		const due_date = typeof due_date_val === 'string' ? due_date_val : null;
-		const status = typeof status_val === 'string' ? status_val : 'planning';
-		const client_email = typeof client_email_val === 'string' ? client_email_val.trim().toLowerCase() : null;
+		const name = str(form, 'name');
+		const description = str(form, 'description') || null;
+		const due_date = str(form, 'due_date') || null;
+		const status = str(form, 'status', 'planning');
+		const client_email = str(form, 'client_email').toLowerCase() || null;
 
 		if (!name) return fail(400, { error: 'Name is required' });
 

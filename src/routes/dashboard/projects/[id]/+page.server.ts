@@ -1,6 +1,7 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { getProjectMilestones, getProjectFiles, getProjectComments, addComment, uploadProjectFile, inviteClientByEmail } from '$lib/server/project';
+import { str, int } from '$lib/server/form';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
 	const { user } = await locals.safeGetSession();
@@ -35,10 +36,8 @@ export const actions: Actions = {
 		const { user } = await locals.safeGetSession();
 		if (!user) error(401);
 		const form = await request.formData();
-		const minutes_val = form.get('minutes');
-		const description_val = form.get('description');
-		const minutes = typeof minutes_val === 'string' ? parseInt(minutes_val) : 0;
-		const description = typeof description_val === 'string' ? description_val.trim() : null;
+		const minutes = int(form, 'minutes');
+		const description = str(form, 'description') || null;
 		if (!minutes || minutes <= 0) return fail(400, { error: 'Invalid minutes' });
 		await locals.supabase.from('time_entries').insert({
 			project_id: params.id, user_id: user.id, minutes, description,
@@ -47,8 +46,7 @@ export const actions: Actions = {
 
 	save_note: async ({ locals, params, request }) => {
 		const form = await request.formData();
-		const body_val = form.get('body');
-		const body = typeof body_val === 'string' ? body_val.trim() : '';
+		const body = str(form, 'body');
 		await locals.supabase.from('project_notes').upsert({ project_id: params.id, body }, { onConflict: 'project_id' });
 	},
 
@@ -56,24 +54,21 @@ export const actions: Actions = {
 		const { user } = await locals.safeGetSession();
 		if (!user) error(401);
 		const form = await request.formData();
-		const body_val = form.get('body');
-		const body = typeof body_val === 'string' ? body_val.trim() : '';
+		const body = str(form, 'body');
 		if (!body) return fail(400, { error: 'Comment body is required' });
 		await addComment(locals.supabase, params.id, user.id, body);
 	},
 
 	toggle_milestone: async ({ locals, params, request }) => {
 		const form = await request.formData();
-		const id_val = form.get('id');
-		const id = typeof id_val === 'string' ? id_val : '';
+		const id = str(form, 'id');
 		const completed = form.get('completed') === 'true';
 		await locals.supabase.from('milestones').update({ completed: !completed }).eq('id', id).eq('project_id', params.id);
 	},
 
 	add_milestone: async ({ locals, params, request }) => {
 		const form = await request.formData();
-		const name_val = form.get('name');
-		const name = typeof name_val === 'string' ? name_val.trim() : '';
+		const name = str(form, 'name');
 		if (!name) return fail(400, { error: 'Name is required' });
 		await locals.supabase.rpc('add_milestone', { p_project_id: params.id, p_name: name });
 	},
@@ -93,8 +88,7 @@ export const actions: Actions = {
 
 	delete_file: async ({ locals, request }) => {
 		const form = await request.formData();
-		const id_val = form.get('id');
-		const id = typeof id_val === 'string' ? id_val : '';
+		const id = str(form, 'id');
 		const { data: file } = await locals.supabase.from('files').select('storage_path').eq('id', id).single();
 		if (file) await locals.supabase.storage.from('project-files').remove([file.storage_path]);
 		await locals.supabase.from('files').delete().eq('id', id);
@@ -102,8 +96,7 @@ export const actions: Actions = {
 
 	update_status: async ({ locals, params, request }) => {
 		const form = await request.formData();
-		const status_val = form.get('status');
-		const status = typeof status_val === 'string' ? status_val : '';
+		const status = str(form, 'status');
 		await locals.supabase.from('projects').update({ status }).eq('id', params.id);
 	},
 
@@ -114,8 +107,7 @@ export const actions: Actions = {
 
 	remove_client: async ({ locals, params, request }) => {
 		const form = await request.formData();
-		const client_id_val = form.get('client_id');
-		const client_id = typeof client_id_val === 'string' ? client_id_val : '';
+		const client_id = str(form, 'client_id');
 		await locals.supabase.from('project_clients').delete().eq('project_id', params.id).eq('client_id', client_id);
 	},
 
@@ -123,8 +115,7 @@ export const actions: Actions = {
 		const { session } = await locals.safeGetSession();
 		if (!session) error(401);
 		const form = await request.formData();
-		const email_val = form.get('email');
-		const email = typeof email_val === 'string' ? email_val.trim().toLowerCase() : '';
+		const email = str(form, 'email').toLowerCase();
 		if (!email) return fail(400, { error: 'Email is required' });
 
 		const inviteErr = await inviteClientByEmail(session.access_token, email, params.id);

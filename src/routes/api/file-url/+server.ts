@@ -12,9 +12,9 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 	const projectId = path.split('/')[0];
 	if (!projectId) error(400, 'Invalid path');
 
-	const { data: access } = await locals.supabase.from('project_clients').select('client_id').eq('project_id', projectId).eq('client_id', user.id).maybeSingle();
-	const isOwner = await locals.supabase.from('projects').select('id').eq('id', projectId).eq('freelancer_id', user.id).maybeSingle();
-	if (!access && !isOwner.data) error(403, 'Forbidden');
+	const { data: access } = await locals.supabase.from('project_clients').select('project_id').eq('project_id', projectId).eq('client_id', user.id).maybeSingle();
+	const { data: owned } = await locals.supabase.from('projects').select('id').eq('id', projectId).eq('freelancer_id', user.id).maybeSingle();
+	if (!access && !owned) error(403, 'Forbidden');
 
 	const { data, error: storageErr } = await locals.supabase.storage
 		.from('project-files')

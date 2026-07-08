@@ -1,6 +1,7 @@
 import { error, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { createCheckoutSessionViaEdge } from '$lib/server/stripe';
+import { str } from '$lib/server/form';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
 	const { user } = await locals.safeGetSession();
@@ -28,8 +29,7 @@ export const actions: Actions = {
 		if (!session) error(401);
 
 		const form = await request.formData();
-		const invoiceId_val = form.get('invoiceId');
-		const invoiceId = typeof invoiceId_val === 'string' ? invoiceId_val : '';
+		const invoiceId = str(form, 'invoiceId');
 		if (!invoiceId) return fail(400, { missing: true });
 
 		const result = await createCheckoutSessionViaEdge(

@@ -2,6 +2,7 @@ import { error, redirect, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { getProjectMilestones, getProjectFiles, getProjectComments, addComment, uploadProjectFile } from '$lib/server/project';
 import { createCheckoutSessionViaEdge } from '$lib/server/stripe';
+import { str } from '$lib/server/form';
 import type { Database } from '$lib/database.types';
 
 type ProjectItem = Database['public']['Tables']['projects']['Row'] & {
@@ -57,8 +58,7 @@ export const actions: Actions = {
 		const projectId = url.searchParams.get('project');
 		if (!projectId) error(400, 'Missing project');
 		const form = await request.formData();
-		const body_val = form.get('body');
-		const body = typeof body_val === 'string' ? body_val.trim() : '';
+		const body = str(form, 'body');
 		if (!body) return;
 		await addComment(locals.supabase, projectId, user.id, body);
 	},
@@ -68,8 +68,7 @@ export const actions: Actions = {
 		if (!user) error(401);
 		const projectId = url.searchParams.get('project');
 		if (!projectId) error(400, 'Missing project');
-		const note_val = (await request.formData()).get('note');
-		const note = typeof note_val === 'string' ? note_val.trim() : null;
+		const note = str(await request.formData(), 'note') || null;
 		await locals.supabase.rpc('approve_project', { p_project_id: projectId, p_note: note || undefined });
 	},
 
@@ -78,8 +77,7 @@ export const actions: Actions = {
 		if (!user) error(401);
 		const projectId = url.searchParams.get('project');
 		if (!projectId) error(400, 'Missing project');
-		const note_val = (await request.formData()).get('note');
-		const note = typeof note_val === 'string' ? note_val.trim() : null;
+		const note = str(await request.formData(), 'note') || null;
 		await locals.supabase.rpc('request_revision', { p_project_id: projectId, p_note: note || undefined });
 	},
 
@@ -104,8 +102,7 @@ export const actions: Actions = {
 		if (!session) error(401);
 
 		const form = await request.formData();
-		const invoiceId_val = form.get('invoiceId');
-		const invoiceId = typeof invoiceId_val === 'string' ? invoiceId_val : '';
+		const invoiceId = str(form, 'invoiceId');
 		if (!invoiceId) return fail(400, { missing: true });
 
 		const result = await createCheckoutSessionViaEdge(invoiceId, session.access_token, reqUrl.origin);

@@ -7,7 +7,7 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 	if (!user) redirect(303, '/login');
 	if (user?.user_metadata?.role === 'client') redirect(303, '/portal');
 
-	const { data } = await locals.supabase.rpc('get_unread_comment_count', { p_user_id: user.id });
+	const { data } = await locals.supabase.rpc('get_unread_comments', { p_user_id: user.id });
 
-	return { user, unreadComments: (data as number) ?? 0 };
+	return { user, unreadComments: (data ?? []) as any };
 };
