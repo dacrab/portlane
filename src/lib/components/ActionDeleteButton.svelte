@@ -1,15 +1,21 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { confirmDelete } from '$lib/fmt';
-	import IconTrashRegular from 'phosphor-icons-svelte/IconTrashRegular.svelte';
+import IconTrashRegular from 'phosphor-icons-svelte/IconTrashRegular.svelte'
+import { enhance } from '$app/forms'
+import { confirmDelete } from '$lib/ui/confirm'
 
-	let { action, message, id, name = 'id', ondelete }: {
-		action: string;
-		message: string;
-		id: string | number;
-		name?: string;
-		ondelete?: () => void;
-	} = $props();
+let {
+	action,
+	message,
+	id,
+	name = 'id',
+	ondelete,
+}: {
+	action: string
+	message: string
+	id: string | number
+	name?: string
+	ondelete?: () => void
+} = $props()
 </script>
 
 <form method="POST" action={action} use:enhance={() => async ({ update }) => { await update(); ondelete?.(); }}>

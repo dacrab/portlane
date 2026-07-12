@@ -1,12 +1,17 @@
 <script lang="ts">
-	import type { Component } from 'svelte';
+import type { Component } from 'svelte'
 
-	let { title, count, icon: Icon, compact = false }: {
-		title: string;
-		count?: string | number;
-		icon?: Component;
-		compact?: boolean;
-	} = $props();
+let {
+	title,
+	count,
+	icon: Icon,
+	compact = false,
+}: {
+	title: string
+	count?: string | number
+	icon?: Component
+	compact?: boolean
+} = $props()
 </script>
 
 {#if compact}

@@ -1,29 +1,32 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import Avatar from '$lib/components/Avatar.svelte';
-	import { toast } from 'svelte-sonner';
-	import type { PageData, ActionData } from './$types';
+import { toast } from 'svelte-sonner'
+import { enhance } from '$app/forms'
+import Avatar from '$lib/components/Avatar.svelte'
+import type { ActionData, PageData } from './$types'
 
-	let { data, form }: { data: PageData; form: ActionData } = $props();
+let { data, form }: { data: PageData; form: ActionData } = $props()
 
-	$effect(() => {
-		if (form?.profile_saved) toast.success('Profile updated');
-		if (form?.profile_error) toast.error(form.profile_error);
-		if (form?.password_saved) toast.success('Password updated');
-		if (form?.password_error) toast.error(form.password_error);
-	});
+$effect(() => {
+	if (form?.profile_saved) toast.success('Profile updated')
+	if (form?.profile_error) toast.error(form.profile_error)
+	if (form?.password_saved) toast.success('Password updated')
+	if (form?.password_error) toast.error(form.password_error)
+})
 
+let deleteForm: HTMLFormElement
 
-	let deleteForm: HTMLFormElement;
-
-	function confirmDeleteAccount() {
-		toast('Delete your account?', {
-			description: 'All projects, files, and data will be permanently removed. This cannot be undone.',
-			action: { label: 'Delete account', onClick: () => deleteForm.requestSubmit() },
-			cancel: { label: 'Cancel', onClick: () => {} },
-			duration: 12000,
-		});
-	}
+function confirmDeleteAccount() {
+	toast('Delete your account?', {
+		description:
+			'All projects, files, and data will be permanently removed. This cannot be undone.',
+		action: {
+			label: 'Delete account',
+			onClick: () => deleteForm.requestSubmit(),
+		},
+		cancel: { label: 'Cancel', onClick: () => {} },
+		duration: 12000,
+	})
+}
 </script>
 
 	<div>

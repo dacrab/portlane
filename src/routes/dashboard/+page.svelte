@@ -1,56 +1,98 @@
 <script lang="ts">
-	import type { PageData } from './$types';
-import { browser } from '$app/environment';
-import { onMount } from 'svelte';
-import { invalidateAll } from '$app/navigation';
-import { fmtDate, fmtDateTime, today, fmtMoney, statusBadge, statusLabel } from '$lib/fmt';
-	import Avatar from '$lib/components/Avatar.svelte';
-	import IconPlusRegular from 'phosphor-icons-svelte/IconPlusRegular.svelte';
-	import IconFolderOpenRegular from 'phosphor-icons-svelte/IconFolderOpenRegular.svelte';
-	import IconClockRegular from 'phosphor-icons-svelte/IconClockRegular.svelte';
-	import IconCheckCircleRegular from 'phosphor-icons-svelte/IconCheckCircleRegular.svelte';
-	import IconCurrencyDollarRegular from 'phosphor-icons-svelte/IconCurrencyDollarRegular.svelte';
-	import IconCheckRegular from 'phosphor-icons-svelte/IconCheckRegular.svelte';
-	import IconXRegular from 'phosphor-icons-svelte/IconXRegular.svelte';
-	import EmptyState from '$lib/components/EmptyState.svelte';
-	import IconBellRegular from 'phosphor-icons-svelte/IconBellRegular.svelte';
+import IconBellRegular from 'phosphor-icons-svelte/IconBellRegular.svelte'
+import IconCheckCircleRegular from 'phosphor-icons-svelte/IconCheckCircleRegular.svelte'
+import IconCheckRegular from 'phosphor-icons-svelte/IconCheckRegular.svelte'
+import IconClockRegular from 'phosphor-icons-svelte/IconClockRegular.svelte'
+import IconCurrencyDollarRegular from 'phosphor-icons-svelte/IconCurrencyDollarRegular.svelte'
+import IconFolderOpenRegular from 'phosphor-icons-svelte/IconFolderOpenRegular.svelte'
+import IconPlusRegular from 'phosphor-icons-svelte/IconPlusRegular.svelte'
+import IconXRegular from 'phosphor-icons-svelte/IconXRegular.svelte'
+import { onMount } from 'svelte'
+import { browser } from '$app/environment'
+import { invalidateAll } from '$app/navigation'
+import Avatar from '$lib/components/Avatar.svelte'
+import EmptyState from '$lib/components/EmptyState.svelte'
+import {
+	fmtDate,
+	fmtDateTime,
+	fmtMoney,
+	statusBadge,
+	statusLabel,
+	today,
+} from '$lib/fmt'
+import type { PageData } from './$types'
 
-	let { data }: { data: PageData } = $props();
+let { data }: { data: PageData } = $props()
 
-	// Auto-dismiss: mark all as read when the dashboard is visited
-	onMount(async () => {
-		if (data.unreadComments.length > 0) {
-			await fetch('?/mark_read', { method: 'POST' });
-			invalidateAll();
-		}
-	});
-
-	let onboardingDismissed = $state(
-		browser && localStorage.getItem('onboarding_dismissed') === '1'
-	);
-	function dismissOnboarding() {
-		localStorage.setItem('onboarding_dismissed', '1');
-		onboardingDismissed = true;
+// Auto-dismiss: mark all as read when the dashboard is visited
+onMount(async () => {
+	if (data.unreadComments.length > 0) {
+		await fetch('?/mark_read', { method: 'POST' })
+		invalidateAll()
 	}
+})
 
-	const showOnboarding = $derived(!onboardingDismissed && !data.onboardingDone);
+let onboardingDismissed = $state(
+	browser && localStorage.getItem('onboarding_dismissed') === '1',
+)
+function dismissOnboarding() {
+	localStorage.setItem('onboarding_dismissed', '1')
+	onboardingDismissed = true
+}
 
+const showOnboarding = $derived(!onboardingDismissed && !data.onboardingDone)
 
-	const isOverdue = (due: string | null) => due && due < today();
+const isOverdue = (due: string | null) => due && due < today()
 
-	const stats = $derived([
-		{ label: 'Active projects', value: data.active,     icon: IconFolderOpenRegular,    color: 'var(--color-accent-600)' },
-		{ label: 'Pending review',  value: data.pending,    icon: IconClockRegular,         color: '#b45309' },
-		{ label: 'Completed',       value: data.completed,  icon: IconCheckCircleRegular,   color: '#15803d' },
-		{ label: 'Revenue', value: fmtMoney(data.revenueMTD), icon: IconCurrencyDollarRegular, color: '#1d4ed8' },
-	]);
+const stats = $derived([
+	{
+		label: 'Active projects',
+		value: data.active,
+		icon: IconFolderOpenRegular,
+		color: 'var(--color-accent-600)',
+	},
+	{
+		label: 'Pending review',
+		value: data.pending,
+		icon: IconClockRegular,
+		color: '#b45309',
+	},
+	{
+		label: 'Completed',
+		value: data.completed,
+		icon: IconCheckCircleRegular,
+		color: '#15803d',
+	},
+	{
+		label: 'Revenue',
+		value: fmtMoney(data.revenueMTD),
+		icon: IconCurrencyDollarRegular,
+		color: '#1d4ed8',
+	},
+])
 
-	const onboardingSteps = $derived([
-		{ label: 'Set your name in Settings', done: data.onboarding.hasProfile, href: '/dashboard/settings' },
-		{ label: 'Create your first project', done: data.onboarding.hasProject, href: '/dashboard/projects?new=1' },
-		{ label: 'Invite a client to a project', done: data.onboarding.hasClient, href: '/dashboard/projects' },
-		{ label: 'Send your first invoice', done: data.onboarding.hasInvoice, href: '/dashboard/invoices' },
-	]);
+const onboardingSteps = $derived([
+	{
+		label: 'Set your name in Settings',
+		done: data.onboarding.hasProfile,
+		href: '/dashboard/settings',
+	},
+	{
+		label: 'Create your first project',
+		done: data.onboarding.hasProject,
+		href: '/dashboard/projects?new=1',
+	},
+	{
+		label: 'Invite a client to a project',
+		done: data.onboarding.hasClient,
+		href: '/dashboard/projects',
+	},
+	{
+		label: 'Send your first invoice',
+		done: data.onboarding.hasInvoice,
+		href: '/dashboard/invoices',
+	},
+])
 </script>
 
 <div class="space-y-8">

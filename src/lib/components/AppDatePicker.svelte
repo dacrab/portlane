@@ -1,21 +1,23 @@
 <script lang="ts">
-	import { DatePicker } from 'bits-ui';
-	import { parseDate, type DateValue } from '@internationalized/date';
-	import IconCalendarRegular from 'phosphor-icons-svelte/IconCalendarRegular.svelte';
-	import IconCaretLeftRegular from 'phosphor-icons-svelte/IconCaretLeftRegular.svelte';
-	import IconCaretRightRegular from 'phosphor-icons-svelte/IconCaretRightRegular.svelte';
+import { type DateValue, parseDate } from '@internationalized/date'
+import { DatePicker } from 'bits-ui'
+import IconCalendarRegular from 'phosphor-icons-svelte/IconCalendarRegular.svelte'
+import IconCaretLeftRegular from 'phosphor-icons-svelte/IconCaretLeftRegular.svelte'
+import IconCaretRightRegular from 'phosphor-icons-svelte/IconCaretRightRegular.svelte'
 
-	let {
-		name,
-		value = $bindable(''),
-		placeholder = 'Pick a date',
-	}: {
-		name: string;
-		value?: string;
-		placeholder?: string;
-	} = $props();
+let {
+	name,
+	value = $bindable(''),
+	placeholder = 'Pick a date',
+}: {
+	name: string
+	value?: string
+	placeholder?: string
+} = $props()
 
-	let calValue = $state<DateValue | undefined>(value ? parseDate(value) : undefined);
+let calValue = $state<DateValue | undefined>(
+	value ? parseDate(value) : undefined,
+)
 </script>
 
 <input type="hidden" {name} value={value} />

@@ -1,62 +1,63 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { toast } from 'svelte-sonner';
-	import type { PageData } from './$types';
-	import type { Database } from '$lib/database.types';
-	import AppSelect from '$lib/components/AppSelect.svelte';
+import IconArrowRightRegular from 'phosphor-icons-svelte/IconArrowRightRegular.svelte'
+import IconFileTextRegular from 'phosphor-icons-svelte/IconFileTextRegular.svelte'
+import { toast } from 'svelte-sonner'
+import { enhance } from '$app/forms'
+import { toastEnhance } from '$lib/client/enhance'
+import ActionDeleteButton from '$lib/components/ActionDeleteButton.svelte'
+import AppDatePicker from '$lib/components/AppDatePicker.svelte'
+import AppSelect from '$lib/components/AppSelect.svelte'
+import EmptyState from '$lib/components/EmptyState.svelte'
+import SectionHeader from '$lib/components/SectionHeader.svelte'
+import { fmtDate, fmtMoney, INVOICE_STATUS_ITEMS } from '$lib/fmt'
+import type { InvoiceJoined } from '$lib/types'
+import type { PageData } from './$types'
 
-	import AppDatePicker from '$lib/components/AppDatePicker.svelte';
+let { data }: { data: PageData } = $props()
+let showForm = $state(false)
+let selectedProject = $state('')
+let selectedClient = $state('')
 
-	type InvoiceJoined = Database['public']['Tables']['invoices']['Row'] & {
-		projects: Pick<Database['public']['Tables']['projects']['Row'], 'name'> | null;
-		profiles: Pick<Database['public']['Tables']['profiles']['Row'], 'full_name'> | null;
-	};
-	import IconArrowRightRegular from 'phosphor-icons-svelte/IconArrowRightRegular.svelte';
-	import IconFileTextRegular from 'phosphor-icons-svelte/IconFileTextRegular.svelte';
-	import { fmtMoney, fmtDate } from '$lib/fmt';
-	import EmptyState from '$lib/components/EmptyState.svelte';
-	import SectionHeader from '$lib/components/SectionHeader.svelte';
-	import ActionDeleteButton from '$lib/components/ActionDeleteButton.svelte';
+let invoiceStatusOverrides = $state<Record<string, string>>({})
 
-	let { data }: { data: PageData } = $props();
-	let showForm = $state(false);
-	let selectedProject = $state('');
-	let selectedClient = $state('');
+type ProjectLight = {
+	id: string
+	name: string
+	project_clients:
+		| { profiles: { id: string; full_name: string | null } | null }[]
+		| null
+}
 
-	let invoiceStatusOverrides = $state<Record<string, string>>({});
+function getStatus(inv: { id: string; status: string }) {
+	return invoiceStatusOverrides[inv.id] ?? inv.status
+}
 
-	type ProjectLight = {
-		id: string; name: string;
-		project_clients: { profiles: { id: string; full_name: string | null } | null }[] | null;
-	};
+const clients = $derived(
+	(
+		(data.projects as ProjectLight[]).find((p) => p.id === selectedProject)
+			?.project_clients ?? []
+	)
+		.map((pc) => pc.profiles)
+		.filter((c): c is NonNullable<typeof c> => c != null),
+)
 
-	function getStatus(inv: { id: string; status: string }) {
-		return invoiceStatusOverrides[inv.id] ?? inv.status;
-	}
+const clientItems = $derived(
+	clients.map((c) => ({ value: c.id, label: c.full_name ?? c.id })),
+)
 
+const stats = $derived({
+	total: data.invoices.length,
+	outstanding: data.invoices
+		.filter((i: InvoiceJoined) => i.status === 'sent')
+		.reduce((s: number, i: InvoiceJoined) => s + i.amount_cents, 0),
+	paid: data.invoices
+		.filter((i: InvoiceJoined) => i.status === 'paid')
+		.reduce((s: number, i: InvoiceJoined) => s + i.amount_cents, 0),
+	overdue: data.invoices.filter((i: InvoiceJoined) => i.status === 'overdue')
+		.length,
+})
 
-	const clients = $derived(
-		((data.projects as ProjectLight[]).find((p) => p.id === selectedProject)?.project_clients ?? [])
-			.map((pc) => pc.profiles).filter((c): c is NonNullable<typeof c> => c != null)
-	);
-
-	const clientItems = $derived(clients.map((c) => ({ value: c.id, label: c.full_name ?? c.id })));
-
-	const stats = $derived({
-		total: data.invoices.length,
-		outstanding: data.invoices.filter((i: InvoiceJoined) => i.status === 'sent').reduce((s: number, i: InvoiceJoined) => s + i.amount_cents, 0),
-		paid: data.invoices.filter((i: InvoiceJoined) => i.status === 'paid').reduce((s: number, i: InvoiceJoined) => s + i.amount_cents, 0),
-		overdue: data.invoices.filter((i: InvoiceJoined) => i.status === 'overdue').length,
-	});
-
-
-	const statusItems = [
-		{ value: 'draft', label: 'Draft' },
-		{ value: 'sent', label: 'Sent' },
-		{ value: 'paid', label: 'Paid' },
-		{ value: 'overdue', label: 'Overdue' },
-	];
-
+const statusItems = INVOICE_STATUS_ITEMS
 </script>
 
 <div class="space-y-8">
@@ -92,12 +93,15 @@
 		<div class="card">
 			<SectionHeader title="Create invoice" />
 			<form method="POST" action="?/create"
-				use:enhance={() => async ({ result, update }) => {
-					showForm = false; selectedProject = ''; selectedClient = '';
-					await update();
-					if (result.type !== 'failure') toast.success('Invoice created');
-					else toast.error('Failed to create invoice');
-				}}
+				use:enhance={toastEnhance({
+					successMsg: 'Invoice created',
+					errorMsg: 'Failed to create invoice',
+					beforeUpdate: () => {
+						showForm = false
+						selectedProject = ''
+						selectedClient = ''
+					},
+				})}
 				class="grid gap-4 sm:grid-cols-2">
 				<div>
 					<p class="mb-1.5 text-xs font-medium text-muted">Project</p>
@@ -154,8 +158,8 @@
 			{#each data.invoices as inv}
 				<div class="flex items-center gap-4 px-6 py-4 divide-bottom">
 					<div class="flex-1 min-w-0">
-						<p class="text-sm font-medium text-body">{(inv as InvoiceJoined).projects?.name ?? '—'}</p>
-						<p class="mt-0.5 text-xs text-faint">{(inv as InvoiceJoined).profiles?.full_name ?? '—'}</p>
+						<p class="text-sm font-medium text-body">{inv.projects?.name ?? '—'}</p>
+						<p class="mt-0.5 text-xs text-faint">{inv.profiles?.full_name ?? '—'}</p>
 					</div>
 					<p class="hidden sm:block text-sm text-faint shrink-0">
 						{inv.due_date ? fmtDate(inv.due_date) : '—'}
@@ -163,7 +167,7 @@
 					<p class="text-sm font-semibold text-heading shrink-0">{fmtMoney(inv.amount_cents)}</p>
 					<div class="w-28 shrink-0">
 						<form id="inv-status-{inv.id}" method="POST" action="?/update_status"
-							use:enhance={() => async ({ update }) => { await update(); toast.success('Status updated'); }}>
+							use:enhance={toastEnhance({ successMsg: 'Status updated' })}>
 							<input type="hidden" name="id" value={inv.id} />
 							<input type="hidden" name="status" value={getStatus(inv)} />
 							<AppSelect

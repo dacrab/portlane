@@ -1,4 +1,4 @@
-import { EDGE_FN_BASE } from '$lib/env';
+import { callEdgeFn } from '$lib/server/edge'
 
 export async function createCheckoutSessionViaEdge(
 	invoiceId: string,
@@ -6,20 +6,11 @@ export async function createCheckoutSessionViaEdge(
 	origin: string,
 	returnPath?: string,
 ): Promise<{ url: string } | { error: string; status: number }> {
-	const res = await fetch(`${EDGE_FN_BASE}/create-checkout-session`, {
-		method: 'POST',
-		headers: {
-			Authorization: `Bearer ${accessToken}`,
-			'Content-Type': 'application/json',
-		},
-		body: JSON.stringify({ invoiceId, origin, returnPath }),
-	});
-
-	if (!res.ok) {
-		const text = await res.text();
-		return { error: text || 'Checkout session creation failed', status: res.status };
-	}
-
-	const data = await res.json();
-	return { url: data.url };
+	const result = await callEdgeFn<{ url: string }>(
+		'create-checkout-session',
+		accessToken,
+		{ invoiceId, origin, returnPath },
+	)
+	if ('error' in result) return { error: result.error, status: result.status }
+	return { url: result.data.url }
 }

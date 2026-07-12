@@ -1,18 +1,18 @@
-import { error } from '@sveltejs/kit';
-import type { PageServerLoad, Actions } from './$types';
+import { error } from '@sveltejs/kit'
+import type { Actions, PageServerLoad } from './$types'
 
 interface DashboardStats {
-	total_clients?: number;
-	total_invoices?: number;
-	active_projects?: number;
-	completed_projects?: number;
-	review_projects?: number;
-	revenue_mtd?: number;
+	total_clients?: number
+	total_invoices?: number
+	active_projects?: number
+	completed_projects?: number
+	review_projects?: number
+	revenue_mtd?: number
 }
 
 export const load: PageServerLoad = async ({ locals }) => {
-	const { user } = await locals.safeGetSession();
-	if (!user) error(401);
+	const { user } = await locals.safeGetSession()
+	if (!user) error(401)
 
 	const [
 		{ data: projects },
@@ -27,20 +27,25 @@ export const load: PageServerLoad = async ({ locals }) => {
 			.neq('status', 'archived')
 			.order('created_at', { ascending: false }),
 		locals.supabase.rpc('get_dashboard_stats', { p_user_id: user.id }),
-		locals.supabase.rpc('get_activity_feed', { p_user_id: user.id, p_limit: 5 }),
+		locals.supabase.rpc('get_activity_feed', {
+			p_user_id: user.id,
+			p_limit: 5,
+		}),
 		locals.supabase.rpc('get_unread_comments', { p_user_id: user.id }),
-	]);
+	])
 
-	const s = (stats as DashboardStats[])?.[0] ?? {};
+	const s = (stats as DashboardStats[])?.[0] ?? {}
 
-	const activeFallback = (projects ?? []).filter(p => !['completed','archived'].includes(p.status)).length;
+	const activeFallback = (projects ?? []).filter(
+		(p) => !['completed', 'archived'].includes(p.status),
+	).length
 
 	const onboarding = {
 		hasProject: (projects?.length ?? 0) > 0,
 		hasClient: (s.total_clients ?? 0) > 0,
 		hasInvoice: (s.total_invoices ?? 0) > 0,
-		hasProfile: !!(user?.user_metadata?.full_name),
-	};
+		hasProfile: !!user?.user_metadata?.full_name,
+	}
 
 	return {
 		projects: projects ?? [],
@@ -52,11 +57,11 @@ export const load: PageServerLoad = async ({ locals }) => {
 		unreadComments: unreadComments ?? [],
 		onboarding,
 		onboardingDone: Object.values(onboarding).every(Boolean),
-	};
-};
+	}
+}
 
 export const actions: Actions = {
 	mark_read: async ({ locals }) => {
-		await locals.supabase.rpc('mark_comments_read');
+		await locals.supabase.rpc('mark_comments_read')
 	},
-};
+}

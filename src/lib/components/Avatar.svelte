@@ -1,12 +1,26 @@
 <script lang="ts">
-	let { name = '?', size = 7, color = 'var(--color-accent-600)', bg = 'var(--color-accent-100)' }: {
-		name?: string; size?: number; color?: string; bg?: string;
-	} = $props();
+let {
+	name = '?',
+	size = 7,
+	color = 'var(--color-accent-600)',
+	bg = 'var(--color-accent-100)',
+}: {
+	name?: string
+	size?: number
+	color?: string
+	bg?: string
+} = $props()
 
-	const initials = $derived(
-		name.split(/[\s@]/).filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?'
-	);
-	const px = $derived(size * 4);
+const initials = $derived(
+	name
+		.split(/[\s@]/)
+		.filter(Boolean)
+		.map((w) => w[0])
+		.slice(0, 2)
+		.join('')
+		.toUpperCase() || '?',
+)
+const px = $derived(size * 4)
 </script>
 
 <div

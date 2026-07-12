@@ -1,20 +1,24 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { page } from '$app/state';
-	import { toast } from 'svelte-sonner';
-	import type { PageData } from './$types';
-	import { fmtMoney, statusBadge } from '$lib/fmt';
-	let { data }: { data: PageData } = $props();
+import { toast } from 'svelte-sonner'
+import { enhance } from '$app/forms'
+import { page } from '$app/state'
+import { fmtMoney, statusBadge } from '$lib/fmt'
+import type { PageData } from './$types'
 
-	const inv = $derived(data.invoice);
-	const project = $derived(inv?.projects ?? {});
-	const freelancerName = $derived(inv?.freelancer?.full_name ?? '—');
-	const clientName = $derived(inv?.client?.full_name ?? '—');
-	const currency = $derived(inv?.currency?.toUpperCase());
-	const amount = $derived(inv?.amount_cents ? fmtMoney(inv.amount_cents, currency) : '');
-	const isClient = $derived(inv?.client_id === data.user?.id);
+let { data }: { data: PageData } = $props()
 
-	const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+const inv = $derived(data.invoice)
+const project = $derived(inv?.projects ?? {})
+const freelancerName = $derived(inv?.freelancer?.full_name ?? '—')
+const clientName = $derived(inv?.client?.full_name ?? '—')
+const amount = $derived(inv?.amount_cents ? fmtMoney(inv.amount_cents) : '')
+const isClient = $derived(inv?.client_id === data.user?.id)
+
+const today = new Date().toLocaleDateString('en-US', {
+	year: 'numeric',
+	month: 'long',
+	day: 'numeric',
+})
 </script>
 
 <svelte:head>

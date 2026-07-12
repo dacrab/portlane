@@ -1,44 +1,53 @@
 <script lang="ts">
-	import { page } from '$app/state';
-	import { enhance } from '$app/forms';
-	import IconSignOutRegular from 'phosphor-icons-svelte/IconSignOutRegular.svelte';
-	import IconSidebarSimpleRegular from 'phosphor-icons-svelte/IconSidebarSimpleRegular.svelte';
-	import IconMoonRegular from 'phosphor-icons-svelte/IconMoonRegular.svelte';
-	import IconSunRegular from 'phosphor-icons-svelte/IconSunRegular.svelte';
-	import type { User } from '@supabase/supabase-js';
-	import { sidebarCollapsed } from '$lib/stores.svelte';
-	import { onMount } from 'svelte';
-	import { navItems } from '$lib/nav';
+import type { User } from '@supabase/supabase-js'
+import IconMoonRegular from 'phosphor-icons-svelte/IconMoonRegular.svelte'
+import IconSidebarSimpleRegular from 'phosphor-icons-svelte/IconSidebarSimpleRegular.svelte'
+import IconSignOutRegular from 'phosphor-icons-svelte/IconSignOutRegular.svelte'
+import IconSunRegular from 'phosphor-icons-svelte/IconSunRegular.svelte'
+import { onMount } from 'svelte'
+import { enhance } from '$app/forms'
+import { page } from '$app/state'
+import { type NavItem, navItems } from '$lib/nav'
+import { sidebarCollapsed } from '$lib/stores.svelte'
 
-	let { user, unreadComments = 0 }: { user: User | null; unreadComments?: number } = $props();
+let {
+	user,
+	unreadComments = 0,
+}: { user: User | null; unreadComments?: number } = $props()
 
-	let collapsed = $derived(sidebarCollapsed.value);
-	let dark = $state(false);
+let collapsed = $derived(sidebarCollapsed.value)
+let dark = $state(false)
 
-	function toggle() { sidebarCollapsed.toggle(); }
+function toggle() {
+	sidebarCollapsed.toggle()
+}
 
-	onMount(() => {
-		dark = document.documentElement.classList.contains('dark');
-	});
+onMount(() => {
+	dark = document.documentElement.classList.contains('dark')
+})
 
-	function toggleDark() {
-		dark = !dark;
-		if (dark) {
-			document.documentElement.classList.add('dark');
-			localStorage.setItem('theme', 'dark');
-		} else {
-			document.documentElement.classList.remove('dark');
-			localStorage.setItem('theme', 'light');
-		}
+function toggleDark() {
+	dark = !dark
+	if (dark) {
+		document.documentElement.classList.add('dark')
+		localStorage.setItem('theme', 'dark')
+	} else {
+		document.documentElement.classList.remove('dark')
+		localStorage.setItem('theme', 'light')
 	}
+}
 
-	// biome-ignore lint/style/noNonNullAssertion: navItems has 5 static entries, index 4 is always Settings
-	const settingsItem = navItems[4]!;
+const settingsItem = navItems[4] as NavItem
 
-	const initials = $derived(
-		(user?.user_metadata?.full_name ?? user?.email ?? '?')
-			.split(/[\s@]/).filter(Boolean).map((w: string) => w[0]).slice(0, 2).join('').toUpperCase()
-	);
+const initials = $derived(
+	(user?.user_metadata?.full_name ?? user?.email ?? '?')
+		.split(/[\s@]/)
+		.filter(Boolean)
+		.map((w: string) => w[0])
+		.slice(0, 2)
+		.join('')
+		.toUpperCase(),
+)
 </script>
 
 <aside

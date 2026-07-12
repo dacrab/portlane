@@ -1,13 +1,19 @@
 <script lang="ts">
-	import type { Component } from 'svelte';
+import type { Component } from 'svelte'
 
-	let { icon: Icon, title, description, action, compact = false }: {
-		icon?: Component;
-		title: string;
-		description: string;
-		action?: { label: string; onClick?: () => void; href?: string };
-		compact?: boolean;
-	} = $props();
+let {
+	icon: Icon,
+	title,
+	description,
+	action,
+	compact = false,
+}: {
+	icon?: Component
+	title: string
+	description: string
+	action?: { label: string; onClick?: () => void; href?: string }
+	compact?: boolean
+} = $props()
 </script>
 
 <div class="flex flex-col items-center justify-center px-6 {compact ? 'py-16' : 'py-20'} text-center">

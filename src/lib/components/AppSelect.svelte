@@ -1,29 +1,31 @@
 <script lang="ts">
-	import { Select } from 'bits-ui';
-	import { beforeNavigate } from '$app/navigation';
-	import IconCaretUpDownRegular from 'phosphor-icons-svelte/IconCaretUpDownRegular.svelte';
-	import IconCheckRegular from 'phosphor-icons-svelte/IconCheckRegular.svelte';
+import { Select } from 'bits-ui'
+import IconCaretUpDownRegular from 'phosphor-icons-svelte/IconCaretUpDownRegular.svelte'
+import IconCheckRegular from 'phosphor-icons-svelte/IconCheckRegular.svelte'
+import { beforeNavigate } from '$app/navigation'
 
-	type Item = { value: string; label: string; disabled?: boolean };
+type Item = { value: string; label: string; disabled?: boolean }
 
-	let {
-		name,
-		value = $bindable(''),
-		items,
-		placeholder = 'Select…',
-		required = false,
-		onchange,
-	}: {
-		name?: string;
-		value?: string;
-		items: Item[];
-		placeholder?: string;
-		required?: boolean;
-		onchange?: (value: string) => void;
-	} = $props();
+let {
+	name,
+	value = $bindable(''),
+	items,
+	placeholder = 'Select…',
+	required = false,
+	onchange,
+}: {
+	name?: string
+	value?: string
+	items: Item[]
+	placeholder?: string
+	required?: boolean
+	onchange?: (value: string) => void
+} = $props()
 
-	let open = $state(false);
-	beforeNavigate(() => { open = false; });
+let open = $state(false)
+beforeNavigate(() => {
+	open = false
+})
 </script>
 
 <Select.Root

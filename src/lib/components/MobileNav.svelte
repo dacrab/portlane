@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { page } from '$app/state';
-	import { navItems } from '$lib/nav';
+import { page } from '$app/state'
+import { navItems } from '$lib/nav'
 
-	let { unreadComments = 0 }: { unreadComments?: number } = $props();
+let { unreadComments = 0 }: { unreadComments?: number } = $props()
 </script>
 
 <nav class="fixed bottom-0 inset-x-0 z-30 flex lg:hidden"

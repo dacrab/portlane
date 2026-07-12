@@ -1,20 +1,22 @@
 <script lang="ts">
-	import '../app.css';
-	import { Toaster } from 'svelte-sonner';
-	import { invalidate } from '$app/navigation';
-	import { onMount } from 'svelte';
-	import { supabase } from '$lib/supabase';
+import '../app.css'
+import { onMount } from 'svelte'
+import { Toaster } from 'svelte-sonner'
+import { invalidate } from '$app/navigation'
+import { supabase } from '$lib/supabase'
 
-	let { children, data } = $props();
+let { children, data } = $props()
 
-	onMount(() => {
-		const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
-			if (session?.expires_at !== data.sessionExpiresAt) {
-				invalidate('supabase:auth');
-			}
-		});
-		return () => subscription.unsubscribe();
-	});
+onMount(() => {
+	const {
+		data: { subscription },
+	} = supabase.auth.onAuthStateChange((_, session) => {
+		if (session?.expires_at !== data.sessionExpiresAt) {
+			invalidate('supabase:auth')
+		}
+	})
+	return () => subscription.unsubscribe()
+})
 </script>
 
 <!-- Prevent dark mode flash -->

@@ -1,9 +1,9 @@
-import { redirect } from '@sveltejs/kit';
-import type { LayoutServerLoad } from './$types';
-import { getHomeRoute } from '$lib/server/project';
+import { redirect } from '@sveltejs/kit'
+import { getHomeRoute } from '$lib/server/project'
+import type { LayoutServerLoad } from './$types'
 
 export const load: LayoutServerLoad = async ({ locals }) => {
-	const { session, user } = await locals.safeGetSession();
-	if (!session) return;
-	redirect(303, getHomeRoute(user?.user_metadata?.role));
-};
+	const { session, user } = await locals.safeGetSession()
+	if (!session) return
+	redirect(303, getHomeRoute(user?.user_metadata?.role))
+}

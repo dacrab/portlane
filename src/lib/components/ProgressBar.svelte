@@ -1,11 +1,15 @@
 <script lang="ts">
-	let { current, total, label = 'Progress' }: {
-		current: number;
-		total: number;
-		label?: string;
-	} = $props();
+let {
+	current,
+	total,
+	label = 'Progress',
+}: {
+	current: number
+	total: number
+	label?: string
+} = $props()
 
-	let pct = $derived(total > 0 ? Math.round((current / total) * 100) : 0);
+let pct = $derived(total > 0 ? Math.round((current / total) * 100) : 0)
 </script>
 
 <div>

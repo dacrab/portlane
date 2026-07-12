@@ -1,17 +1,22 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
-	import IconXRegular from 'phosphor-icons-svelte/IconXRegular.svelte';
+import IconXRegular from 'phosphor-icons-svelte/IconXRegular.svelte'
+import type { Snippet } from 'svelte'
 
-	let { open = $bindable(), title, description, children }: {
-		open: boolean;
-		title: string;
-		description?: string;
-		children: Snippet;
-	} = $props();
+let {
+	open = $bindable(),
+	title,
+	description,
+	children,
+}: {
+	open: boolean
+	title: string
+	description?: string
+	children: Snippet
+} = $props()
 
-	function closeOnBackdrop(e: MouseEvent) {
-		if (e.target === e.currentTarget) open = false;
-	}
+function closeOnBackdrop(e: MouseEvent) {
+	if (e.target === e.currentTarget) open = false
+}
 </script>
 
 {#if open}

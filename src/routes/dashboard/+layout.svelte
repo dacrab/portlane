@@ -1,7 +1,8 @@
 <script lang="ts">
-	import Sidebar from '$lib/components/Sidebar.svelte';
-	import MobileNav from '$lib/components/MobileNav.svelte';
-	let { children, data } = $props();
+import MobileNav from '$lib/components/MobileNav.svelte'
+import Sidebar from '$lib/components/Sidebar.svelte'
+
+let { children, data } = $props()
 </script>
 
 <div class="flex h-screen overflow-hidden">

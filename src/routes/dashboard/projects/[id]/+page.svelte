@@ -1,70 +1,87 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { toast } from 'svelte-sonner';
-	import { untrack } from 'svelte';
-	import IconCheckCircleBold from 'phosphor-icons-svelte/IconCheckCircleBold.svelte';
-	import IconCircleRegular from 'phosphor-icons-svelte/IconCircleRegular.svelte';
-	import IconChatTextRegular from 'phosphor-icons-svelte/IconChatTextRegular.svelte';
-	import IconArrowLeftRegular from 'phosphor-icons-svelte/IconArrowLeftRegular.svelte';
-	import IconPlusRegular from 'phosphor-icons-svelte/IconPlusRegular.svelte';
-	import IconUserPlusRegular from 'phosphor-icons-svelte/IconUserPlusRegular.svelte';
-	import IconDownloadSimpleRegular from 'phosphor-icons-svelte/IconDownloadSimpleRegular.svelte';
-	import IconTrashRegular from 'phosphor-icons-svelte/IconTrashRegular.svelte';
-	import IconClockRegular from 'phosphor-icons-svelte/IconClockRegular.svelte';
-	import IconLinkRegular from 'phosphor-icons-svelte/IconLinkRegular.svelte';
-	import IconNoteRegular from 'phosphor-icons-svelte/IconNoteRegular.svelte';
-	import IconExportRegular from 'phosphor-icons-svelte/IconExportRegular.svelte';
-	import type { PageData } from './$types';
-	import AppSelect from '$lib/components/AppSelect.svelte';
-	import { fmtDate, fmtDateLong, downloadFile, confirmDelete } from '$lib/fmt';
-	import Avatar from '$lib/components/Avatar.svelte';
-	import SectionHeader from '$lib/components/SectionHeader.svelte';
-	import ProgressBar from '$lib/components/ProgressBar.svelte';
-	import ActionDeleteButton from '$lib/components/ActionDeleteButton.svelte';
+import IconArrowLeftRegular from 'phosphor-icons-svelte/IconArrowLeftRegular.svelte'
+import IconChatTextRegular from 'phosphor-icons-svelte/IconChatTextRegular.svelte'
+import IconCheckCircleBold from 'phosphor-icons-svelte/IconCheckCircleBold.svelte'
+import IconCircleRegular from 'phosphor-icons-svelte/IconCircleRegular.svelte'
+import IconClockRegular from 'phosphor-icons-svelte/IconClockRegular.svelte'
+import IconDownloadSimpleRegular from 'phosphor-icons-svelte/IconDownloadSimpleRegular.svelte'
+import IconExportRegular from 'phosphor-icons-svelte/IconExportRegular.svelte'
+import IconLinkRegular from 'phosphor-icons-svelte/IconLinkRegular.svelte'
+import IconNoteRegular from 'phosphor-icons-svelte/IconNoteRegular.svelte'
+import IconPlusRegular from 'phosphor-icons-svelte/IconPlusRegular.svelte'
+import IconTrashRegular from 'phosphor-icons-svelte/IconTrashRegular.svelte'
+import IconUserPlusRegular from 'phosphor-icons-svelte/IconUserPlusRegular.svelte'
+import { untrack } from 'svelte'
+import { toast } from 'svelte-sonner'
+import { enhance } from '$app/forms'
+import { downloadFile } from '$lib/client/download'
+import { toastEnhance } from '$lib/client/enhance'
+import ActionDeleteButton from '$lib/components/ActionDeleteButton.svelte'
+import AppSelect from '$lib/components/AppSelect.svelte'
+import Avatar from '$lib/components/Avatar.svelte'
+import ProgressBar from '$lib/components/ProgressBar.svelte'
+import SectionHeader from '$lib/components/SectionHeader.svelte'
+import { fmtDate, fmtDateLong, PROJECT_STATUS_ITEMS } from '$lib/fmt'
+import {
+	milestoneDone,
+	milestoneProgress,
+	milestoneTotal,
+} from '$lib/milestones'
+import { confirmDelete } from '$lib/ui/confirm'
+import type { PageData } from './$types'
 
-	let { data }: { data: PageData } = $props();
-	let comment = $state('');
-	let newMilestone = $state('');
-	let inviteEmail = $state('');
-	let inviting = $state(false);
-	let timeMinutes = $state('');
-	let timeDesc = $state('');
-	let noteBody = $state(untrack(() => data.note));
-	let projectStatus = $state(untrack(() => data.project.status));
+let { data }: { data: PageData } = $props()
+let comment = $state('')
+let newMilestone = $state('')
+let inviteEmail = $state('')
+let inviting = $state(false)
+let timeMinutes = $state('')
+let timeDesc = $state('')
+let noteBody = $state(untrack(() => data.note))
+let projectStatus = $state(untrack(() => data.project.status))
 
-	const totalMilestones = $derived(data.milestones.length);
-	const doneMilestones = $derived(data.milestones.filter((m) => m.completed).length);
-	const progress = $derived(totalMilestones ? Math.round((doneMilestones / totalMilestones) * 100) : 0);
-	const totalMinutes = $derived(data.timeEntries.reduce((s, e) => s + e.minutes, 0));
-	const totalHours = $derived((totalMinutes / 60).toFixed(1));
+const totalMilestones = $derived(milestoneTotal(data.milestones))
+const doneMilestones = $derived(milestoneDone(data.milestones))
+const progress = $derived(milestoneProgress(data.milestones))
+const totalMinutes = $derived(
+	data.timeEntries.reduce((s, e) => s + e.minutes, 0),
+)
+const totalHours = $derived((totalMinutes / 60).toFixed(1))
 
-	function copyPortalLink() {
-		navigator.clipboard.writeText(`${window.location.origin}/portal?project=${data.project.id}`);
-		toast.success('Portal link copied to clipboard');
-	}
+function copyPortalLink() {
+	navigator.clipboard.writeText(
+		`${window.location.origin}/portal?project=${data.project.id}`,
+	)
+	toast.success('Portal link copied to clipboard')
+}
 
-	function exportTimeCSV() {
-		const rows = [
-			['Date', 'Description', 'Minutes', 'Hours'],
-			...data.timeEntries.map((e) => [
-				e.logged_at,
-				e.description ?? '',
-				e.minutes,
-				(e.minutes / 60).toFixed(2),
-			]),
-			['', 'Total', totalMinutes, (totalMinutes / 60).toFixed(2)],
-		];
-		const csv = rows.map(r => r.map(String).map(v => `"${v.replace(/"/g, '""')}"`).join(',')).join('\n');
-		const blob = new Blob([csv], { type: 'text/csv' });
-		const a = document.createElement('a');
-		a.href = URL.createObjectURL(blob);
-		a.download = `${data.project.name}-time-entries.csv`;
-		a.click();
-		URL.revokeObjectURL(a.href);
-		toast.success('Time entries exported');
-	}
-
-
+function exportTimeCSV() {
+	const rows = [
+		['Date', 'Description', 'Minutes', 'Hours'],
+		...data.timeEntries.map((e) => [
+			e.logged_at,
+			e.description ?? '',
+			e.minutes,
+			(e.minutes / 60).toFixed(2),
+		]),
+		['', 'Total', totalMinutes, (totalMinutes / 60).toFixed(2)],
+	]
+	const csv = rows
+		.map((r) =>
+			r
+				.map(String)
+				.map((v) => `"${v.replace(/"/g, '""')}"`)
+				.join(','),
+		)
+		.join('\n')
+	const blob = new Blob([csv], { type: 'text/csv' })
+	const a = document.createElement('a')
+	a.href = URL.createObjectURL(blob)
+	a.download = `${data.project.name}-time-entries.csv`
+	a.click()
+	URL.revokeObjectURL(a.href)
+	toast.success('Time entries exported')
+}
 </script>
 
 <div class="space-y-6">
@@ -76,20 +93,11 @@
 			<div class="flex flex-wrap items-center gap-3">
 				<h1 class="page-title">{data.project.name}</h1>
 				<form id="status-form" method="POST" action="?/update_status"
-					use:enhance={() => async ({ result, update }) => {
-						await update();
-						if (result.type !== 'error') toast.success('Status updated');
-					}}>
+					use:enhance={toastEnhance({ successMsg: 'Status updated' })}>
 					<input type="hidden" name="status" value={projectStatus} />
 					<AppSelect
 						bind:value={projectStatus}
-						items={[
-							{ value: 'planning', label: 'Planning' },
-							{ value: 'in_progress', label: 'In Progress' },
-							{ value: 'review', label: 'Review' },
-							{ value: 'completed', label: 'Completed' },
-							{ value: 'archived', label: 'Archived' },
-						]}
+						items={PROJECT_STATUS_ITEMS}
 						onchange={(v) => { projectStatus = v; (document.getElementById('status-form') as HTMLFormElement)?.requestSubmit(); }}
 					/>
 				</form>
@@ -112,7 +120,7 @@
 				<IconLinkRegular class="h-3.5 w-3.5" /><span class="hidden sm:inline">Copy portal link</span>
 			</button>
 			<form id="delete-project-form" method="POST" action="?/delete_project"
-				use:enhance={() => async ({ update }) => { await update(); }}>
+				use:enhance={toastEnhance()}>
 				<button type="button" class="btn-icon" title="Delete project"
 					onclick={(e) => confirmDelete('This will permanently delete the project and all its data.', (e.currentTarget as HTMLElement).closest('form') as HTMLFormElement)}>
 					<span class="text-faint"><IconTrashRegular class="h-4 w-4" /></span>
@@ -139,9 +147,9 @@
 				{:else}
 					<div class="mb-4 space-y-1">
 						{#each data.milestones as m}
-							<form method="POST" action="?/toggle_milestone"
-								use:enhance={() => async ({ update }) => { await update(); }}
-								class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover-bg">
+						<form method="POST" action="?/toggle_milestone"
+							use:enhance={toastEnhance()}
+							class="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover-bg">
 								<input type="hidden" name="id" value={m.id} />
 								<input type="hidden" name="completed" value={m.completed} />
 								<button type="submit" class="shrink-0">
@@ -157,11 +165,12 @@
 					</div>
 				{/if}
 				<form method="POST" action="?/add_milestone"
-					use:enhance={() => async ({ update }) => {
-						newMilestone = '';
-						await update();
-						toast.success('Milestone added');
-					}}
+					use:enhance={toastEnhance({
+						successMsg: 'Milestone added',
+						beforeUpdate: () => {
+							newMilestone = ''
+						},
+					})}
 					class="flex gap-2 pt-3 divide-top">
 					<input name="name" bind:value={newMilestone} required placeholder="Add a milestone…" class="input" />
 					<button type="submit" class="btn btn-primary px-3 shrink-0"><IconPlusRegular class="h-3.5 w-3.5" /></button>
@@ -196,11 +205,13 @@
 					</div>
 				{/if}
 				<form method="POST" action="?/log_time"
-					use:enhance={() => async ({ update }) => {
-						timeMinutes = ''; timeDesc = '';
-						await update();
-						toast.success('Time logged');
-					}}
+					use:enhance={toastEnhance({
+						successMsg: 'Time logged',
+						beforeUpdate: () => {
+							timeMinutes = ''
+							timeDesc = ''
+						},
+					})}
 					class="flex gap-2 pt-3 divide-top">
 					<input name="description" bind:value={timeDesc} placeholder="What did you work on?" class="input flex-1" />
 					<input name="minutes" bind:value={timeMinutes} type="number" min="1" required placeholder="mins" class="input w-20 shrink-0" />
@@ -227,7 +238,12 @@
 					</div>
 				{/if}
 				<form method="POST" action="?/comment"
-					use:enhance={() => async ({ update }) => { comment = ''; await update(); toast.success('Comment posted'); }}
+					use:enhance={toastEnhance({
+						successMsg: 'Comment posted',
+						beforeUpdate: () => {
+							comment = ''
+						},
+					})}
 					class="flex gap-2 pt-3 divide-top">
 					<input name="body" bind:value={comment} required placeholder="Add a comment…" class="input" />
 					<button type="submit" class="btn btn-primary px-5 shrink-0">Send</button>
@@ -306,7 +322,7 @@
 					</div>
 				{/if}
 				<form method="POST" action="?/upload_file" enctype="multipart/form-data"
-					use:enhance={() => async ({ update }) => { await update(); toast.success('File uploaded'); }}
+					use:enhance={toastEnhance({ successMsg: 'File uploaded' })}
 					class="pt-3 divide-top">
 					<label class="flex cursor-pointer items-center gap-1.5 text-xs font-medium text-accent">
 						<IconPlusRegular class="h-3 w-3" /> Upload file
@@ -319,7 +335,7 @@
 			<div class="card">
 				<SectionHeader title="Internal notes" icon={IconNoteRegular} />
 				<form method="POST" action="?/save_note"
-					use:enhance={() => async ({ update }) => { await update(); toast.success('Note saved'); }}>
+					use:enhance={toastEnhance({ successMsg: 'Note saved' })}>
 					<textarea name="body" bind:value={noteBody} rows="5" placeholder="Private notes — not visible to clients…"
 						class="input mb-3 resize-none w-full"></textarea>
 					<button type="submit" class="btn btn-ghost text-xs px-3 py-1.5">Save note</button>

@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { onMount } from 'svelte';
+import { onMount } from 'svelte'
+import { enhance } from '$app/forms'
 
-	let formEl: HTMLFormElement;
-	onMount(() => formEl.requestSubmit());
+let formEl: HTMLFormElement
+onMount(() => formEl.requestSubmit())
 </script>
 
 <form method="POST" bind:this={formEl} use:enhance class="hidden"></form>

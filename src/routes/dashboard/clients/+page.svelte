@@ -1,11 +1,10 @@
 <script lang="ts">
-	import type { PageData } from './$types';
-	import IconUsersRegular from 'phosphor-icons-svelte/IconUsersRegular.svelte';
-	import Avatar from '$lib/components/Avatar.svelte';
-	import EmptyState from '$lib/components/EmptyState.svelte';
+import IconUsersRegular from 'phosphor-icons-svelte/IconUsersRegular.svelte'
+import Avatar from '$lib/components/Avatar.svelte'
+import EmptyState from '$lib/components/EmptyState.svelte'
+import type { PageData } from './$types'
 
-	let { data }: { data: PageData } = $props();
-
+let { data }: { data: PageData } = $props()
 </script>
 
 <div>

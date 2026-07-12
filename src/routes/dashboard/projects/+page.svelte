@@ -1,43 +1,62 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { toast } from 'svelte-sonner';
-	import type { PageData, ActionData } from './$types';
-	import AppSelect from '$lib/components/AppSelect.svelte';
-	import AppDatePicker from '$lib/components/AppDatePicker.svelte';
-	import IconPlusRegular from 'phosphor-icons-svelte/IconPlusRegular.svelte';
-	import IconFolderOpenRegular from 'phosphor-icons-svelte/IconFolderOpenRegular.svelte';
-	import { fmtDate, today, statusBadge, statusLabel } from '$lib/fmt';
-	import EmptyState from '$lib/components/EmptyState.svelte';
-	import SlideOver from '$lib/components/SlideOver.svelte';
+import IconFolderOpenRegular from 'phosphor-icons-svelte/IconFolderOpenRegular.svelte'
+import IconPlusRegular from 'phosphor-icons-svelte/IconPlusRegular.svelte'
+import { toast } from 'svelte-sonner'
+import { enhance } from '$app/forms'
+import { page } from '$app/state'
+import AppDatePicker from '$lib/components/AppDatePicker.svelte'
+import AppSelect from '$lib/components/AppSelect.svelte'
+import EmptyState from '$lib/components/EmptyState.svelte'
+import SlideOver from '$lib/components/SlideOver.svelte'
+import {
+	fmtDate,
+	PROJECT_STATUS_ITEMS,
+	statusBadge,
+	statusLabel,
+	today,
+} from '$lib/fmt'
+import { milestoneProgress } from '$lib/milestones'
+import type { ActionData, PageData } from './$types'
 
-	import { page } from '$app/state';
+let { data, form }: { data: PageData; form: ActionData } = $props()
 
-	let { data, form }: { data: PageData; form: ActionData } = $props();
+let open = $state(page.url.searchParams.has('new'))
+let loading = $state(false)
 
-	let open = $state(page.url.searchParams.has('new'));
-	let loading = $state(false);
+$effect(() => {
+	if (form?.error) open = true
+})
 
-	$effect(() => { if (form?.error) open = true; });
+let showArchived = $state(false)
 
-	let showArchived = $state(false);
+function progress(p: { milestones: { completed: boolean }[] | null }) {
+	const ms = p.milestones ?? []
+	return ms.length ? milestoneProgress(ms) : null
+}
 
+const createStatusItems = PROJECT_STATUS_ITEMS.filter(
+	(s) => s.value === 'planning' || s.value === 'in_progress',
+)
 
+const visible = $derived(
+	showArchived
+		? data.projects
+		: data.projects.filter((p) => p.status !== 'archived'),
+)
+const archivedCount = $derived(
+	data.projects.filter((p) => p.status === 'archived').length,
+)
+const activeCount = $derived(
+	data.projects.filter((p) => !['completed', 'archived'].includes(p.status))
+		.length,
+)
+const reviewCount = $derived(
+	data.projects.filter((p) => p.status === 'review').length,
+)
 
-
-	function progress(p: { milestones: { completed: boolean }[] | null }) {
-		const ms = p.milestones ?? [];
-		if (!ms.length) return null;
-		return Math.round((ms.filter((m: { completed: boolean }) => m.completed).length / ms.length) * 100);
-	}
-
-	const visible = $derived(
-		showArchived ? data.projects : data.projects.filter((p) => p.status !== 'archived')
-	);
-	const archivedCount = $derived(data.projects.filter((p) => p.status === 'archived').length);
-	const activeCount = $derived(data.projects.filter((p) => !['completed', 'archived'].includes(p.status)).length);
-	const reviewCount = $derived(data.projects.filter((p) => p.status === 'review').length);
-
-	function focusOnMount(node: HTMLElement) { node.focus(); }
+function focusOnMount(node: HTMLElement) {
+	node.focus()
+}
 </script>
 
 <!-- Slide-over modal -->
@@ -84,10 +103,7 @@
 				<AppSelect
 					name="status"
 					value="planning"
-					items={[
-						{ value: 'planning', label: 'Planning' },
-						{ value: 'in_progress', label: 'In Progress' },
-					]}
+					items={createStatusItems}
 				/>
 			</div>
 		</div>

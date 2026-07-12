@@ -1,13 +1,28 @@
 <script lang="ts">
-	import IconArrowRightRegular from 'phosphor-icons-svelte/IconArrowRightRegular.svelte';
-	import IconStarFill from 'phosphor-icons-svelte/IconStarFill.svelte';
-	import IconCheckRegular from 'phosphor-icons-svelte/IconCheckRegular.svelte';
+import IconArrowRightRegular from 'phosphor-icons-svelte/IconArrowRightRegular.svelte'
+import IconCheckRegular from 'phosphor-icons-svelte/IconCheckRegular.svelte'
+import IconStarFill from 'phosphor-icons-svelte/IconStarFill.svelte'
 
-	const reviews = [
-		{ quote: "My clients stopped asking 'where's the file?' within the first week.", name: 'Maya R.', role: 'Brand Designer' },
-		{ quote: "Invoicing used to take me an afternoon. Now it's five minutes and it looks great.", name: 'Tom H.', role: 'Freelance Developer' },
-		{ quote: "The portal makes us look like a much bigger studio. Clients notice.", name: 'Sara K.', role: 'Creative Director' },
-	];
+const reviews = [
+	{
+		quote:
+			"My clients stopped asking 'where's the file?' within the first week.",
+		name: 'Maya R.',
+		role: 'Brand Designer',
+	},
+	{
+		quote:
+			"Invoicing used to take me an afternoon. Now it's five minutes and it looks great.",
+		name: 'Tom H.',
+		role: 'Freelance Developer',
+	},
+	{
+		quote:
+			'The portal makes us look like a much bigger studio. Clients notice.',
+		name: 'Sara K.',
+		role: 'Creative Director',
+	},
+]
 </script>
 
 <div class="min-h-screen" style="background:var(--color-bg);color:var(--color-text)">
