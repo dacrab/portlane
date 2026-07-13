@@ -10,7 +10,6 @@ import AppSelect from '$lib/components/AppSelect.svelte'
 import EmptyState from '$lib/components/EmptyState.svelte'
 import SectionHeader from '$lib/components/SectionHeader.svelte'
 import { fmtDate, fmtMoney, INVOICE_STATUS_ITEMS } from '$lib/fmt'
-import type { InvoiceJoined } from '$lib/types'
 import type { PageData } from './$types'
 
 let { data }: { data: PageData } = $props()
@@ -48,13 +47,12 @@ const clientItems = $derived(
 const stats = $derived({
 	total: data.invoices.length,
 	outstanding: data.invoices
-		.filter((i: InvoiceJoined) => i.status === 'sent')
-		.reduce((s: number, i: InvoiceJoined) => s + i.amount_cents, 0),
+		.filter((i) => i.status === 'sent')
+		.reduce((s, i) => s + i.amount_cents, 0),
 	paid: data.invoices
-		.filter((i: InvoiceJoined) => i.status === 'paid')
-		.reduce((s: number, i: InvoiceJoined) => s + i.amount_cents, 0),
-	overdue: data.invoices.filter((i: InvoiceJoined) => i.status === 'overdue')
-		.length,
+		.filter((i) => i.status === 'paid')
+		.reduce((s, i) => s + i.amount_cents, 0),
+	overdue: data.invoices.filter((i) => i.status === 'overdue').length,
 })
 
 const statusItems = INVOICE_STATUS_ITEMS

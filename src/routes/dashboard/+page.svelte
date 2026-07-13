@@ -25,10 +25,9 @@ import type { PageData } from './$types'
 let { data }: { data: PageData } = $props()
 
 // Auto-dismiss: mark all as read when the dashboard is visited
-onMount(async () => {
+onMount(() => {
 	if (data.unreadComments.length > 0) {
-		await fetch('?/mark_read', { method: 'POST' })
-		invalidateAll()
+		fetch('?/mark_read', { method: 'POST' }).then(() => invalidateAll())
 	}
 })
 
