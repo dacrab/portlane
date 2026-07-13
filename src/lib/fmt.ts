@@ -1,34 +1,33 @@
+function formatDateSafe(iso: string, options: Intl.DateTimeFormatOptions): string {
+	const d = new Date(iso);
+	if (Number.isNaN(d.getTime())) return '-';
+	return d.toLocaleDateString('en-US', options);
+}
+
 /** Format cents to display string e.g. "$3,200" or "$3,200.50" */
-export const fmtMoney = (cents: number, currency = 'USD') =>
-	(cents / 100).toLocaleString('en-US', {
+export const fmtMoney = (cents: number, currency = 'USD'): string => {
+	const amount = cents / 100;
+	return amount.toLocaleString('en-US', {
 		style: 'currency',
 		currency,
-		minimumFractionDigits: cents % 100 === 0 ? 0 : 2,
-	})
+		minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
+	});
+};
 
 /** Format date to short form e.g. "Jun 3" */
-export const fmtDate = (iso: string) =>
-	new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+export const fmtDate = (iso: string): string =>
+	formatDateSafe(iso, { month: 'short', day: 'numeric' });
 
 /** Format date to long form e.g. "June 3, 2026" */
-export const fmtDateLong = (iso: string) =>
-	new Date(iso).toLocaleDateString('en-US', {
-		year: 'numeric',
-		month: 'long',
-		day: 'numeric',
-	})
+export const fmtDateLong = (iso: string): string =>
+	formatDateSafe(iso, { year: 'numeric', month: 'long', day: 'numeric' });
 
 /** Format date+time e.g. "Jun 3, 2:30 PM" */
-export const fmtDateTime = (iso: string) =>
-	new Date(iso).toLocaleDateString('en-US', {
-		month: 'short',
-		day: 'numeric',
-		hour: '2-digit',
-		minute: '2-digit',
-	})
+export const fmtDateTime = (iso: string): string =>
+	formatDateSafe(iso, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
 /** Today's ISO date string for overdue comparisons */
-export const today = () => new Date().toISOString().split('T')[0] ?? ''
+export const today = (): string => new Date().toISOString().split('T')[0] ?? '';
 
 const projectStatuses = [
 	'planning',
@@ -36,9 +35,9 @@ const projectStatuses = [
 	'review',
 	'completed',
 	'archived',
-] as const
+] as const;
 
-const invoiceStatuses = ['draft', 'sent', 'paid', 'overdue'] as const
+const invoiceStatuses = ['draft', 'sent', 'paid', 'overdue'] as const;
 
 /** Status → badge CSS class */
 export const statusBadge: Record<string, string> = {
@@ -51,7 +50,7 @@ export const statusBadge: Record<string, string> = {
 	review: 'badge badge-yellow',
 	completed: 'badge badge-green',
 	archived: 'badge badge-neutral',
-}
+};
 
 /** Status → human label */
 export const statusLabel: Record<string, string> = {
@@ -64,15 +63,26 @@ export const statusLabel: Record<string, string> = {
 	planning: 'Planning',
 	completed: 'Completed',
 	archived: 'Archived',
+};
+
+/** Download a file via signed URL */
+export async function downloadFile(path: string, name: string): Promise<void> {
+	const res = await fetch(`/api/file-url?path=${encodeURIComponent(path)}`);
+	if (!res.ok) throw new Error('Download failed');
+	const { url } = await res.json();
+	const a = document.createElement('a');
+	a.href = url;
+	a.download = name;
+	a.click();
 }
 
 /** Status options derived from {@link statusLabel} to avoid drift. */
 export const PROJECT_STATUS_ITEMS = projectStatuses.map((s) => ({
 	value: s,
 	label: statusLabel[s] ?? s,
-}))
+}));
 
 export const INVOICE_STATUS_ITEMS = invoiceStatuses.map((s) => ({
 	value: s,
 	label: statusLabel[s] ?? s,
-}))
+}));
