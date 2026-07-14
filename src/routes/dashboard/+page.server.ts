@@ -44,7 +44,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		hasProject: (projects?.length ?? 0) > 0,
 		hasClient: (s.total_clients ?? 0) > 0,
 		hasInvoice: (s.total_invoices ?? 0) > 0,
-		hasProfile: !!user?.user_metadata?.full_name,
+		hasProfile: !!user.user_metadata?.full_name,
 	}
 
 	return {

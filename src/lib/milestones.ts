@@ -1,7 +1,3 @@
-import type { Database } from '$lib/database.types'
-
-export type Milestone = Database['public']['Tables']['milestones']['Row']
-
 export type MilestoneLike = { completed: boolean }
 
 export const milestoneTotal = (ms: MilestoneLike[]): number => ms.length

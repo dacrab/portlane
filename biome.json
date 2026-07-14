@@ -13,6 +13,7 @@
 			"!**/node_modules",
 			"!**/build",
 			"!**/dist",
+			"!.vercel",
 			"!bun.lock",
 			"!src/lib/database.types.ts"
 		]
