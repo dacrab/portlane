@@ -19,8 +19,7 @@ type ProjectItem = Database['public']['Tables']['projects']['Row'] & {
 }
 
 export const load: PageServerLoad = async ({ locals, url }) => {
-	const { session, user } = await locals.safeGetSession()
-	if (!session) redirect(303, '/login')
+	const { user } = await locals.safeGetSession()
 	if (!user) redirect(303, '/login')
 
 	const projectId = url.searchParams.get('project')

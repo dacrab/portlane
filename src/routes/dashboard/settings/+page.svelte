@@ -47,9 +47,7 @@ function confirmDeleteAccount() {
 				</div>
 			</div>
 
-			<form method="POST" action="?/update_profile"
-				use:enhance={() => async ({ update }) => { await update(); }}
-				class="space-y-4">
+			<form method="POST" action="?/update_profile" use:enhance class="space-y-4">
 				<div>
 					<label for="full_name" class="mb-1.5 block text-xs font-medium text-muted">Full name</label>
 					<input id="full_name" name="full_name" type="text" value={data.profile?.full_name ?? ''} class="input" />
@@ -72,9 +70,7 @@ function confirmDeleteAccount() {
 				<p class="mt-0.5 text-xs text-faint">Choose a strong password of at least 8 characters.</p>
 			</div>
 
-			<form method="POST" action="?/change_password"
-				use:enhance={() => async ({ update }) => { await update(); }}
-				class="space-y-4">
+			<form method="POST" action="?/change_password" use:enhance class="space-y-4">
 				<div>
 					<label for="password" class="mb-1.5 block text-xs font-medium text-muted">New password</label>
 					<input id="password" name="password" type="password" required minlength="8" autocomplete="new-password" class="input" placeholder="••••••••" />
@@ -98,8 +94,7 @@ function confirmDeleteAccount() {
 				Permanently delete your account and all associated data. This cannot be undone.
 			</p>
 		</div>
-		<form bind:this={deleteForm} method="POST" action="?/delete_account"
-			use:enhance={() => async ({ update }) => { await update(); }}>
+		<form bind:this={deleteForm} method="POST" action="?/delete_account" use:enhance>
 			<button type="button" class="btn btn-danger" onclick={confirmDeleteAccount}>
 				Delete account
 			</button>

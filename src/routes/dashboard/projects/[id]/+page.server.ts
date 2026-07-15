@@ -1,4 +1,6 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { error, fail, redirect } from '@sveltejs/kit'
+import type { Database } from '$lib/database.types'
 import {
 	addComment,
 	getProjectComments,
@@ -11,7 +13,6 @@ import type { Actions, PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals, params }) => {
 	const { user } = await locals.safeGetSession()
-	if (!params.id) error(400, 'Invalid project ID')
 	if (!user) error(401, 'Unauthorized')
 
 	const [
@@ -71,6 +72,21 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	}
 }
 
+async function requireProjectOwnership(
+	supabase: SupabaseClient<Database>,
+	userId: string,
+	projectId: string,
+) {
+	const { data: project } = await supabase
+		.from('projects')
+		.select('id')
+		.eq('id', projectId)
+		.eq('freelancer_id', userId)
+		.maybeSingle()
+	if (!project) return fail(403, { error: 'Not your project' })
+	return null
+}
+
 export const actions: Actions = {
 	log_time: async ({ locals, params, request }) => {
 		const { user } = await locals.safeGetSession()
@@ -96,14 +112,12 @@ export const actions: Actions = {
 		if (!user) return fail(401, { error: 'Not authenticated' })
 		const form = await request.formData()
 		const body = (form.get('body') as string).trim()
-		// Verify the project belongs to the caller (RLS would; this is explicit + UX).
-		const { data: own } = await locals.supabase
-			.from('projects')
-			.select('id')
-			.eq('id', params.id)
-			.eq('freelancer_id', user.id)
-			.maybeSingle()
-		if (!own) return fail(403, { error: 'Not your project' })
+		const denied = await requireProjectOwnership(
+			locals.supabase,
+			user.id,
+			params.id,
+		)
+		if (denied) return denied
 		const { error: e } = await locals.supabase
 			.from('project_notes')
 			.upsert({ project_id: params.id, body }, { onConflict: 'project_id' })
@@ -125,15 +139,12 @@ export const actions: Actions = {
 		const form = await request.formData()
 		const id = form.get('id') as string
 		const completed = form.get('completed') === 'true'
-		// Filter by freelancer_id via the projects join. Direct milestone updates
-		// only filter by project_id (a known id), so we re-verify ownership.
-		const { data: project } = await locals.supabase
-			.from('projects')
-			.select('id')
-			.eq('id', params.id)
-			.eq('freelancer_id', user.id)
-			.maybeSingle()
-		if (!project) return fail(403, { error: 'Not your project' })
+		const denied = await requireProjectOwnership(
+			locals.supabase,
+			user.id,
+			params.id,
+		)
+		if (denied) return denied
 		await locals.supabase
 			.from('milestones')
 			.update({ completed: !completed })
@@ -147,13 +158,12 @@ export const actions: Actions = {
 		const form = await request.formData()
 		const name = (form.get('name') as string).trim()
 		if (!name) return fail(400, { error: 'Name is required' })
-		const { data: project } = await locals.supabase
-			.from('projects')
-			.select('id')
-			.eq('id', params.id)
-			.eq('freelancer_id', user.id)
-			.maybeSingle()
-		if (!project) return fail(403, { error: 'Not your project' })
+		const denied = await requireProjectOwnership(
+			locals.supabase,
+			user.id,
+			params.id,
+		)
+		if (denied) return denied
 		await locals.supabase.rpc('add_milestone', {
 			p_project_id: params.id,
 			p_name: name,
@@ -229,14 +239,12 @@ export const actions: Actions = {
 		if (!user) return fail(401, { error: 'Not authenticated' })
 		const form = await request.formData()
 		const client_id = form.get('client_id') as string
-		// Verify ownership of the project before un-inviting.
-		const { data: project } = await locals.supabase
-			.from('projects')
-			.select('id')
-			.eq('id', params.id)
-			.eq('freelancer_id', user.id)
-			.maybeSingle()
-		if (!project) return fail(403, { error: 'Not your project' })
+		const denied = await requireProjectOwnership(
+			locals.supabase,
+			user.id,
+			params.id,
+		)
+		if (denied) return denied
 		const { error: e } = await locals.supabase
 			.from('project_clients')
 			.delete()
@@ -252,14 +260,12 @@ export const actions: Actions = {
 		const form = await request.formData()
 		const email = (form.get('email') as string).trim().toLowerCase()
 		if (!email) return fail(400, { error: 'Email is required' })
-		// Verify ownership first.
-		const { data: project } = await locals.supabase
-			.from('projects')
-			.select('id')
-			.eq('id', params.id)
-			.eq('freelancer_id', user.id)
-			.maybeSingle()
-		if (!project) return fail(403, { error: 'Not your project' })
+		const denied = await requireProjectOwnership(
+			locals.supabase,
+			user.id,
+			params.id,
+		)
+		if (denied) return denied
 
 		const inviteErr = await inviteClientByEmail(
 			session.access_token,

@@ -38,9 +38,10 @@ export const addComment = async (
 	authorId: string,
 	body: string,
 ) => {
-	await supabase
+	const { error } = await supabase
 		.from('comments')
 		.insert({ project_id: projectId, author_id: authorId, body })
+	if (error) throw error
 }
 
 export const uploadProjectFile = async (
@@ -55,13 +56,14 @@ export const uploadProjectFile = async (
 		.upload(path, file)
 	if (uploadErr) throw uploadErr
 
-	await supabase.from('files').insert({
+	const { error: insertErr } = await supabase.from('files').insert({
 		project_id: projectId,
 		uploaded_by: userId,
 		name: file.name,
 		storage_path: path,
 		size_bytes: file.size,
 	})
+	if (insertErr) throw insertErr
 }
 
 export const inviteClientByEmail = async (

@@ -4,12 +4,10 @@ import { onMount, untrack } from 'svelte'
 import { toast } from 'svelte-sonner'
 import Avatar from '$lib/components/Avatar.svelte'
 import SectionHeader from '$lib/components/SectionHeader.svelte'
+import type { Database } from '$lib/database.types'
 import { supabase } from '$lib/supabase'
 
-type Comment = {
-	id: string
-	author_id: string
-	body: string
+type Comment = Database['public']['Tables']['comments']['Row'] & {
 	profiles: { full_name: string | null } | null
 }
 
@@ -43,7 +41,7 @@ onMount(() => {
 					.eq('id', payload.new.id)
 					.single()
 				if (row) {
-					comments = [...comments, row as Comment]
+					comments = [...comments, row]
 					if (row.author_id !== userId)
 						toast.info(
 							`New message from ${row.profiles?.full_name ?? 'someone'}`,
