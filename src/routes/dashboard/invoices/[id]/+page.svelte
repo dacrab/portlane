@@ -39,8 +39,8 @@ const today = new Date().toLocaleDateString('en-US', {
 			<form method="POST" action="?/checkout" use:enhance={() => {
 				return async ({ result }) => {
 					if (result.type !== 'success') return;
-					const data = result.data as { url?: string } | undefined;
-					if (data?.url) window.location.href = data.url;
+					const d = result.data as Record<string, unknown> | undefined;
+					if (typeof d?.url === 'string') window.location.href = d.url;
 				};
 			}}
 			>

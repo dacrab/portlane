@@ -69,7 +69,8 @@ function focusOnMount(node: HTMLElement) {
 			return async ({ result, update }) => {
 				loading = false;
 				if (result.type === 'failure') {
-					toast.error((result.data as { error?: string }).error ?? 'Failed to create project');
+					const data = result.data as Record<string, unknown> | undefined
+					toast.error(typeof data?.error === 'string' ? data.error : 'Failed to create project');
 				}
 				await update();
 			};
@@ -77,7 +78,7 @@ function focusOnMount(node: HTMLElement) {
 		class="flex flex-1 flex-col gap-5 overflow-y-auto px-6 py-6"
 	>
 		{#if form?.error}
-			<p class="form-error">{(form as { error: string }).error}</p>
+			<p class="form-error">{String(form.error)}</p>
 		{/if}
 
 		<div>

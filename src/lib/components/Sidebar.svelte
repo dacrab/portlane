@@ -7,7 +7,7 @@ import IconSunRegular from 'phosphor-icons-svelte/IconSunRegular.svelte'
 import { onMount } from 'svelte'
 import { enhance } from '$app/forms'
 import { page } from '$app/state'
-import { type NavItem, navItems } from '$lib/nav'
+import { navItems } from '$lib/nav'
 import { sidebarCollapsed } from '$lib/stores.svelte'
 
 let {
@@ -37,7 +37,8 @@ function toggleDark() {
 	}
 }
 
-const settingsItem = navItems[4] as NavItem
+const settingsItem = navItems[4]
+if (!settingsItem) throw new Error('Missing settings nav item')
 
 const initials = $derived(
 	(user?.user_metadata?.full_name ?? user?.email ?? '?')

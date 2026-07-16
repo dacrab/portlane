@@ -21,7 +21,7 @@ let {
 <form method="POST" action={action} use:enhance={() => async ({ update }) => { await update(); ondelete?.(); }}>
 	<input {name} value={id} type="hidden" />
 	<button type="button" class="btn-icon shrink-0" title="Delete"
-		onclick={(e) => confirmDelete(message, (e.currentTarget as HTMLElement).closest('form') as HTMLFormElement)}>
+		onclick={(e: MouseEvent) => { const t = e.currentTarget; const f = t instanceof Element ? t.closest('form') : null; if (f instanceof HTMLFormElement) confirmDelete(message, f); }}>
 		<span class="text-faint"><IconTrashRegular class="h-3.5 w-3.5" /></span>
 	</button>
 </form>

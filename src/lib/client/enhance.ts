@@ -20,7 +20,8 @@ export function toastEnhance(opts: ToastEnhanceOptions = {}): SubmitFunction {
 			opts.beforeUpdate?.()
 			await update()
 			if (result.type === 'failure') {
-				const detail = (result.data as { error?: string } | undefined)?.error
+				const data = result.data as Record<string, unknown> | undefined
+				const detail = typeof data?.error === 'string' ? data.error : undefined
 				toast.error(opts.errorMsg ?? detail ?? 'Something went wrong')
 			} else if (opts.successMsg) {
 				toast.success(opts.successMsg)

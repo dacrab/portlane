@@ -98,7 +98,7 @@ function exportTimeCSV() {
 					<AppSelect
 						bind:value={projectStatus}
 						items={PROJECT_STATUS_ITEMS}
-						onchange={(v) => { projectStatus = v; (document.getElementById('status-form') as HTMLFormElement)?.requestSubmit(); }}
+						onchange={(v: string) => { projectStatus = v; const el = document.getElementById('status-form'); if (el instanceof HTMLFormElement) el.requestSubmit(); }}
 					/>
 				</form>
 			</div>
@@ -122,7 +122,7 @@ function exportTimeCSV() {
 			<form id="delete-project-form" method="POST" action="?/delete_project"
 				use:enhance={toastEnhance()}>
 				<button type="button" class="btn-icon" title="Delete project"
-					onclick={(e) => confirmDelete('This will permanently delete the project and all its data.', (e.currentTarget as HTMLElement).closest('form') as HTMLFormElement)}>
+					onclick={(e: MouseEvent) => { const t = e.currentTarget; const f = t instanceof Element ? t.closest('form') : null; if (f instanceof HTMLFormElement) confirmDelete('This will permanently delete the project and all its data.', f); }}>
 					<span class="text-faint"><IconTrashRegular class="h-4 w-4" /></span>
 				</button>
 			</form>
@@ -279,7 +279,8 @@ function exportTimeCSV() {
 							inviteEmail = '';
 							await update();
 							if (result.type === 'failure') {
-								toast.error((result.data as { error?: string }).error ?? 'Invitation failed');
+								const d = result.data as Record<string, unknown> | undefined;
+								toast.error(typeof d?.error === 'string' ? d.error : 'Invitation failed');
 							} else {
 								toast.success('Invitation sent', { description: 'The client will receive a magic link to access the portal.' });
 							}
@@ -326,7 +327,7 @@ function exportTimeCSV() {
 					class="pt-3 divide-top">
 					<label class="flex cursor-pointer items-center gap-1.5 text-xs font-medium text-accent">
 						<IconPlusRegular class="h-3 w-3" /> Upload file
-						<input type="file" name="file" class="hidden" onchange={(e) => (e.currentTarget.form as HTMLFormElement).requestSubmit()} />
+						<input type="file" name="file" class="hidden" onchange={(e: Event) => { const t = e.target; if (t instanceof HTMLInputElement && t.form instanceof HTMLFormElement) t.form.requestSubmit(); }} />
 					</label>
 				</form>
 			</div>

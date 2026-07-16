@@ -25,23 +25,32 @@ export const POST: RequestHandler = async ({ request }) => {
 
 	if (event.type !== 'checkout.session.completed') return text('ok')
 
-	const session = event.data.object as Stripe.Checkout.Session
-	const invoiceId = session.client_reference_id
+	const obj: unknown = event.data.object
+	if (!obj || typeof obj !== 'object') error(400, 'Invalid event object')
+	const session = obj as {
+		client_reference_id: unknown
+		id: unknown
+		payment_intent: unknown
+	}
+	const invoiceId =
+		typeof session.client_reference_id === 'string'
+			? session.client_reference_id
+			: null
 	if (!invoiceId) return text('ok')
 
 	const serviceKey = env.SUPABASE_SERVICE_ROLE_KEY
 	if (!serviceKey) error(500, 'SUPABASE_SERVICE_ROLE_KEY not configured')
 
 	const supabase = createClient<Database>(PUBLIC_SUPABASE_URL, serviceKey)
+	const sessionId = typeof session.id === 'string' ? session.id : null
+	const paymentIntent =
+		typeof session.payment_intent === 'string' ? session.payment_intent : null
 	await supabase
 		.from('invoices')
 		.update({
 			status: 'paid',
-			stripe_session_id: session.id,
-			stripe_payment_intent_id:
-				typeof session.payment_intent === 'string'
-					? session.payment_intent
-					: null,
+			stripe_session_id: sessionId,
+			stripe_payment_intent_id: paymentIntent,
 		})
 		.eq('id', invoiceId)
 

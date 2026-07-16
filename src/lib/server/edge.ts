@@ -2,6 +2,19 @@ import { EDGE_FN_BASE } from '$lib/env'
 
 export type EdgeResult<T> = { data: T } | { error: string; status: number }
 
+function parseEdgeError(text: string): string | undefined {
+	try {
+		const parsed: unknown = JSON.parse(text)
+		if (parsed && typeof parsed === 'object' && 'error' in parsed) {
+			const { error: err } = parsed as { error: unknown }
+			if (typeof err === 'string') return err
+		}
+	} catch {
+		// keep raw text
+	}
+	return undefined
+}
+
 export async function callEdgeFn<T>(
 	path: string,
 	token: string,
@@ -18,15 +31,10 @@ export async function callEdgeFn<T>(
 
 	if (!res.ok) {
 		const text = await res.text()
-		let detail = text || `${path} failed`
-		try {
-			const parsed = JSON.parse(text) as { error?: string }
-			if (parsed && typeof parsed.error === 'string') detail = parsed.error
-		} catch {
-			// keep raw text
-		}
+		const detail = parseEdgeError(text) || text || `${path} failed`
 		return { error: detail, status: res.status }
 	}
 
-	return { data: (await res.json()) as T }
+	const json: unknown = await res.json()
+	return { data: json as T }
 }

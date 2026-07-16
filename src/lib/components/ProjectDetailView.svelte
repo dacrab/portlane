@@ -32,8 +32,9 @@ let note = $state('')
 let submittingApproval = $state(false)
 
 const freelancerName = $derived(
-	(data.project as WithProfile | null)?.profiles?.full_name ??
-		'Your freelancer',
+	('profiles' in data.project
+		? (data.project as WithProfile).profiles?.full_name
+		: null) ?? 'Your freelancer',
 )
 const total = $derived(milestoneTotal(data.milestones))
 const done = $derived(milestoneDone(data.milestones))
@@ -96,8 +97,8 @@ const isClient = $derived(data.invoices.length > 0)
 								<form method="POST" action="?/checkout" use:enhance={() => {
 									return async ({ result }) => {
 										if (result.type !== 'success') return;
-										const data = result.data as { url?: string } | undefined;
-										if (data?.url) window.location.href = data.url;
+										const d = result.data as Record<string, unknown> | undefined;
+										if (typeof d?.url === 'string') window.location.href = d.url;
 									};
 									}}
 									class="absolute inset-0 z-10 cursor-pointer" style="background:transparent">
@@ -181,7 +182,7 @@ const isClient = $derived(data.invoices.length > 0)
 				class="{data.files.length > 0 ? 'pt-3 divide-top' : ''}">
 				<label class="flex cursor-pointer items-center gap-1.5 text-xs font-medium text-accent">
 					<IconPlusRegular class="h-3 w-3" /> Upload a file
-					<input type="file" name="file" class="hidden" onchange={(e) => (e.currentTarget.form as HTMLFormElement).requestSubmit()} />
+					<input type="file" name="file" class="hidden" onchange={(e: Event) => { const t = e.target; if (t instanceof HTMLInputElement && t.form instanceof HTMLFormElement) t.form.requestSubmit(); }} />
 				</label>
 			</form>
 		</div>

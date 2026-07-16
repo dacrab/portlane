@@ -1,6 +1,6 @@
 import { error, fail, redirect } from '@sveltejs/kit'
 import type { Database } from '$lib/database.types'
-import { str } from '$lib/server/form'
+import { DB_ERROR, formFile, str } from '$lib/server/form'
 import {
 	addComment,
 	getProjectComments,
@@ -33,8 +33,11 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			.eq('client_id', user.id)
 
 		const projects: ProjectItem[] = (rows ?? []).flatMap((r) => {
-			const p = (r as { projects: ProjectItem | null }).projects
-			return p ? [p] : []
+			const row: unknown = r
+			if (!row || typeof row !== 'object') return []
+			if (!('projects' in row)) return []
+			const p = (row as { projects: unknown }).projects
+			return p && typeof p === 'object' ? [p as ProjectItem] : []
 		})
 		return {
 			project: null,
@@ -133,12 +136,12 @@ export const actions: Actions = {
 	upload_file: async ({ locals, url, request }) => {
 		const { user, projectId } = await requireClientProject({ locals, url })
 		const form = await request.formData()
-		const file = form.get('file')
-		if (!(file instanceof File) || !file.size) return
+		const file = formFile(form, 'file')
+		if (!file?.size) return
 		try {
 			await uploadProjectFile(locals.supabase, projectId, user.id, file)
-		} catch (e) {
-			error(500, e instanceof Error ? e.message : 'Upload failed')
+		} catch {
+			error(500, DB_ERROR)
 		}
 	},
 

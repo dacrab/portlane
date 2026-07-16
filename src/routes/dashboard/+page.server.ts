@@ -10,6 +10,13 @@ interface DashboardStats {
 	revenue_mtd?: number
 }
 
+function isDashboardStatsArray(v: unknown): v is DashboardStats[] {
+	return (
+		Array.isArray(v) &&
+		v.every((item) => typeof item === 'object' && item !== null)
+	)
+}
+
 export const load: PageServerLoad = async ({ locals }) => {
 	const { user } = await locals.safeGetSession()
 	if (!user) error(401)
@@ -34,7 +41,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 		locals.supabase.rpc('get_unread_comments', { p_user_id: user.id }),
 	])
 
-	const s = (stats as DashboardStats[])?.[0] ?? {}
+	const s: DashboardStats =
+		stats && isDashboardStatsArray(stats) ? (stats[0] ?? {}) : {}
 
 	const activeFallback = (projects ?? []).filter(
 		(p) => !['completed', 'archived'].includes(p.status),
@@ -62,6 +70,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 export const actions: Actions = {
 	mark_read: async ({ locals }) => {
+		const { user } = await locals.safeGetSession()
+		if (!user) error(401)
 		await locals.supabase.rpc('mark_comments_read')
 	},
 }

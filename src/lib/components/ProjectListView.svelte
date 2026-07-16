@@ -25,7 +25,7 @@ let { data }: { data: PageData } = $props()
 					<div class="flex-1 min-w-0">
 						<p class="text-sm font-semibold text-heading">{p.name}</p>
 						<p class="text-xs text-faint">
-							{(p as WithProfile).profiles?.full_name ?? 'Freelancer'}
+							{'profiles' in p ? ((p as WithProfile).profiles?.full_name ?? 'Freelancer') : 'Freelancer'}
 							{#if p.due_date} · Due {fmtDate(p.due_date)}{/if}
 						</p>
 					</div>

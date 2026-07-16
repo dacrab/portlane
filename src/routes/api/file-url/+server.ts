@@ -2,6 +2,7 @@ import { error, json } from '@sveltejs/kit'
 import type { RequestHandler } from './$types'
 
 const SIGNED_URL_TTL_SECONDS = 60 * 60
+const STORAGE_ERROR = 'Unable to generate download URL.'
 
 export const GET: RequestHandler = async ({ url, locals }) => {
 	const { session, user } = await locals.safeGetSession()
@@ -32,7 +33,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 		.from('project-files')
 		.createSignedUrl(path, SIGNED_URL_TTL_SECONDS)
 
-	if (storageErr) error(500, storageErr.message)
+	if (storageErr) error(500, STORAGE_ERROR)
 
 	return json({ url: data.signedUrl })
 }

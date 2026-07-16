@@ -33,7 +33,7 @@ function getStatus(inv: { id: string; status: string }) {
 
 const clients = $derived(
 	(
-		(data.projects as ProjectLight[]).find((p) => p.id === selectedProject)
+		data.projects.find((p: ProjectLight) => p.id === selectedProject)
 			?.project_clients ?? []
 	)
 		.map((pc) => pc.profiles)
@@ -106,7 +106,7 @@ const statusItems = INVOICE_STATUS_ITEMS
 					<AppSelect
 						name="project_id"
 						bind:value={selectedProject}
-						items={data.projects.map((p: ProjectLight) => ({ value: p.id, label: p.name }))}
+						items={data.projects.map((p: { id: string; name: string }) => ({ value: p.id, label: p.name }))}
 						placeholder="Select project…"
 						required
 						onchange={() => { selectedClient = ''; }}
@@ -171,9 +171,10 @@ const statusItems = INVOICE_STATUS_ITEMS
 							<AppSelect
 								value={getStatus(inv)}
 								items={statusItems}
-								onchange={(v) => {
+								onchange={(v: string) => {
 									invoiceStatusOverrides[inv.id] = v;
-									(document.getElementById(`inv-status-${inv.id}`) as HTMLFormElement)?.requestSubmit();
+									const el = document.getElementById(`inv-status-${inv.id}`);
+									if (el instanceof HTMLFormElement) el.requestSubmit();
 								}}
 							/>
 						</form>

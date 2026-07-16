@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { error, fail, redirect } from '@sveltejs/kit'
 import type { Database } from '$lib/database.types'
+import { DB_ERROR, formFile, int, str } from '$lib/server/form'
 import {
 	addComment,
 	getProjectComments,
@@ -49,14 +50,13 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			.maybeSingle(),
 	])
 
-	// Surface partial-load failures instead of returning null data silently → 500.
-	if (projectRes.error) error(500, projectRes.error.message)
-	if (milestonesRes.error) error(500, milestonesRes.error.message)
-	if (filesRes.error) error(500, filesRes.error.message)
-	if (commentsRes.error) error(500, commentsRes.error.message)
-	if (clientsRes.error) error(500, clientsRes.error.message)
-	if (timeEntriesRes.error) error(500, timeEntriesRes.error.message)
-	if (noteRes.error) error(500, noteRes.error.message)
+	if (projectRes.error) error(500, DB_ERROR)
+	if (milestonesRes.error) error(500, DB_ERROR)
+	if (filesRes.error) error(500, DB_ERROR)
+	if (commentsRes.error) error(500, DB_ERROR)
+	if (clientsRes.error) error(500, DB_ERROR)
+	if (timeEntriesRes.error) error(500, DB_ERROR)
+	if (noteRes.error) error(500, DB_ERROR)
 
 	const project = projectRes.data
 	if (!project) error(404, 'Project not found')
@@ -92,9 +92,8 @@ export const actions: Actions = {
 		const { user } = await locals.safeGetSession()
 		if (!user) return fail(401, { error: 'Not authenticated' })
 		const form = await request.formData()
-		const minutes = parseInt(form.get('minutes') as string, 10)
-		const description =
-			(form.get('description') as string | null)?.trim() ?? null
+		const minutes = int(form, 'minutes')
+		const description = str(form, 'description') || null
 		if (!minutes || minutes <= 0) return fail(400, { error: 'Invalid minutes' })
 		// Scope by freelancer_id; RLS would catch a mismatch but propagates a silent
 		// RLS rejection back as success. Use the explicit ownership filter.
@@ -104,14 +103,14 @@ export const actions: Actions = {
 			minutes,
 			description,
 		})
-		if (e) return fail(500, { error: e.message })
+		if (e) return fail(500, { error: DB_ERROR })
 	},
 
 	save_note: async ({ locals, params, request }) => {
 		const { user } = await locals.safeGetSession()
 		if (!user) return fail(401, { error: 'Not authenticated' })
 		const form = await request.formData()
-		const body = (form.get('body') as string).trim()
+		const body = str(form, 'body')
 		const denied = await requireProjectOwnership(
 			locals.supabase,
 			user.id,
@@ -121,14 +120,14 @@ export const actions: Actions = {
 		const { error: e } = await locals.supabase
 			.from('project_notes')
 			.upsert({ project_id: params.id, body }, { onConflict: 'project_id' })
-		if (e) return fail(500, { error: e.message })
+		if (e) return fail(500, { error: DB_ERROR })
 	},
 
 	comment: async ({ locals, params, request }) => {
 		const { user } = await locals.safeGetSession()
 		if (!user) return fail(401, { error: 'Not authenticated' })
 		const form = await request.formData()
-		const body = (form.get('body') as string).trim()
+		const body = str(form, 'body')
 		if (!body) return fail(400, { error: 'Comment body is required' })
 		await addComment(locals.supabase, params.id, user.id, body)
 	},
@@ -137,7 +136,7 @@ export const actions: Actions = {
 		const { user } = await locals.safeGetSession()
 		if (!user) return fail(401, { error: 'Not authenticated' })
 		const form = await request.formData()
-		const id = form.get('id') as string
+		const id = str(form, 'id')
 		const completed = form.get('completed') === 'true'
 		const denied = await requireProjectOwnership(
 			locals.supabase,
@@ -156,7 +155,7 @@ export const actions: Actions = {
 		const { user } = await locals.safeGetSession()
 		if (!user) return fail(401, { error: 'Not authenticated' })
 		const form = await request.formData()
-		const name = (form.get('name') as string).trim()
+		const name = str(form, 'name')
 		if (!name) return fail(400, { error: 'Name is required' })
 		const denied = await requireProjectOwnership(
 			locals.supabase,
@@ -174,12 +173,12 @@ export const actions: Actions = {
 		const { user } = await locals.safeGetSession()
 		if (!user) return fail(401, { error: 'Not authenticated' })
 		const form = await request.formData()
-		const file = form.get('file') as File
+		const file = formFile(form, 'file')
 		if (!file?.size) return fail(400, { error: 'No file provided' })
 		try {
 			await uploadProjectFile(locals.supabase, params.id, user.id, file)
-		} catch (e) {
-			return fail(500, { error: (e as Error).message })
+		} catch {
+			return fail(500, { error: DB_ERROR })
 		}
 	},
 
@@ -187,7 +186,7 @@ export const actions: Actions = {
 		const { user } = await locals.safeGetSession()
 		if (!user) return fail(401, { error: 'Not authenticated' })
 		const form = await request.formData()
-		const id = form.get('id') as string
+		const id = str(form, 'id')
 		// Only allow deleting files that belong to a project owned by the caller.
 		const { data: file } = await locals.supabase
 			.from('files')
@@ -212,14 +211,14 @@ export const actions: Actions = {
 		const { user } = await locals.safeGetSession()
 		if (!user) return fail(401, { error: 'Not authenticated' })
 		const form = await request.formData()
-		const status = form.get('status') as string
+		const status = str(form, 'status')
 		// Filter by freelancer_id so updates don't apply silently.
 		const { error: e } = await locals.supabase
 			.from('projects')
 			.update({ status })
 			.eq('id', params.id)
 			.eq('freelancer_id', user.id)
-		if (e) return fail(500, { error: e.message })
+		if (e) return fail(500, { error: DB_ERROR })
 	},
 
 	delete_project: async ({ locals, params }) => {
@@ -230,7 +229,7 @@ export const actions: Actions = {
 			.delete()
 			.eq('id', params.id)
 			.eq('freelancer_id', user.id)
-		if (e) return fail(500, { error: e.message })
+		if (e) return fail(500, { error: DB_ERROR })
 		redirect(303, '/dashboard/projects')
 	},
 
@@ -238,7 +237,7 @@ export const actions: Actions = {
 		const { user } = await locals.safeGetSession()
 		if (!user) return fail(401, { error: 'Not authenticated' })
 		const form = await request.formData()
-		const client_id = form.get('client_id') as string
+		const client_id = str(form, 'client_id')
 		const denied = await requireProjectOwnership(
 			locals.supabase,
 			user.id,
@@ -250,7 +249,7 @@ export const actions: Actions = {
 			.delete()
 			.eq('project_id', params.id)
 			.eq('client_id', client_id)
-		if (e) return fail(500, { error: e.message })
+		if (e) return fail(500, { error: DB_ERROR })
 	},
 
 	invite_client: async ({ locals, params, request }) => {
@@ -258,7 +257,7 @@ export const actions: Actions = {
 		if (!user) return fail(401, { error: 'Not authenticated' })
 		if (!session) return fail(401, { error: 'Not authenticated' })
 		const form = await request.formData()
-		const email = (form.get('email') as string).trim().toLowerCase()
+		const email = str(form, 'email').toLowerCase()
 		if (!email) return fail(400, { error: 'Email is required' })
 		const denied = await requireProjectOwnership(
 			locals.supabase,

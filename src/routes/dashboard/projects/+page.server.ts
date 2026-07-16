@@ -1,5 +1,5 @@
 import { error, fail, redirect } from '@sveltejs/kit'
-import { str } from '$lib/server/form'
+import { DB_ERROR, str } from '$lib/server/form'
 import { inviteClientByEmail } from '$lib/server/project'
 import type { Actions, PageServerLoad } from './$types'
 
@@ -34,7 +34,7 @@ export const actions: Actions = {
 			.select('id')
 			.single()
 
-		if (insertErr) return fail(500, { error: insertErr.message })
+		if (insertErr) return fail(500, { error: DB_ERROR })
 
 		if (client_email) {
 			const inviteErr = await inviteClientByEmail(

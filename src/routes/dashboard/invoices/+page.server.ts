@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { error, fail } from '@sveltejs/kit'
 import type { Database } from '$lib/database.types'
-import { num, str } from '$lib/server/form'
+import { DB_ERROR, num, str } from '$lib/server/form'
 import { createCheckoutSessionViaEdge } from '$lib/server/stripe'
 import type { InvoiceJoined } from '$lib/types'
 import type { Actions, PageServerLoad } from './$types'
@@ -39,7 +39,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	])
 
 	return {
-		invoices: (invoices ?? []) as InvoiceJoined[],
+		invoices: (invoices ?? []) satisfies InvoiceJoined[],
 		projects: projects ?? [],
 	}
 }
@@ -64,7 +64,7 @@ export const actions: Actions = {
 			amount_cents: Math.round(amount * 100),
 			due_date,
 		})
-		if (insertErr) return fail(500, { error: insertErr.message })
+		if (insertErr) return fail(500, { error: DB_ERROR })
 	},
 
 	checkout: async ({ locals, request, url: reqUrl }) => {

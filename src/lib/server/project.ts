@@ -44,16 +44,34 @@ export const addComment = async (
 	if (error) throw error
 }
 
+const MAX_FILE_SIZE = 100 * 1024 * 1024 // 100 MB
+const ALLOWED_MIME_PREFIXES = [
+	'image/',
+	'application/pdf',
+	'application/zip',
+	'application/x-zip-compressed',
+	'text/',
+]
+
 export const uploadProjectFile = async (
 	supabase: SupabaseClient<Database>,
 	projectId: string,
 	userId: string,
 	file: File,
 ) => {
-	const path = `${projectId}/${crypto.randomUUID()}-${file.name}`
+	if (file.size > MAX_FILE_SIZE)
+		throw new Error('File exceeds maximum size of 100 MB')
+
+	const allowed = ALLOWED_MIME_PREFIXES.some((p) => file.type.startsWith(p))
+	if (!allowed && file.type !== '')
+		throw new Error(`File type "${file.type}" is not supported`)
+
+	const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+	const path = `${projectId}/${crypto.randomUUID()}-${safeName}`
+
 	const { error: uploadErr } = await supabase.storage
 		.from('project-files')
-		.upload(path, file)
+		.upload(path, file, { upsert: false })
 	if (uploadErr) throw uploadErr
 
 	const { error: insertErr } = await supabase.from('files').insert({

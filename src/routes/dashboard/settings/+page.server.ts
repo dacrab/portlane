@@ -1,5 +1,5 @@
 import { error, fail, redirect } from '@sveltejs/kit'
-import { MIN_PASSWORD_LENGTH, str } from '$lib/server/form'
+import { DB_ERROR, MIN_PASSWORD_LENGTH, str } from '$lib/server/form'
 import type { Actions, PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -23,7 +23,7 @@ export const actions: Actions = {
 			.from('profiles')
 			.update({ full_name })
 			.eq('id', user.id)
-		if (updateErr) return fail(500, { profile_error: updateErr.message })
+		if (updateErr) return fail(500, { profile_error: DB_ERROR })
 		return { profile_saved: true }
 	},
 

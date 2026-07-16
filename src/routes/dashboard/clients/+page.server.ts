@@ -1,10 +1,18 @@
 import { error } from '@sveltejs/kit'
+import type { Database } from '$lib/database.types'
 import type { PageServerLoad } from './$types'
 
-interface ClientRow {
-	client_id: string
-	full_name: string
-	projects: string[]
+type ClientRow =
+	Database['public']['Functions']['get_freelancer_clients']['Returns'][number]
+
+function isClientRows(v: unknown): v is ClientRow[] {
+	return (
+		Array.isArray(v) &&
+		v.every(
+			(item) =>
+				typeof item === 'object' && item !== null && 'client_id' in item,
+		)
+	)
 }
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -14,8 +22,10 @@ export const load: PageServerLoad = async ({ locals }) => {
 		p_user_id: user.id,
 	})
 
+	const rows: ClientRow[] = data && isClientRows(data) ? data : []
+
 	return {
-		clients: ((data ?? []) as ClientRow[]).map((r) => ({
+		clients: rows.map((r) => ({
 			id: r.client_id,
 			full_name: r.full_name,
 			projects: r.projects ?? [],
