@@ -1,6 +1,6 @@
 import { EDGE_FN_BASE } from '$lib/env'
 
-export type EdgeResult<T> = { data: T } | { error: string; status: number }
+type EdgeResult<T> = { data: T } | { error: string; status: number }
 
 function parseEdgeError(text: string): string | undefined {
 	try {
@@ -9,9 +9,7 @@ function parseEdgeError(text: string): string | undefined {
 			const { error: err } = parsed as { error: unknown }
 			if (typeof err === 'string') return err
 		}
-	} catch {
-		// keep raw text
-	}
+	} catch {}
 	return undefined
 }
 

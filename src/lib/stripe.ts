@@ -1,4 +1,4 @@
-export interface InvoiceLineItemInput {
+interface InvoiceLineItemInput {
 	amount_cents: number
 	currency?: string
 	project_name?: string | null

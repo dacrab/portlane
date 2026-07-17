@@ -90,8 +90,6 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	}
 }
 
-/** Guards a client portal action: requires an authenticated client with a
- * selected project, returning `{ user, projectId }` or throwing (401/400). */
 async function requireClientProject({
 	locals,
 	url,

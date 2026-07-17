@@ -8,12 +8,6 @@ export interface ToastEnhanceOptions {
 	beforeUpdate?: () => void
 }
 
-/**
- * Thin `use:enhance` wrapper that applies the default `update()` and shows a
- * success/error toast. Mirrors the common form pattern used across the app:
- * always update (following redirects), toast success on any non-error result,
- * toast the error detail on `failure`.
- */
 export function toastEnhance(opts: ToastEnhanceOptions = {}): SubmitFunction {
 	return () => {
 		return async ({ result, update }) => {

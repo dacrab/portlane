@@ -1,4 +1,4 @@
-export type MilestoneLike = { completed: boolean }
+type MilestoneLike = { completed: boolean }
 
 export const milestoneTotal = (ms: MilestoneLike[]): number => ms.length
 

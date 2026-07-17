@@ -6,7 +6,6 @@ let { children, data } = $props()
 </script>
 
 <div class="flex h-screen overflow-hidden">
-	<!-- Sidebar: hidden on mobile, visible on lg+ -->
 	<div class="hidden lg:flex">
 		<Sidebar user={data.user} unreadComments={data.unreadComments} />
 	</div>
@@ -20,5 +19,5 @@ let { children, data } = $props()
 	</main>
 </div>
 
-<!-- Bottom nav on mobile -->
+
 <MobileNav unreadComments={data.unreadComments} />

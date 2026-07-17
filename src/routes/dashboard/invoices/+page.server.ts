@@ -6,7 +6,6 @@ import { createCheckoutSessionViaEdge } from '$lib/server/stripe'
 import type { InvoiceJoined } from '$lib/types'
 import type { Actions, PageServerLoad } from './$types'
 
-/** Ensures the invoice with `id` is owned by `user`; returns a 403 failure otherwise. */
 async function requireInvoiceOwned(
 	supabase: SupabaseClient<Database>,
 	user: { id: string },

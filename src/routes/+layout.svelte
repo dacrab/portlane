@@ -19,7 +19,6 @@ onMount(() => {
 })
 </script>
 
-<!-- Prevent dark mode flash -->
 <svelte:head>
 	<script>
 		try {

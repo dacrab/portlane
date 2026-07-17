@@ -44,7 +44,7 @@ export const addComment = async (
 	if (error) throw error
 }
 
-const MAX_FILE_SIZE = 100 * 1024 * 1024 // 100 MB
+const MAX_FILE_SIZE = 100 * 1024 * 1024
 const ALLOWED_MIME_PREFIXES = [
 	'image/',
 	'application/pdf',
@@ -100,7 +100,6 @@ export const inviteClientByEmail = async (
 export const getHomeRoute = (role: string | undefined) =>
 	role === 'client' ? '/portal' : '/dashboard'
 
-/** Paths allowed as post-auth `next` redirect targets. */
 export const ALLOWED_NEXT_PATHS = [
 	'/dashboard',
 	'/portal',

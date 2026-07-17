@@ -1,4 +1,3 @@
-/** Download a file via signed URL */
 export async function downloadFile(path: string, name: string) {
 	const res = await fetch(`/api/file-url?path=${encodeURIComponent(path)}`)
 	if (!res.ok) throw new Error('Download failed')

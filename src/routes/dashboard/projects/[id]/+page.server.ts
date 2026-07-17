@@ -95,8 +95,6 @@ export const actions: Actions = {
 		const minutes = int(form, 'minutes')
 		const description = str(form, 'description') || null
 		if (!minutes || minutes <= 0) return fail(400, { error: 'Invalid minutes' })
-		// Scope by freelancer_id; RLS would catch a mismatch but propagates a silent
-		// RLS rejection back as success. Use the explicit ownership filter.
 		const { error: e } = await locals.supabase.from('time_entries').insert({
 			project_id: params.id,
 			user_id: user.id,
