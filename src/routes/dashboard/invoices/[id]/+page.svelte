@@ -2,19 +2,23 @@
 import { toast } from 'svelte-sonner'
 import { enhance } from '$app/forms'
 import { page } from '$app/state'
+import { LOCALE } from '$lib/constants'
 import { fmtMoney, statusBadge } from '$lib/fmt'
 import type { PageData } from './$types'
 
 let { data }: { data: PageData } = $props()
 
 const inv = $derived(data.invoice)
-const project = $derived(inv?.projects ?? {})
-const freelancerName = $derived(inv?.freelancer?.full_name ?? '—')
-const clientName = $derived(inv?.client?.full_name ?? '—')
+const project = $derived(
+	inv ? { name: inv.project_name, description: inv.project_description } : {},
+)
+const freelancerName = $derived(inv?.freelancer_name ?? '—')
+const clientName = $derived(inv?.client_name ?? '—')
 const amount = $derived(inv?.amount_cents ? fmtMoney(inv.amount_cents) : '')
-const isClient = $derived(inv?.client_id === data.user?.id)
+const isClient = $derived(inv?.client_id === data.user?.userId)
+const status = $derived(inv?.status ?? '')
 
-const today = new Date().toLocaleDateString('en-US', {
+const today = new Date().toLocaleDateString(LOCALE, {
 	year: 'numeric',
 	month: 'long',
 	day: 'numeric',
@@ -35,7 +39,7 @@ const today = new Date().toLocaleDateString('en-US', {
 <div class="no-print mb-6 flex items-center gap-3">
 	<a href="/dashboard/invoices" class="text-sm text-faint">← Invoices</a>
 	<div class="ml-auto flex gap-2">
-		{#if isClient && (inv.status === 'sent' || inv.status === 'overdue') && !inv.stripe_session_id}
+		{#if isClient && (status === 'sent' || status === 'overdue') && !inv?.stripe_session_id}
 			<form method="POST" action="?/checkout" use:enhance={() => {
 				return async ({ result }) => {
 					if (result.type !== 'success') return;
@@ -44,7 +48,7 @@ const today = new Date().toLocaleDateString('en-US', {
 				};
 			}}
 			>
-				<input type="hidden" name="invoiceId" value={inv.id} />
+				<input type="hidden" name="invoiceId" value={inv?.id ?? ''} />
 				<button type="submit" class="btn btn-primary text-xs">Pay Now</button>
 			</form>
 		{/if}
@@ -64,14 +68,14 @@ const today = new Date().toLocaleDateString('en-US', {
 				<span class="text-sm font-semibold text-heading">Portlane</span>
 			</div>
 			<p class="text-3xl font-bold tracking-tight text-heading">Invoice</p>
-			<p class="mt-1 text-xs font-mono text-faint">{inv.id.slice(0, 8).toUpperCase()}</p>
+			<p class="mt-1 text-xs font-mono text-faint">{String(inv?.id).slice(0, 8).toUpperCase()}</p>
 		</div>
 		<div class="text-right">
-			<span class="{statusBadge[inv.status] ?? 'badge badge-neutral'} capitalize">{inv.status}</span>
+			<span class="{statusBadge[status] ?? 'badge badge-neutral'} capitalize">{status}</span>
 			<p class="mt-3 text-xs text-faint">Issued {today}</p>
-			{#if inv.due_date}
+			{#if inv?.due_date}
 				<p class="text-xs text-faint">
-					Due {new Date(inv.due_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+					Due {new Date(inv.due_date).toLocaleDateString(LOCALE, { year: 'numeric', month: 'long', day: 'numeric' })}
 				</p>
 			{/if}
 		</div>

@@ -1,13 +1,11 @@
 import { error, json } from '@sveltejs/kit'
+import { and, eq } from 'drizzle-orm'
+import { useDb } from '$lib/server/db'
+import * as schema from '$lib/server/db/schema'
 import type { RequestHandler } from './$types'
 
-const SIGNED_URL_TTL_SECONDS = 60 * 60
-const STORAGE_ERROR = 'Unable to generate download URL.'
-
 export const GET: RequestHandler = async ({ url, locals }) => {
-	const { session, user } = await locals.safeGetSession()
-	if (!session) error(401)
-	if (!user) error(401)
+	if (!locals.user) error(401)
 
 	const path = url.searchParams.get('path')
 	if (!path) error(400, 'Missing path')
@@ -15,25 +13,30 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 	const projectId = path.split('/')[0]
 	if (!projectId) error(400, 'Invalid path')
 
-	const { data: access } = await locals.supabase
-		.from('project_clients')
-		.select('project_id')
-		.eq('project_id', projectId)
-		.eq('client_id', user.id)
-		.maybeSingle()
-	const { data: owned } = await locals.supabase
-		.from('projects')
-		.select('id')
-		.eq('id', projectId)
-		.eq('freelancer_id', user.id)
-		.maybeSingle()
+	const db = useDb()
+	const [access] = await db
+		.select({ one: schema.projectClients.projectId })
+		.from(schema.projectClients)
+		.where(
+			and(
+				eq(schema.projectClients.projectId, projectId),
+				eq(schema.projectClients.clientId, locals.user.userId),
+			),
+		)
+		.limit(1)
+
+	const [owned] = await db
+		.select({ one: schema.projects.id })
+		.from(schema.projects)
+		.where(
+			and(
+				eq(schema.projects.id, projectId),
+				eq(schema.projects.freelancerId, locals.user.userId),
+			),
+		)
+		.limit(1)
+
 	if (!access && !owned) error(403, 'Forbidden')
 
-	const { data, error: storageErr } = await locals.supabase.storage
-		.from('project-files')
-		.createSignedUrl(path, SIGNED_URL_TTL_SECONDS)
-
-	if (storageErr) error(500, STORAGE_ERROR)
-
-	return json({ url: data.signedUrl })
+	return json({ url: path })
 }

@@ -18,7 +18,7 @@ let { data }: { data: PageData } = $props()
 {:else}
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 		{#each data.clients as c}
-			{@const name = c.full_name ?? 'Unknown'}
+			{@const name = c.name ?? 'Unknown'}
 			<div class="card flex flex-col gap-4">
 				<div class="flex items-center gap-3">
 					<Avatar {name} size={10} />

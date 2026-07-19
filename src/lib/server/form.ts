@@ -1,6 +1,3 @@
-export const MIN_PASSWORD_LENGTH = 8
-
-/** Generic error shown instead of leaking internal DB/Supabase error details. */
 export const DB_ERROR = 'An unexpected error occurred. Please try again.'
 
 function formVal(f: FormData, k: string): string | null {

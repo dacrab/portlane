@@ -18,7 +18,7 @@ import { fmtDate, fmtMoney, statusBadge, today } from '$lib/fmt'
 import { milestoneDone, milestoneTotal } from '$lib/milestones'
 import type { PageData } from '../../routes/portal/$types'
 
-type WithProfile = { profiles: { full_name: string | null } | null }
+type WithProfile = { profiles: { name: string | null } | null }
 
 let {
 	data,
@@ -33,7 +33,7 @@ let submittingApproval = $state(false)
 
 const freelancerName = $derived(
 	('profiles' in data.project
-		? (data.project as WithProfile).profiles?.full_name
+		? (data.project as WithProfile).profiles?.name
 		: null) ?? 'Your freelancer',
 )
 const total = $derived(milestoneTotal(data.milestones))
@@ -93,7 +93,7 @@ const isClient = $derived(data.invoices.length > 0)
 				<div class="space-y-2">
 					{#each data.invoices as inv}
 						<div class="relative flex items-center justify-between rounded-lg px-3 py-3" style="border:1px solid var(--color-border-subtle)">
-							{#if isClient && (inv.status === 'sent' || inv.status === 'overdue') && !inv.stripe_session_id}
+							{#if isClient && (inv.status === 'sent' || inv.status === 'overdue') && !inv.stripeSessionId}
 								<form method="POST" action="?/checkout" use:enhance={() => {
 									return async ({ result }) => {
 										if (result.type !== 'success') return;
@@ -106,9 +106,9 @@ const isClient = $derived(data.invoices.length > 0)
 								</form>
 							{/if}
 							<div>
-								<p class="text-sm font-semibold text-heading">{fmtMoney(inv.amount_cents)}</p>
-								<p class="text-xs mt-0.5" class:text-danger={inv.due_date && inv.due_date < today() && inv.status !== 'paid'} class:text-faint={!(inv.due_date && inv.due_date < today() && inv.status !== 'paid')}>
-									{inv.due_date ? `Due ${fmtDate(inv.due_date)}` : fmtDate(inv.created_at ?? '')}
+								<p class="text-sm font-semibold text-heading">{fmtMoney(inv.amountCents)}</p>
+								<p class="text-xs mt-0.5" class:text-danger={inv.dueDate && inv.dueDate < today() && inv.status !== 'paid'} class:text-faint={!(inv.dueDate && inv.dueDate < today() && inv.status !== 'paid')}>
+									{inv.dueDate ? `Due ${fmtDate(inv.dueDate)}` : fmtDate(inv.createdAt ?? '')}
 								</p>
 							</div>
 							<span class="{statusBadge[inv.status] ?? 'badge badge-neutral'}">{inv.status}</span>
@@ -167,10 +167,10 @@ const isClient = $derived(data.invoices.length > 0)
 							<div class="flex-1 min-w-0">
 								<p class="truncate text-sm font-medium text-body">{f.name}</p>
 								<p class="text-xs text-faint mt-0.5">
-									{f.size_bytes ? (f.size_bytes / 1024 / 1024).toFixed(1) + ' MB' : '—'} · {fmtDate(f.created_at ?? '')}
+									{f.sizeBytes ? (f.sizeBytes / 1024 / 1024).toFixed(1) + ' MB' : '—'} · {fmtDate(f.createdAt ?? '')}
 								</p>
 							</div>
-							<button onclick={() => downloadFile(f.storage_path, f.name)} class="btn-icon shrink-0" title="Download">
+							<button onclick={() => downloadFile(f.storagePath, f.name)} class="btn-icon shrink-0" title="Download">
 								<IconDownloadSimpleRegular class="h-3.5 w-3.5" />
 							</button>
 						</div>
@@ -191,8 +191,7 @@ const isClient = $derived(data.invoices.length > 0)
 		{#if data.project}
 			<div class="card">
 				<CommentThread
-					projectId={data.project.id}
-					userId={data.user?.id}
+					userId={data.user?.userId}
 					initial={data.comments}
 				/>
 				<form method="POST" action="?/comment"

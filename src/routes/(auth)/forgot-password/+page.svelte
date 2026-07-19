@@ -1,31 +1,53 @@
 <script lang="ts">
-import { enhance } from '$app/forms'
+import { authClient } from '$lib/auth-client'
 import AuthCard from '$lib/components/AuthCard.svelte'
-import type { ActionData } from './$types'
 
-let { form }: { form: ActionData } = $props()
+let email = $state('')
+let sent = $state(false)
+let error = $state('')
+let loading = $state(false)
+
+async function submit(e: Event) {
+	e.preventDefault()
+	error = ''
+	loading = true
+	// @ts-expect-error - better-auth client types don't include email/password methods on the svelte wrapper
+	const { error: err } = await authClient.forgetPassword({
+		email,
+		redirectTo: '/reset-password',
+	})
+	loading = false
+	if (err) {
+		error = err.message ?? err.statusText ?? 'Request failed'
+		return
+	}
+	sent = true
+}
 </script>
 
 <AuthCard>
-	{#if form?.sent}
-		<div class="auth-header">
-			<h1>Check your email</h1>
-			<p>We sent a password reset link to your inbox.</p>
+	{#if sent}
+		<div class="text-center space-y-2">
+			<h1 class="text-lg font-semibold">Check your email</h1>
+			<p class="text-sm text-muted">If an account exists for {email}, you'll receive a reset link shortly.</p>
+			<a href="/login" class="text-accent text-sm hover:underline">Back to sign in</a>
 		</div>
-		<a href="/login" class="btn btn-primary auth-submit" style="display:flex;justify-content:center">Back to login</a>
 	{:else}
-		<div class="auth-header">
-			<h1>Reset your password</h1>
-			<p>Enter your email and we'll send you a link.</p>
-		</div>
-		<form method="POST" use:enhance class="auth-form">
-			{#if form?.error}<p class="form-error">{form.error}</p>{/if}
-			<div class="auth-field">
-				<label for="email">Email</label>
-				<input id="email" name="email" type="email" required class="input" placeholder="you@example.com" />
+		<form onsubmit={submit} class="space-y-4">
+			<h1 class="text-lg font-semibold text-center">Reset password</h1>
+			{#if error}
+				<p class="text-sm text-red-600 text-center">{error}</p>
+			{/if}
+			<div>
+				<label for="email" class="input-label">Email</label>
+				<input id="email" type="email" bind:value={email} required class="input" placeholder="your@email.com" />
 			</div>
-			<button type="submit" class="btn btn-primary auth-submit">Send reset link</button>
+			<button type="submit" class="btn btn-primary w-full" disabled={loading}>
+				{loading ? 'Sending...' : 'Send reset link'}
+			</button>
+			<p class="text-sm text-center text-faint">
+				<a href="/login" class="text-accent hover:underline">Back to sign in</a>
+			</p>
 		</form>
-		<p class="auth-footer"><a href="/login">Back to login</a></p>
 	{/if}
 </AuthCard>

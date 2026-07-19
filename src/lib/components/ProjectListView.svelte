@@ -4,7 +4,7 @@ import EmptyState from '$lib/components/EmptyState.svelte'
 import { fmtDate } from '$lib/fmt'
 import type { PageData } from '../../routes/portal/$types'
 
-type WithProfile = { profiles: { full_name: string | null } | null }
+type WithProfile = { profiles: { name: string | null } | null }
 
 let { data }: { data: PageData } = $props()
 </script>
@@ -25,8 +25,8 @@ let { data }: { data: PageData } = $props()
 					<div class="flex-1 min-w-0">
 						<p class="text-sm font-semibold text-heading">{p.name}</p>
 						<p class="text-xs text-faint">
-							{'profiles' in p ? ((p as WithProfile).profiles?.full_name ?? 'Freelancer') : 'Freelancer'}
-							{#if p.due_date} · Due {fmtDate(p.due_date)}{/if}
+							{'profiles' in p ? ((p as WithProfile).profiles?.name ?? 'Freelancer') : 'Freelancer'}
+							{#if p.dueDate} · Due {fmtDate(p.dueDate)}{/if}
 						</p>
 					</div>
 					<span class="badge badge-neutral shrink-0">{p.status.replace('_', ' ')}</span>

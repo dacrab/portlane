@@ -11,10 +11,9 @@
 			"command": ["npx", "-y", "@dopplerhq/mcp-server"],
 			"enabled": true
 		},
-		"supabase": {
+		"Neon": {
 			"type": "remote",
-			"url": "https://mcp.supabase.com/mcp?project_ref=ggwnsckppgusiotrcqwf",
-			"enabled": true
+			"url": "https://mcp.neon.tech/mcp"
 		}
 	}
 }

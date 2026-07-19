@@ -22,9 +22,7 @@ let invoiceStatusOverrides = $state<Record<string, string>>({})
 type ProjectLight = {
 	id: string
 	name: string
-	project_clients:
-		| { profiles: { id: string; full_name: string | null } | null }[]
-		| null
+	clients: { id: string; name: string | null }[] | null
 }
 
 function getStatus(inv: { id: string; status: string }) {
@@ -32,16 +30,12 @@ function getStatus(inv: { id: string; status: string }) {
 }
 
 const clients = $derived(
-	(
-		data.projects.find((p: ProjectLight) => p.id === selectedProject)
-			?.project_clients ?? []
-	)
-		.map((pc) => pc.profiles)
-		.filter((c): c is NonNullable<typeof c> => c != null),
+	data.projects.find((p: ProjectLight) => p.id === selectedProject)?.clients ??
+		[],
 )
 
 const clientItems = $derived(
-	clients.map((c) => ({ value: c.id, label: c.full_name ?? c.id })),
+	clients.map((c) => ({ value: c.id, label: c.name ?? c.id })),
 )
 
 const stats = $derived({
@@ -156,8 +150,8 @@ const statusItems = INVOICE_STATUS_ITEMS
 			{#each data.invoices as inv}
 				<div class="flex items-center gap-4 px-6 py-4 divide-bottom">
 					<div class="flex-1 min-w-0">
-						<p class="text-sm font-medium text-body">{inv.projects?.name ?? '—'}</p>
-						<p class="mt-0.5 text-xs text-faint">{inv.profiles?.full_name ?? '—'}</p>
+						<p class="text-sm font-medium text-body">{inv.project_name ?? '—'}</p>
+						<p class="mt-0.5 text-xs text-faint">{inv.client_name ?? '—'}</p>
 					</div>
 					<p class="hidden sm:block text-sm text-faint shrink-0">
 						{inv.due_date ? fmtDate(inv.due_date) : '—'}

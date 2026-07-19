@@ -1,19 +1,21 @@
 <script lang="ts">
-import type { User } from '@supabase/supabase-js'
 import IconMoonRegular from 'phosphor-icons-svelte/IconMoonRegular.svelte'
 import IconSidebarSimpleRegular from 'phosphor-icons-svelte/IconSidebarSimpleRegular.svelte'
 import IconSignOutRegular from 'phosphor-icons-svelte/IconSignOutRegular.svelte'
 import IconSunRegular from 'phosphor-icons-svelte/IconSunRegular.svelte'
 import { onMount } from 'svelte'
-import { enhance } from '$app/forms'
 import { page } from '$app/state'
+import { authClient } from '$lib/auth-client'
 import { navItems } from '$lib/nav'
 import { sidebarCollapsed } from '$lib/stores.svelte'
 
 let {
 	user,
 	unreadComments = 0,
-}: { user: User | null; unreadComments?: number } = $props()
+}: {
+	user: { userId: string; email: string; role: string } | null
+	unreadComments?: number
+} = $props()
 
 let collapsed = $derived(sidebarCollapsed.value)
 let dark = $state(false)
@@ -39,16 +41,6 @@ function toggleDark() {
 
 const settingsItem = navItems[4]
 if (!settingsItem) throw new Error('Missing settings nav item')
-
-const initials = $derived(
-	(user?.user_metadata?.full_name ?? user?.email ?? '?')
-		.split(/[\s@]/)
-		.filter(Boolean)
-		.map((w: string) => w[0])
-		.slice(0, 2)
-		.join('')
-		.toUpperCase(),
-)
 </script>
 
 <aside
@@ -113,25 +105,24 @@ const initials = $derived(
 			{/if}
 		</div>
 
-		<!-- User row -->
+		<!-- User -->
 		<div class="mt-2 pt-2" style="border-top:1px solid rgba(255,255,255,0.05)">
 			{#if !collapsed}
 				<div class="flex items-center gap-2 rounded-md px-2 py-1.5" style="background:rgba(255,255,255,0.03)">
-					<div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold"
-						style="background:var(--color-accent-700);color:#fff">{initials}</div>
+					<div class="flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-semibold uppercase" style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.6)">
+						{user?.email?.charAt(0) ?? '?'}
+					</div>
 					<p class="flex-1 truncate text-[11px]" style="color:rgba(255,255,255,0.3)">{user?.email ?? ''}</p>
-					<form method="POST" action="/logout" use:enhance>
-						<button type="submit" class="shrink-0 rounded p-0.5 transition-colors" style="color:rgba(255,255,255,0.2)" title="Sign out">
-							<IconSignOutRegular class="h-3.5 w-3.5" />
-						</button>
-					</form>
+					<button onclick={() => authClient.signOut()} class="shrink-0 p-1 rounded hover:bg-white/10" title="Sign out">
+						<span style="color:rgba(255,255,255,0.3)"><IconSignOutRegular class="h-3.5 w-3.5" /></span>
+					</button>
 				</div>
 			{:else}
-				<form method="POST" action="/logout" use:enhance>
-					<button type="submit" class="nav-item w-full justify-center px-0" title="Sign out">
-						<IconSignOutRegular class="h-[15px] w-[15px] shrink-0" />
+				<div class="flex justify-center">
+					<button onclick={() => authClient.signOut()} class="flex h-7 w-7 items-center justify-center rounded-full hover:bg-white/10" title="Sign out">
+						<span class="text-[10px] font-semibold uppercase" style="color:rgba(255,255,255,0.6)">{user?.email?.charAt(0) ?? '?'}</span>
 					</button>
-				</form>
+				</div>
 			{/if}
 		</div>
 	</div>

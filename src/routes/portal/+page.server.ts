@@ -1,5 +1,7 @@
 import { error, fail, redirect } from '@sveltejs/kit'
-import type { Database } from '$lib/database.types'
+import { and, desc, eq, getTableColumns, sql } from 'drizzle-orm'
+import { useDb } from '$lib/server/db'
+import * as schema from '$lib/server/db/schema'
 import { DB_ERROR, formFile, str } from '$lib/server/form'
 import {
 	addComment,
@@ -8,37 +10,36 @@ import {
 	getProjectMilestones,
 	uploadProjectFile,
 } from '$lib/server/project'
-import { createCheckoutSessionViaEdge } from '$lib/server/stripe'
+import { createCheckoutSession } from '$lib/server/stripe'
 import type { Actions, PageServerLoad } from './$types'
 
-type ProjectItem = Database['public']['Tables']['projects']['Row'] & {
-	profiles: Pick<
-		Database['public']['Tables']['profiles']['Row'],
-		'full_name'
-	> | null
-}
-
 export const load: PageServerLoad = async ({ locals, url }) => {
-	const { user } = await locals.safeGetSession()
-	if (!user) redirect(303, '/login')
+	if (!locals.user) redirect(303, '/login')
+	const userId = locals.user.userId
+	const db = useDb()
 
 	const projectId = url.searchParams.get('project')
 
 	if (!projectId) {
-		const { data: rows } = await locals.supabase
-			.from('project_clients')
-			.select(
-				'projects(id, name, status, due_date, profiles!projects_freelancer_id_fkey(full_name))',
+		const projects = await db
+			.select({
+				id: schema.projects.id,
+				name: schema.projects.name,
+				status: schema.projects.status,
+				dueDate: schema.projects.dueDate,
+				freelancerName: schema.users.name,
+			})
+			.from(schema.projectClients)
+			.innerJoin(
+				schema.projects,
+				eq(schema.projects.id, schema.projectClients.projectId),
 			)
-			.eq('client_id', user.id)
+			.innerJoin(
+				schema.users,
+				eq(schema.users.id, schema.projects.freelancerId),
+			)
+			.where(eq(schema.projectClients.clientId, userId))
 
-		const projects: ProjectItem[] = (rows ?? []).flatMap((r) => {
-			const row: unknown = r
-			if (!row || typeof row !== 'object') return []
-			if (!('projects' in row)) return []
-			const p = (row as { projects: unknown }).projects
-			return p && typeof p === 'object' ? [p as ProjectItem] : []
-		})
 		return {
 			project: null,
 			projects,
@@ -46,118 +47,152 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			files: [],
 			comments: [],
 			invoices: [],
-			user,
+			user: locals.user,
 		}
 	}
 
-	const { data: membership } = await locals.supabase
-		.from('project_clients')
-		.select('project_id')
-		.eq('project_id', projectId)
-		.eq('client_id', user.id)
-		.maybeSingle()
+	const [membership] = await db
+		.select({ one: sql`1` })
+		.from(schema.projectClients)
+		.where(
+			and(
+				eq(schema.projectClients.projectId, projectId),
+				eq(schema.projectClients.clientId, userId),
+			),
+		)
+		.limit(1)
+
 	if (!membership) error(403, 'Forbidden')
 
-	const [projectRes, milestonesRes, filesRes, commentsRes, invoicesRes] =
+	const [projectRows, milestones, files, comments, invoices] =
 		await Promise.all([
-			locals.supabase
-				.from('projects')
-				.select('*, profiles!projects_freelancer_id_fkey(full_name)')
-				.eq('id', projectId)
-				.single(),
-			getProjectMilestones(locals.supabase, projectId),
-			getProjectFiles(locals.supabase, projectId),
-			getProjectComments(locals.supabase, projectId),
-			locals.supabase
-				.from('invoices')
-				.select('*')
-				.eq('project_id', projectId)
-				.eq('client_id', user.id)
-				.order('created_at', { ascending: false }),
+			db
+				.select({
+					...getTableColumns(schema.projects),
+					freelancerName: schema.users.name,
+				})
+				.from(schema.projects)
+				.innerJoin(
+					schema.users,
+					eq(schema.users.id, schema.projects.freelancerId),
+				)
+				.where(eq(schema.projects.id, projectId))
+				.limit(1),
+			getProjectMilestones(projectId),
+			getProjectFiles(projectId),
+			getProjectComments(projectId),
+			db
+				.select()
+				.from(schema.invoices)
+				.where(
+					and(
+						eq(schema.invoices.projectId, projectId),
+						eq(schema.invoices.clientId, userId),
+					),
+				)
+				.orderBy(desc(schema.invoices.createdAt)),
 		])
 
-	const project = projectRes.data
+	const project = projectRows[0]
 	if (!project) error(404, 'Project not found')
 
 	return {
 		project,
 		projects: [],
-		milestones: milestonesRes.data ?? [],
-		files: filesRes.data ?? [],
-		comments: commentsRes.data ?? [],
-		invoices: invoicesRes.data ?? [],
-		user,
+		milestones,
+		files,
+		comments,
+		invoices,
+		user: locals.user,
 	}
-}
-
-async function requireClientProject({
-	locals,
-	url,
-}: {
-	locals: App.Locals
-	url: URL
-}) {
-	const { user } = await locals.safeGetSession()
-	if (!user) error(401)
-	const projectId = url.searchParams.get('project')
-	if (!projectId) error(400, 'Missing project')
-	return { user, projectId }
 }
 
 export const actions: Actions = {
 	comment: async ({ locals, url, request }) => {
-		const { user, projectId } = await requireClientProject({ locals, url })
+		if (!locals.user) error(401)
+		const projectId = url.searchParams.get('project')
+		if (!projectId) error(400, 'Missing project')
 		const form = await request.formData()
 		const body = str(form, 'body')
 		if (!body) return
-		await addComment(locals.supabase, projectId, user.id, body)
+		try {
+			await addComment(projectId, locals.user.userId, body)
+		} catch {
+			return fail(500, { error: DB_ERROR })
+		}
 	},
 
 	approve: async ({ locals, url, request }) => {
-		const { projectId } = await requireClientProject({ locals, url })
+		if (!locals.user) error(401)
+		const projectId = url.searchParams.get('project')
+		if (!projectId) error(400, 'Missing project')
 		const note = str(await request.formData(), 'note') || null
-		await locals.supabase.rpc('approve_project', {
-			p_project_id: projectId,
-			p_note: note || undefined,
-		})
+		const db = useDb()
+		await db.execute(
+			sql`SELECT approve_project(${projectId}, ${locals.user.userId}, ${note})`,
+		)
 	},
 
 	request_revision: async ({ locals, url, request }) => {
-		const { projectId } = await requireClientProject({ locals, url })
+		if (!locals.user) error(401)
+		const projectId = url.searchParams.get('project')
+		if (!projectId) error(400, 'Missing project')
 		const note = str(await request.formData(), 'note') || null
-		await locals.supabase.rpc('request_revision', {
-			p_project_id: projectId,
-			p_note: note || undefined,
-		})
+		const db = useDb()
+		await db.execute(
+			sql`SELECT request_revision(${projectId}, ${locals.user.userId}, ${note})`,
+		)
 	},
 
 	upload_file: async ({ locals, url, request }) => {
-		const { user, projectId } = await requireClientProject({ locals, url })
+		if (!locals.user) error(401)
+		const projectId = url.searchParams.get('project')
+		if (!projectId) error(400, 'Missing project')
 		const form = await request.formData()
 		const file = formFile(form, 'file')
 		if (!file?.size) return
 		try {
-			await uploadProjectFile(locals.supabase, projectId, user.id, file)
+			await uploadProjectFile(projectId, locals.user.userId, file)
 		} catch {
 			error(500, DB_ERROR)
 		}
 	},
 
 	checkout: async ({ locals, request, url: reqUrl }) => {
-		const { session, user } = await locals.safeGetSession()
-		if (!user) error(401)
-		if (!session) error(401)
-
+		if (!locals.user) error(401)
 		const form = await request.formData()
 		const invoiceId = str(form, 'invoiceId')
 		if (!invoiceId) return fail(400, { missing: true })
 
-		const result = await createCheckoutSessionViaEdge(
-			invoiceId,
-			session.access_token,
+		const db = useDb()
+		const [invoice] = await db
+			.select({
+				id: schema.invoices.id,
+				amountCents: schema.invoices.amountCents,
+				currency: schema.invoices.currency,
+				projectName: sql<string>`(SELECT name FROM project WHERE id = ${schema.invoices.projectId})`,
+			})
+			.from(schema.invoices)
+			.where(
+				and(
+					eq(schema.invoices.id, invoiceId),
+					eq(schema.invoices.clientId, locals.user.userId),
+				),
+			)
+			.limit(1)
+
+		if (!invoice) return fail(404, { error: 'Invoice not found' })
+
+		const result = await createCheckoutSession(
+			{
+				id: invoice.id,
+				amount_cents: invoice.amountCents,
+				currency: invoice.currency,
+				project_name: invoice.projectName,
+			},
 			reqUrl.origin,
 		)
-		if ('error' in result) return fail(result.status, { error: result.error })
+
 		return { url: result.url }
 	},
 }

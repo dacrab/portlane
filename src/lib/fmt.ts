@@ -1,15 +1,17 @@
+import { LOCALE } from '$lib/constants'
+
 function formatDateSafe(
 	iso: string,
 	options: Intl.DateTimeFormatOptions,
 ): string {
 	const d = new Date(iso)
 	if (Number.isNaN(d.getTime())) return '-'
-	return d.toLocaleDateString('en-US', options)
+	return d.toLocaleDateString(LOCALE, options)
 }
 
 export const fmtMoney = (cents: number, currency = 'USD'): string => {
 	const amount = cents / 100
-	return amount.toLocaleString('en-US', {
+	return amount.toLocaleString(LOCALE, {
 		style: 'currency',
 		currency,
 		minimumFractionDigits: amount % 1 === 0 ? 0 : 2,

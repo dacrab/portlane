@@ -1,24 +1,38 @@
 import { error, fail, redirect } from '@sveltejs/kit'
+import { desc, eq, sql } from 'drizzle-orm'
+import { useDb } from '$lib/server/db'
+import * as schema from '$lib/server/db/schema'
 import { DB_ERROR, str } from '$lib/server/form'
 import { inviteClientByEmail } from '$lib/server/project'
 import type { Actions, PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals }) => {
-	const { user } = await locals.safeGetSession()
-	if (!user) error(401)
-	const { data: projects } = await locals.supabase
-		.from('projects')
-		.select('*, milestones(completed), project_clients(count)')
-		.eq('freelancer_id', user.id)
-		.order('created_at', { ascending: false })
-	return { projects: projects ?? [] }
+	if (!locals.user) error(401)
+	const db = useDb()
+
+	const projects = await db
+		.select({
+			id: schema.projects.id,
+			freelancerId: schema.projects.freelancerId,
+			name: schema.projects.name,
+			description: schema.projects.description,
+			status: schema.projects.status,
+			dueDate: schema.projects.dueDate,
+			createdAt: schema.projects.createdAt,
+			completedMilestones: sql<number>`(SELECT COUNT(*) FROM milestone WHERE project_id = ${schema.projects.id} AND completed = true)::int`,
+			totalMilestones: sql<number>`(SELECT COUNT(*) FROM milestone WHERE project_id = ${schema.projects.id})::int`,
+			clientCount: sql<number>`(SELECT COUNT(*) FROM project_client WHERE project_id = ${schema.projects.id})::int`,
+		})
+		.from(schema.projects)
+		.where(eq(schema.projects.freelancerId, locals.user.userId))
+		.orderBy(desc(schema.projects.createdAt))
+
+	return { projects }
 }
 
 export const actions: Actions = {
 	create: async ({ locals, request }) => {
-		const { session, user } = await locals.safeGetSession()
-		if (!user) error(401)
-		if (!session) error(401)
+		if (!locals.user) error(401)
 		const form = await request.formData()
 		const name = str(form, 'name')
 		const description = str(form, 'description') || null
@@ -28,23 +42,28 @@ export const actions: Actions = {
 
 		if (!name) return fail(400, { error: 'Name is required' })
 
-		const { data, error: insertErr } = await locals.supabase
-			.from('projects')
-			.insert({ name, description, due_date, status, freelancer_id: user.id })
-			.select('id')
-			.single()
+		const db = useDb()
+		const [project] = await db
+			.insert(schema.projects)
+			.values({
+				name,
+				description,
+				dueDate: due_date,
+				status,
+				freelancerId: locals.user.userId,
+			})
+			.returning({ id: schema.projects.id })
 
-		if (insertErr) return fail(500, { error: DB_ERROR })
+		if (!project) return fail(500, { error: DB_ERROR })
 
 		if (client_email) {
-			const inviteErr = await inviteClientByEmail(
-				session.access_token,
-				client_email,
-				data.id,
-			)
-			if (inviteErr) return fail(200, { error: inviteErr.message })
+			try {
+				await inviteClientByEmail(client_email, project.id)
+			} catch (e) {
+				return fail(200, { error: (e as Error).message })
+			}
 		}
 
-		redirect(303, `/dashboard/projects/${data.id}`)
+		redirect(303, `/dashboard/projects/${project.id}`)
 	},
 }

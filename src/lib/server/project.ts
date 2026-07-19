@@ -1,50 +1,56 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '$lib/database.types'
-import { callEdgeFn } from '$lib/server/edge'
+import { eq, sql } from 'drizzle-orm'
+import { MAX_FILE_SIZE } from '$lib/constants'
+import { useDb } from '$lib/server/db'
+import * as schema from '$lib/server/db/schema'
 
-export const getProjectMilestones = (
-	supabase: SupabaseClient<Database>,
-	projectId: string,
-) =>
-	supabase
-		.from('milestones')
-		.select('*')
-		.eq('project_id', projectId)
-		.order('position')
+export async function getProjectMilestones(projectId: string) {
+	const db = useDb()
+	return db
+		.select()
+		.from(schema.milestones)
+		.where(eq(schema.milestones.projectId, projectId))
+		.orderBy(schema.milestones.position)
+}
 
-export const getProjectFiles = (
-	supabase: SupabaseClient<Database>,
-	projectId: string,
-) =>
-	supabase
-		.from('files')
-		.select('*')
-		.eq('project_id', projectId)
-		.order('created_at', { ascending: false })
+export async function getProjectFiles(projectId: string) {
+	const db = useDb()
+	return db
+		.select()
+		.from(schema.files)
+		.where(eq(schema.files.projectId, projectId))
+		.orderBy(sql`${schema.files.createdAt} DESC`)
+}
 
-export const getProjectComments = (
-	supabase: SupabaseClient<Database>,
-	projectId: string,
-) =>
-	supabase
-		.from('comments')
-		.select('*, profiles(full_name)')
-		.eq('project_id', projectId)
-		.order('created_at')
+export async function getProjectComments(projectId: string) {
+	const db = useDb()
+	const rows = await db
+		.select()
+		.from(schema.comments)
+		.innerJoin(schema.users, eq(schema.users.id, schema.comments.authorId))
+		.where(eq(schema.comments.projectId, projectId))
+		.orderBy(schema.comments.createdAt)
+	return rows.map((r) => ({
+		id: r.comment.id,
+		body: r.comment.body,
+		created_at: r.comment.createdAt,
+		author_id: r.comment.authorId,
+		name: r.user.name,
+	}))
+}
 
-export const addComment = async (
-	supabase: SupabaseClient<Database>,
+export async function addComment(
 	projectId: string,
 	authorId: string,
 	body: string,
-) => {
-	const { error } = await supabase
-		.from('comments')
-		.insert({ project_id: projectId, author_id: authorId, body })
-	if (error) throw error
+) {
+	const db = useDb()
+	await db.insert(schema.comments).values({
+		projectId,
+		authorId,
+		body,
+	})
 }
 
-const MAX_FILE_SIZE = 100 * 1024 * 1024
 const ALLOWED_MIME_PREFIXES = [
 	'image/',
 	'application/pdf',
@@ -53,12 +59,11 @@ const ALLOWED_MIME_PREFIXES = [
 	'text/',
 ]
 
-export const uploadProjectFile = async (
-	supabase: SupabaseClient<Database>,
+export async function uploadProjectFile(
 	projectId: string,
 	userId: string,
 	file: File,
-) => {
+) {
 	if (file.size > MAX_FILE_SIZE)
 		throw new Error('File exceeds maximum size of 100 MB')
 
@@ -69,39 +74,38 @@ export const uploadProjectFile = async (
 	const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
 	const path = `${projectId}/${crypto.randomUUID()}-${safeName}`
 
-	const { error: uploadErr } = await supabase.storage
-		.from('project-files')
-		.upload(path, file, { upsert: false })
-	if (uploadErr) throw uploadErr
+	const { put } = await import('@vercel/blob')
+	const blob = await put(path, file, { access: 'public' })
 
-	const { error: insertErr } = await supabase.from('files').insert({
-		project_id: projectId,
-		uploaded_by: userId,
+	const db = useDb()
+	await db.insert(schema.files).values({
+		projectId,
+		uploadedBy: userId,
 		name: file.name,
-		storage_path: path,
-		size_bytes: file.size,
+		storagePath: blob.url,
+		sizeBytes: file.size,
 	})
-	if (insertErr) throw insertErr
 }
 
-export const inviteClientByEmail = async (
-	accessToken: string,
-	email: string,
-	projectId: string,
-) => {
-	const result = await callEdgeFn('invite-client', accessToken, {
-		email,
+export async function inviteClientByEmail(email: string, projectId: string) {
+	const db = useDb()
+
+	const [user] = await db
+		.insert(schema.users)
+		.values({
+			email,
+			name: '',
+			role: 'client',
+		})
+		.returning({ id: schema.users.id })
+
+	if (!user) throw new Error('Failed to create user')
+
+	await db.insert(schema.projectClients).values({
 		projectId,
+		clientId: user.id,
 	})
-	if ('error' in result) return new Error(result.error)
-	return null
 }
 
 export const getHomeRoute = (role: string | undefined) =>
 	role === 'client' ? '/portal' : '/dashboard'
-
-export const ALLOWED_NEXT_PATHS = [
-	'/dashboard',
-	'/portal',
-	'/reset-password',
-] as const

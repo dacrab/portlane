@@ -1,37 +1,55 @@
 <script lang="ts">
-import { enhance } from '$app/forms'
+import { goto } from '$app/navigation'
+import { authClient } from '$lib/auth-client'
 import AuthCard from '$lib/components/AuthCard.svelte'
-import type { ActionData } from './$types'
 
-let { form }: { form: ActionData } = $props()
+let name = $state('')
+let email = $state('')
+let password = $state('')
+let error = $state('')
 let loading = $state(false)
+
+async function submit(e: Event) {
+	e.preventDefault()
+	error = ''
+	loading = true
+	const { error: err } = await authClient.signUp.email({
+		name,
+		email,
+		password,
+	})
+	loading = false
+	if (err) {
+		error = err.message ?? err.statusText ?? 'Sign up failed'
+		return
+	}
+	goto('/dashboard')
+}
 </script>
 
 <AuthCard>
-	<div class="auth-header">
-		<h1>Create an account</h1>
-		<p>Start managing your clients today — free.</p>
-	</div>
-	<form method="POST" use:enhance={() => {
-		loading = true;
-		return async ({ update }) => { loading = false; await update(); };
-	}} class="auth-form">
-		{#if form?.error}<p class="form-error">{form.error}</p>{/if}
-		<div class="auth-field">
-			<label for="full_name">Full name</label>
-			<input id="full_name" name="full_name" type="text" required autocomplete="name" class="input" placeholder="Alex Rivera" />
+	<form onsubmit={submit} class="space-y-4">
+		<h1 class="text-lg font-semibold text-center">Create an account</h1>
+		{#if error}
+			<p class="text-sm text-red-600 text-center">{error}</p>
+		{/if}
+		<div>
+			<label for="name" class="input-label">Name</label>
+			<input id="name" type="text" bind:value={name} required class="input" placeholder="Your name" />
 		</div>
-		<div class="auth-field">
-			<label for="email">Email</label>
-			<input id="email" name="email" type="email" required autocomplete="email" class="input" placeholder="you@example.com" />
+		<div>
+			<label for="email" class="input-label">Email</label>
+			<input id="email" type="email" bind:value={email} required class="input" placeholder="your@email.com" />
 		</div>
-		<div class="auth-field">
-			<label for="password">Password</label>
-			<input id="password" name="password" type="password" required autocomplete="new-password" minlength="8" class="input" placeholder="Min. 8 characters" />
+		<div>
+			<label for="password" class="input-label">Password</label>
+			<input id="password" type="password" bind:value={password} required class="input" placeholder="Min 8 characters" />
 		</div>
-		<button type="submit" disabled={loading} class="btn btn-primary auth-submit">
-			{loading ? 'Creating account…' : 'Create account'}
+		<button type="submit" class="btn btn-primary w-full" disabled={loading}>
+			{loading ? 'Creating account...' : 'Create account'}
 		</button>
+		<p class="text-sm text-center text-faint">
+			Already have an account? <a href="/login" class="text-accent hover:underline">Sign in</a>
+		</p>
 	</form>
-	<p class="auth-footer">Already have an account? <a href="/login">Sign in</a></p>
 </AuthCard>

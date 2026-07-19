@@ -2,6 +2,7 @@
 import { toast } from 'svelte-sonner'
 import { enhance } from '$app/forms'
 import Avatar from '$lib/components/Avatar.svelte'
+import { PASSWORD_MIN_LENGTH } from '$lib/constants'
 import type { ActionData, PageData } from './$types'
 
 let { data, form }: { data: PageData; form: ActionData } = $props()
@@ -9,8 +10,13 @@ let { data, form }: { data: PageData; form: ActionData } = $props()
 $effect(() => {
 	if (form?.profile_saved) toast.success('Profile updated')
 	if (form?.profile_error) toast.error(form.profile_error)
-	if (form?.password_saved) toast.success('Password updated')
-	if (form?.password_error) toast.error(form.password_error)
+	if (form && 'password_saved' in form) toast.success('Password updated')
+	if (
+		form &&
+		'password_error' in form &&
+		typeof form.password_error === 'string'
+	)
+		toast.error(form.password_error)
 })
 
 let deleteForm: HTMLFormElement
@@ -40,17 +46,17 @@ function confirmDeleteAccount() {
 		<!-- Profile -->
 		<div class="card space-y-5">
 			<div class="flex items-center gap-4">
-				<Avatar name={data.profile?.full_name ?? data.email ?? '?'} size={12} />
+				<Avatar name={data.profile?.name ?? data.email ?? '?'} size={12} />
 				<div>
-					<p class="text-sm font-semibold text-heading">{data.profile?.full_name ?? 'No name set'}</p>
+					<p class="text-sm font-semibold text-heading">{data.profile?.name ?? 'No name set'}</p>
 					<p class="text-xs text-faint">{data.email}</p>
 				</div>
 			</div>
 
 			<form method="POST" action="?/update_profile" use:enhance class="space-y-4">
 				<div>
-					<label for="full_name" class="mb-1.5 block text-xs font-medium text-muted">Full name</label>
-					<input id="full_name" name="full_name" type="text" value={data.profile?.full_name ?? ''} class="input" />
+					<label for="name" class="mb-1.5 block text-xs font-medium text-muted">Full name</label>
+					<input id="name" name="name" type="text" value={data.profile?.name ?? ''} class="input" />
 				</div>
 				<div>
 					<label for="email_display" class="mb-1.5 block text-xs font-medium text-muted">Email</label>
@@ -67,17 +73,17 @@ function confirmDeleteAccount() {
 		<div class="card space-y-5">
 			<div>
 				<p class="text-sm font-semibold text-heading">Change password</p>
-				<p class="mt-0.5 text-xs text-faint">Choose a strong password of at least 8 characters.</p>
+				<p class="mt-0.5 text-xs text-faint">Choose a strong password of at least {PASSWORD_MIN_LENGTH} characters.</p>
 			</div>
 
 			<form method="POST" action="?/change_password" use:enhance class="space-y-4">
 				<div>
 					<label for="password" class="mb-1.5 block text-xs font-medium text-muted">New password</label>
-					<input id="password" name="password" type="password" required minlength="8" autocomplete="new-password" class="input" placeholder="••••••••" />
+					<input id="password" name="password" type="password" required minlength={PASSWORD_MIN_LENGTH} autocomplete="new-password" class="input" placeholder="••••••••" />
 				</div>
 				<div>
 					<label for="confirm" class="mb-1.5 block text-xs font-medium text-muted">Confirm password</label>
-					<input id="confirm" name="confirm" type="password" required minlength="8" autocomplete="new-password" class="input" placeholder="••••••••" />
+					<input id="confirm" name="confirm" type="password" required minlength={PASSWORD_MIN_LENGTH} autocomplete="new-password" class="input" placeholder="••••••••" />
 				</div>
 				<div class="pt-2 divide-top">
 					<button type="submit" class="btn btn-primary">Update password</button>

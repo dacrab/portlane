@@ -15,7 +15,7 @@ import {
 	statusLabel,
 	today,
 } from '$lib/fmt'
-import { milestoneProgress } from '$lib/milestones'
+
 import type { ActionData, PageData } from './$types'
 
 let { data, form }: { data: PageData; form: ActionData } = $props()
@@ -29,30 +29,37 @@ $effect(() => {
 
 let showArchived = $state(false)
 
-function progress(p: { milestones: { completed: boolean }[] | null }) {
-	const ms = p.milestones ?? []
-	return ms.length ? milestoneProgress(ms) : null
+function progress(p: PItem) {
+	const total = p.totalMilestones
+	return total ? Math.round((p.completedMilestones / total) * 100) : null
 }
 
 const createStatusItems = PROJECT_STATUS_ITEMS.filter(
 	(s) => s.value === 'planning' || s.value === 'in_progress',
 )
 
+type PItem = {
+	id: string
+	name: string
+	status: string
+	dueDate: string | null
+	completedMilestones: number
+	totalMilestones: number
+	clientCount: number
+}
+
+const items = $derived(data.projects as PItem[])
+
 const visible = $derived(
-	showArchived
-		? data.projects
-		: data.projects.filter((p) => p.status !== 'archived'),
+	showArchived ? items : items.filter((p) => p.status !== 'archived'),
 )
 const archivedCount = $derived(
-	data.projects.filter((p) => p.status === 'archived').length,
+	items.filter((p) => p.status === 'archived').length,
 )
 const activeCount = $derived(
-	data.projects.filter((p) => !['completed', 'archived'].includes(p.status))
-		.length,
+	items.filter((p) => !['completed', 'archived'].includes(p.status)).length,
 )
-const reviewCount = $derived(
-	data.projects.filter((p) => p.status === 'review').length,
-)
+const reviewCount = $derived(items.filter((p) => p.status === 'review').length)
 
 function focusOnMount(node: HTMLElement) {
 	node.focus()
@@ -166,8 +173,8 @@ function focusOnMount(node: HTMLElement) {
 		{:else}
 			{#each visible as p}
 				{@const pct = progress(p)}
-				{@const overdue = p.due_date && p.due_date < today() && p.status !== 'completed'}
-				{@const clientCount = p.project_clients?.[0]?.count ?? 0}
+				{@const overdue = p.dueDate && p.dueDate < today() && p.status !== 'completed'}
+				{@const clientCount = p.clientCount}
 				<a href="/dashboard/projects/{p.id}"
 					class="flex items-center gap-4 px-6 py-4 transition-colors hover-bg divide-bottom no-underline"
 					style="opacity:{p.status === 'archived' ? '0.6' : '1'}">
@@ -178,8 +185,8 @@ function focusOnMount(node: HTMLElement) {
 						<div class="min-w-0">
 							<p class="text-sm font-medium truncate text-body">{p.name}</p>
 							<p class="mt-0.5 text-xs" class:text-danger={overdue} class:text-faint={!overdue}>
-								{overdue ? '⚠ Overdue · ' : (p.due_date ? 'Due ' : '')}
-								{p.due_date ? fmtDate(p.due_date) : "No due date"}
+								{overdue ? '⚠ Overdue · ' : (p.dueDate ? 'Due ' : '')}
+								{p.dueDate ? fmtDate(p.dueDate) : "No due date"}
 							</p>
 						</div>
 					</div>

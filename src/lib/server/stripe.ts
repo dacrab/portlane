@@ -1,22 +1,6 @@
 import Stripe from 'stripe'
 import { env } from '$env/dynamic/private'
-import { callEdgeFn } from '$lib/server/edge'
 import { buildInvoiceLineItems } from '$lib/stripe'
-
-export async function createCheckoutSessionViaEdge(
-	invoiceId: string,
-	accessToken: string,
-	origin: string,
-	returnPath?: string,
-): Promise<{ url: string } | { error: string; status: number }> {
-	const result = await callEdgeFn<{ url: string }>(
-		'create-checkout-session',
-		accessToken,
-		{ invoiceId, origin, returnPath },
-	)
-	if ('error' in result) return { error: result.error, status: result.status }
-	return { url: result.data.url }
-}
 
 export async function createCheckoutSession(
 	invoice: {

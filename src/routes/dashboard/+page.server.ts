@@ -1,68 +1,77 @@
 import { error } from '@sveltejs/kit'
+import { and, desc, eq, ne, sql } from 'drizzle-orm'
+import { useDb } from '$lib/server/db'
+import * as schema from '$lib/server/db/schema'
 import type { Actions, PageServerLoad } from './$types'
 
-interface DashboardStats {
-	total_clients?: number
-	total_invoices?: number
-	active_projects?: number
-	completed_projects?: number
-	review_projects?: number
-	revenue_mtd?: number
-}
-
-function isDashboardStatsArray(v: unknown): v is DashboardStats[] {
-	return (
-		Array.isArray(v) &&
-		v.every((item) => typeof item === 'object' && item !== null)
-	)
-}
-
 export const load: PageServerLoad = async ({ locals }) => {
-	const { user } = await locals.safeGetSession()
-	if (!user) error(401)
+	if (!locals.user) error(401)
+	const userId = locals.user.userId
 
-	const [
-		{ data: projects },
-		{ data: stats },
-		{ data: activity },
-		{ data: unreadComments },
-	] = await Promise.all([
-		locals.supabase
-			.from('projects')
-			.select('id, name, status, due_date')
-			.eq('freelancer_id', user.id)
-			.neq('status', 'archived')
-			.order('created_at', { ascending: false }),
-		locals.supabase.rpc('get_dashboard_stats', { p_user_id: user.id }),
-		locals.supabase.rpc('get_activity_feed', {
-			p_user_id: user.id,
-			p_limit: 5,
-		}),
-		locals.supabase.rpc('get_unread_comments', { p_user_id: user.id }),
-	])
+	const db = useDb()
 
-	const s: DashboardStats =
-		stats && isDashboardStatsArray(stats) ? (stats[0] ?? {}) : {}
+	const projects = await db
+		.select({
+			id: schema.projects.id,
+			name: schema.projects.name,
+			status: schema.projects.status,
+			dueDate: schema.projects.dueDate,
+		})
+		.from(schema.projects)
+		.where(
+			and(
+				eq(schema.projects.freelancerId, userId),
+				ne(schema.projects.status, 'archived'),
+			),
+		)
+		.orderBy(desc(schema.projects.createdAt))
 
-	const activeFallback = (projects ?? []).filter(
-		(p) => !['completed', 'archived'].includes(p.status),
+	const stats = await db.execute<{
+		active_projects: number
+		completed_projects: number
+		review_projects: number
+		revenue_mtd: number
+		total_invoices: number
+		total_clients: number
+	}>(sql`SELECT * FROM get_dashboard_stats(${userId})`)
+	const s = stats.rows[0]
+
+	const activity = await db.execute<{
+		body: string
+		created_at: string
+		author_name: string
+		project_id: string
+		project_name: string
+	}>(sql`SELECT * FROM get_activity_feed(${userId}, 5)`)
+
+	const unread = await db.execute<{
+		id: string
+		body: string
+		created_at: string
+		author_name: string
+		project_id: string
+		project_name: string
+	}>(sql`SELECT * FROM get_unread_comments(${userId})`)
+
+	const activeFallback = projects.filter(
+		(p) => p.status !== 'completed' && p.status !== 'archived',
 	).length
 
 	const onboarding = {
-		hasProject: (projects?.length ?? 0) > 0,
-		hasClient: (s.total_clients ?? 0) > 0,
-		hasInvoice: (s.total_invoices ?? 0) > 0,
-		hasProfile: !!user.user_metadata?.full_name,
+		hasProject: projects.length > 0,
+		hasClient: (s?.total_clients ?? 0) > 0,
+		hasInvoice: (s?.total_invoices ?? 0) > 0,
+		hasProfile: !!locals.user.email,
 	}
 
 	return {
-		projects: projects ?? [],
-		active: s.active_projects ?? activeFallback,
-		completed: s.completed_projects ?? 0,
-		pending: s.review_projects ?? 0,
-		revenueMTD: s.revenue_mtd ?? 0,
-		activity: activity ?? [],
-		unreadComments: unreadComments ?? [],
+		projects,
+		active: s?.active_projects ?? activeFallback,
+		completed: s?.completed_projects ?? 0,
+		pending: s?.review_projects ?? 0,
+		revenueMTD: s?.revenue_mtd ?? 0,
+		activity: activity.rows ?? [],
+		unreadComments: unread.rows ?? [],
 		onboarding,
 		onboardingDone: Object.values(onboarding).every(Boolean),
 	}
@@ -70,8 +79,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 export const actions: Actions = {
 	mark_read: async ({ locals }) => {
-		const { user } = await locals.safeGetSession()
-		if (!user) error(401)
-		await locals.supabase.rpc('mark_comments_read')
+		if (!locals.user) error(401)
+		const db = useDb()
+		await db.execute(sql`SELECT mark_comments_read(${locals.user.userId})`)
 	},
 }

@@ -1,9 +1,9 @@
-import { createClient } from '@supabase/supabase-js'
 import { error, text } from '@sveltejs/kit'
+import { eq } from 'drizzle-orm'
 import Stripe from 'stripe'
 import { env } from '$env/dynamic/private'
-import type { Database } from '$lib/database.types'
-import { PUBLIC_SUPABASE_URL } from '$lib/env'
+import { useDb } from '$lib/server/db'
+import * as schema from '$lib/server/db/schema'
 import type { RequestHandler } from './$types'
 
 export const POST: RequestHandler = async ({ request }) => {
@@ -38,21 +38,19 @@ export const POST: RequestHandler = async ({ request }) => {
 			: null
 	if (!invoiceId) return text('ok')
 
-	const serviceKey = env.SUPABASE_SERVICE_ROLE_KEY
-	if (!serviceKey) error(500, 'SUPABASE_SERVICE_ROLE_KEY not configured')
-
-	const supabase = createClient<Database>(PUBLIC_SUPABASE_URL, serviceKey)
 	const sessionId = typeof session.id === 'string' ? session.id : null
 	const paymentIntent =
 		typeof session.payment_intent === 'string' ? session.payment_intent : null
-	await supabase
-		.from('invoices')
-		.update({
+
+	const db = useDb()
+	await db
+		.update(schema.invoices)
+		.set({
 			status: 'paid',
-			stripe_session_id: sessionId,
-			stripe_payment_intent_id: paymentIntent,
+			stripeSessionId: sessionId,
+			stripePaymentIntentId: paymentIntent,
 		})
-		.eq('id', invoiceId)
+		.where(eq(schema.invoices.id, invoiceId))
 
 	return text('ok')
 }

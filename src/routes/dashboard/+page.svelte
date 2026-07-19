@@ -12,6 +12,7 @@ import { browser } from '$app/environment'
 import { invalidateAll } from '$app/navigation'
 import Avatar from '$lib/components/Avatar.svelte'
 import EmptyState from '$lib/components/EmptyState.svelte'
+import { LOCALE } from '$lib/constants'
 import {
 	fmtDate,
 	fmtDateTime,
@@ -101,7 +102,7 @@ const onboardingSteps = $derived([
 			<p class="mb-1 text-xs font-semibold uppercase tracking-widest text-muted">Overview</p>
 			<h1 class="page-title">Good morning 👋</h1>
 			<p class="mt-0.5 text-sm text-muted">
-				{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+				{new Date().toLocaleDateString(LOCALE, { weekday: 'long', month: 'long', day: 'numeric' })}
 			</p>
 		</div>
 		<a href="/dashboard/projects?new=1" class="btn btn-primary shrink-0">
@@ -196,10 +197,10 @@ const onboardingSteps = $derived([
 						<Avatar name={p.name} size={8} />
 						<div class="flex-1 min-w-0">
 							<p class="text-sm font-medium truncate text-body">{p.name}</p>
-							{#if p.due_date}
-								<p class="mt-0.5 text-xs" class:text-danger={isOverdue(p.due_date)} class:text-faint={!isOverdue(p.due_date)}>
-									{isOverdue(p.due_date) ? '⚠ Overdue · ' : 'Due '}
-									{fmtDate(p.due_date)}
+							{#if p.dueDate}
+								<p class="mt-0.5 text-xs" class:text-danger={isOverdue(p.dueDate)} class:text-faint={!isOverdue(p.dueDate)}>
+									{isOverdue(p.dueDate) ? '⚠ Overdue · ' : 'Due '}
+									{fmtDate(p.dueDate)}
 								</p>
 							{:else}
 								<p class="mt-0.5 text-xs text-faint">No due date</p>

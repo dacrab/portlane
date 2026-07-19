@@ -4,11 +4,13 @@ interface InvoiceLineItemInput {
 	project_name?: string | null
 }
 
+import { DEFAULT_CURRENCY } from '$lib/constants'
+
 export function buildInvoiceLineItems(invoice: InvoiceLineItemInput) {
 	return [
 		{
 			price_data: {
-				currency: invoice.currency ?? 'usd',
+				currency: invoice.currency ?? DEFAULT_CURRENCY,
 				product_data: {
 					name: invoice.project_name ?? 'Invoice payment',
 				},

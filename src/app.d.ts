@@ -1,17 +1,15 @@
-import type { Session, SupabaseClient, User } from '@supabase/supabase-js'
-import type { Database } from '$lib/database.types'
+type LocalUser = {
+	userId: string
+	email: string
+	role: string
+}
 
 declare global {
 	namespace App {
 		interface Locals {
-			supabase: SupabaseClient<Database>
-			safeGetSession: () => Promise<{
-				session: Session | null
-				user: User | null
-			}>
-		}
-		interface PageData {
-			sessionExpiresAt: number | null
+			user: LocalUser | null
 		}
 	}
 }
+
+export {}
