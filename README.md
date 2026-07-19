@@ -17,7 +17,7 @@ A client portal for freelancers and studios. Replace messy email threads and sha
 
 ## Running locally
 
-You'll need [Bun](https://bun.sh), a [Neon](https://neon.tech) database, and a [Clerk](https://clerk.com) application.
+You'll need [Bun](https://bun.sh) and a [Neon](https://neon.tech) database.
 
 ```bash
 git clone https://github.com/dacrab/portlane
@@ -29,8 +29,8 @@ Set up environment variables via [Doppler](https://doppler.com) or directly in `
 
 ```env
 DATABASE_URL=postgresql://user:password@ep-xxx.us-east-1.aws.neon.tech/neondb?sslmode=require
-PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_xxx
-CLERK_SECRET_KEY=sk_live_xxx
+BETTER_AUTH_SECRET=your-secret
+BETTER_AUTH_URL=http://localhost:5173
 STRIPE_SECRET_KEY=sk_test_your-secret-key
 STRIPE_WEBHOOK_SECRET=whsec_your-webhook-secret
 PUBLIC_APP_URL=http://localhost:5173
@@ -47,7 +47,7 @@ bun dev
 ## Tech stack
 
 - **SvelteKit 5** — full-stack framework with file-based routing
-- **Clerk** — authentication (session management, sign-in/sign-up pages)
+- **Better Auth** — authentication (email magic links, session management)
 - **Drizzle ORM** — typed database queries over PostgreSQL (Neon)
 - **Stripe** — invoicing and payment processing
 - **Tailwind CSS v4** — utility-first styling
