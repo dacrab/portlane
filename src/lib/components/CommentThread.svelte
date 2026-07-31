@@ -6,8 +6,8 @@ import SectionHeader from '$lib/components/SectionHeader.svelte'
 type Comment = {
 	id: string
 	body: string
-	created_at: string
-	author_id: string
+	createdAt: string
+	authorId: string
 	name: string | null
 }
 
@@ -26,7 +26,7 @@ let comments = $derived(initial)
 {#if comments.length > 0}
 	<div class="space-y-3 mb-4 max-h-80 overflow-y-auto">
 		{#each comments as c (c.id)}
-			{@const isMe = c.author_id === userId}
+			{@const isMe = c.authorId === userId}
 			<div class="flex items-start gap-2.5" class:flex-row-reverse={isMe}>
 				<Avatar name={c.name ?? '?'} size={7} />
 				<div class="rounded-lg px-3 py-2.5 max-w-[85%]"

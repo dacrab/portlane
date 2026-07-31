@@ -32,8 +32,8 @@ export async function getProjectComments(projectId: string) {
 	return rows.map((r) => ({
 		id: r.comment.id,
 		body: r.comment.body,
-		created_at: r.comment.createdAt,
-		author_id: r.comment.authorId,
+		createdAt: r.comment.createdAt,
+		authorId: r.comment.authorId,
 		name: r.user.name,
 	}))
 }
