@@ -8,7 +8,6 @@ let { data }: { data: PageData } = $props()
 </script>
 
 <div class="min-h-screen" style="background:var(--color-bg);font-family:var(--font-sans)">
-	<!-- Nav -->
 	<header class="sticky top-0 z-40"
 		style="background:color-mix(in srgb, var(--color-bg-elevated) 90%, transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--color-border)">
 		<div class="mx-auto flex h-13 max-w-[72rem] items-center justify-between px-6">

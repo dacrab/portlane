@@ -9,7 +9,6 @@ type WithProfile = { profiles: { name: string | null } | null }
 let { data }: { data: PageData } = $props()
 </script>
 
-<!-- Project list -->
 <div class="max-w-[40rem]">
 	<div class="mb-6">
 		<p class="mb-1 text-xs font-semibold uppercase tracking-widest text-muted">Client Portal</p>

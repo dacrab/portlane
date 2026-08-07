@@ -30,10 +30,10 @@ Set up environment variables via [Doppler](https://doppler.com) or directly in `
 ```env
 DATABASE_URL=postgresql://user:password@ep-xxx.us-east-1.aws.neon.tech/neondb?sslmode=require
 BETTER_AUTH_SECRET=your-secret
-BETTER_AUTH_URL=http://localhost:5173
+BETTER_AUTH_URL=http://localhost:3000
 STRIPE_SECRET_KEY=sk_test_your-secret-key
 STRIPE_WEBHOOK_SECRET=whsec_your-webhook-secret
-PUBLIC_APP_URL=http://localhost:5173
+PUBLIC_APP_URL=http://localhost:3000
 ```
 
 Generate and apply migrations, then start:
@@ -46,7 +46,7 @@ bun dev
 
 ## Tech stack
 
-- **SvelteKit 5** — full-stack framework with file-based routing
+- **SvelteKit 2 (Svelte 5)** — full-stack framework with file-based routing
 - **Better Auth** — authentication (email magic links, session management)
 - **Drizzle ORM** — typed database queries over PostgreSQL (Neon)
 - **Stripe** — invoicing and payment processing
