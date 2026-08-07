@@ -28,9 +28,13 @@ jobs:
       - uses: dopplerhq/cli-action@v4
 
       - name: Check
-        run: bun run check
+        run: doppler run -- bun run check
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
       - name: Test
-        run: bun run test
+        run: doppler run -- bun run test
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
       - name: Build
         run: doppler run -- bun run build
         env:
