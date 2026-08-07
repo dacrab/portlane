@@ -1,7 +1,37 @@
-import { eq, sql } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 import { MAX_FILE_SIZE } from '$lib/constants'
 import { useDb } from '$lib/server/db'
 import * as schema from '$lib/server/db/schema'
+
+export async function isProjectOwner(projectId: string, userId: string) {
+	const db = useDb()
+	const [row] = await db
+		.select({ id: schema.projects.id })
+		.from(schema.projects)
+		.where(
+			and(
+				eq(schema.projects.id, projectId),
+				eq(schema.projects.freelancerId, userId),
+			),
+		)
+		.limit(1)
+	return !!row
+}
+
+export async function isProjectClient(projectId: string, userId: string) {
+	const db = useDb()
+	const [row] = await db
+		.select({ projectId: schema.projectClients.projectId })
+		.from(schema.projectClients)
+		.where(
+			and(
+				eq(schema.projectClients.projectId, projectId),
+				eq(schema.projectClients.clientId, userId),
+			),
+		)
+		.limit(1)
+	return !!row
+}
 
 export async function getProjectMilestones(projectId: string) {
 	const db = useDb()

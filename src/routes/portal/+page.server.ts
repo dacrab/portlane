@@ -8,6 +8,7 @@ import {
 	getProjectComments,
 	getProjectFiles,
 	getProjectMilestones,
+	isProjectClient,
 	uploadProjectFile,
 } from '$lib/server/project'
 import { createCheckoutSession } from '$lib/server/stripe'
@@ -112,6 +113,7 @@ export const actions: Actions = {
 		if (!locals.user) error(401)
 		const projectId = url.searchParams.get('project')
 		if (!projectId) error(400, 'Missing project')
+		if (!(await isProjectClient(projectId, locals.user.userId))) error(403)
 		const form = await request.formData()
 		const body = str(form, 'body')
 		if (!body) return
@@ -126,6 +128,7 @@ export const actions: Actions = {
 		if (!locals.user) error(401)
 		const projectId = url.searchParams.get('project')
 		if (!projectId) error(400, 'Missing project')
+		if (!(await isProjectClient(projectId, locals.user.userId))) error(403)
 		const note = str(await request.formData(), 'note') || null
 		const db = useDb()
 		await db.execute(
@@ -137,6 +140,7 @@ export const actions: Actions = {
 		if (!locals.user) error(401)
 		const projectId = url.searchParams.get('project')
 		if (!projectId) error(400, 'Missing project')
+		if (!(await isProjectClient(projectId, locals.user.userId))) error(403)
 		const note = str(await request.formData(), 'note') || null
 		const db = useDb()
 		await db.execute(
@@ -148,6 +152,7 @@ export const actions: Actions = {
 		if (!locals.user) error(401)
 		const projectId = url.searchParams.get('project')
 		if (!projectId) error(400, 'Missing project')
+		if (!(await isProjectClient(projectId, locals.user.userId))) error(403)
 		const form = await request.formData()
 		const file = formFile(form, 'file')
 		if (!file?.size) return

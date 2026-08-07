@@ -8,6 +8,7 @@ import {
 	getProjectFiles,
 	getProjectMilestones,
 	inviteClientByEmail,
+	isProjectOwner,
 	uploadProjectFile,
 } from '$lib/server/project'
 import type { Actions, PageServerLoad } from './$types'
@@ -68,6 +69,8 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 export const actions: Actions = {
 	log_time: async ({ locals, params, request }) => {
 		if (!locals.user) return fail(401, { error: 'Not authenticated' })
+		if (!(await isProjectOwner(params.id, locals.user.userId)))
+			return fail(403, { error: 'Not your project' })
 		const form = await request.formData()
 		const minutes = int(form, 'minutes')
 		const description = str(form, 'description') || null
@@ -87,6 +90,8 @@ export const actions: Actions = {
 
 	save_note: async ({ locals, params, request }) => {
 		if (!locals.user) return fail(401, { error: 'Not authenticated' })
+		if (!(await isProjectOwner(params.id, locals.user.userId)))
+			return fail(403, { error: 'Not your project' })
 		const form = await request.formData()
 		const body = str(form, 'body')
 		const db = useDb()
@@ -105,6 +110,8 @@ export const actions: Actions = {
 
 	comment: async ({ locals, params, request }) => {
 		if (!locals.user) return fail(401, { error: 'Not authenticated' })
+		if (!(await isProjectOwner(params.id, locals.user.userId)))
+			return fail(403, { error: 'Not your project' })
 		const form = await request.formData()
 		const body = str(form, 'body')
 		if (!body) return fail(400, { error: 'Comment body is required' })
@@ -140,6 +147,8 @@ export const actions: Actions = {
 
 	add_milestone: async ({ locals, params, request }) => {
 		if (!locals.user) return fail(401, { error: 'Not authenticated' })
+		if (!(await isProjectOwner(params.id, locals.user.userId)))
+			return fail(403, { error: 'Not your project' })
 		const form = await request.formData()
 		const name = str(form, 'name')
 		if (!name) return fail(400, { error: 'Name is required' })
@@ -149,6 +158,8 @@ export const actions: Actions = {
 
 	upload_file: async ({ locals, params, request }) => {
 		if (!locals.user) return fail(401, { error: 'Not authenticated' })
+		if (!(await isProjectOwner(params.id, locals.user.userId)))
+			return fail(403, { error: 'Not your project' })
 		const form = await request.formData()
 		const file = formFile(form, 'file')
 		if (!file?.size) return fail(400, { error: 'No file provided' })
@@ -237,6 +248,8 @@ export const actions: Actions = {
 
 	remove_client: async ({ locals, params, request }) => {
 		if (!locals.user) return fail(401, { error: 'Not authenticated' })
+		if (!(await isProjectOwner(params.id, locals.user.userId)))
+			return fail(403, { error: 'Not your project' })
 		const form = await request.formData()
 		const client_id = str(form, 'client_id')
 		const db = useDb()
