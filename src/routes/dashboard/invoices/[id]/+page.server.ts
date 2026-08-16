@@ -1,9 +1,11 @@
 import { error, fail } from '@sveltejs/kit'
-import { eq, sql } from 'drizzle-orm'
+import { sql } from 'drizzle-orm'
 import { useDb } from '$lib/server/db'
-import * as schema from '$lib/server/db/schema'
 import { str } from '$lib/server/form'
-import { createCheckoutSession } from '$lib/server/stripe'
+import {
+	createInvoiceCheckoutSession,
+	InvoiceCheckoutError,
+} from '$lib/server/invoices'
 import type { Actions, PageServerLoad } from './$types'
 
 interface InvoiceDetail extends Record<string, unknown> {
@@ -60,30 +62,16 @@ export const actions: Actions = {
 		const invoiceId = str(form, 'invoiceId')
 		if (!invoiceId) return fail(400, { missing: true })
 
-		const db = useDb()
-		const [invoice] = await db
-			.select({
-				id: schema.invoices.id,
-				amountCents: schema.invoices.amountCents,
-				currency: schema.invoices.currency,
-				projectName: sql<string>`(SELECT name FROM project WHERE id = ${schema.invoices.projectId})`,
-			})
-			.from(schema.invoices)
-			.where(eq(schema.invoices.id, invoiceId))
-			.limit(1)
-
-		if (!invoice) return fail(404, { error: 'Invoice not found' })
-
-		const result = await createCheckoutSession(
-			{
-				id: invoice.id,
-				amount_cents: invoice.amountCents,
-				currency: invoice.currency,
-				project_name: invoice.projectName,
-			},
-			reqUrl.origin,
-		)
-
-		return { url: result.url }
+		try {
+			return await createInvoiceCheckoutSession(
+				invoiceId,
+				locals.user.userId,
+				reqUrl.origin,
+			)
+		} catch (e) {
+			if (e instanceof InvoiceCheckoutError)
+				return fail(e.code === 'not_found' ? 404 : 400, { error: e.message })
+			throw e
+		}
 	},
 }

@@ -3,7 +3,10 @@ import { and, eq, sql } from 'drizzle-orm'
 import { useDb } from '$lib/server/db'
 import * as schema from '$lib/server/db/schema'
 import { DB_ERROR, num, str } from '$lib/server/form'
-import { createCheckoutSession } from '$lib/server/stripe'
+import {
+	createInvoiceCheckoutSession,
+	InvoiceCheckoutError,
+} from '$lib/server/invoices'
 import type { Actions, PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -89,40 +92,17 @@ export const actions: Actions = {
 		const invoiceId = str(form, 'invoiceId')
 		if (!invoiceId) return fail(400, { error: 'Invoice ID required' })
 
-		const db = useDb()
-		const [invoice] = await db
-			.select({
-				id: schema.invoices.id,
-				amountCents: schema.invoices.amountCents,
-				currency: schema.invoices.currency,
-				status: schema.invoices.status,
-				stripeSessionId: schema.invoices.stripeSessionId,
-				projectName: sql<string>`(SELECT name FROM project WHERE id = ${schema.invoices.projectId})`,
-			})
-			.from(schema.invoices)
-			.where(
-				and(
-					eq(schema.invoices.id, invoiceId),
-					eq(schema.invoices.freelancerId, locals.user.userId),
-				),
+		try {
+			return await createInvoiceCheckoutSession(
+				invoiceId,
+				locals.user.userId,
+				reqUrl.origin,
 			)
-			.limit(1)
-
-		if (!invoice) return fail(404, { error: 'Invoice not found' })
-		if (invoice.stripeSessionId)
-			return fail(400, { error: 'A payment session already exists' })
-
-		const result = await createCheckoutSession(
-			{
-				id: invoice.id,
-				amount_cents: invoice.amountCents,
-				currency: invoice.currency,
-				project_name: invoice.projectName,
-			},
-			reqUrl.origin,
-		)
-
-		return { url: result.url }
+		} catch (e) {
+			if (e instanceof InvoiceCheckoutError)
+				return fail(e.code === 'not_found' ? 404 : 400, { error: e.message })
+			throw e
+		}
 	},
 
 	update_status: async ({ locals, request }) => {

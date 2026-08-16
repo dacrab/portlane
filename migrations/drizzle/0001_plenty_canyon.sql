@@ -2,6 +2,12 @@
 -- The original functions lived in Supabase migrations and were lost when the
 -- migrations were regenerated for Neon (0000_yummy_quasar only creates tables).
 -- All ids are text (crypto.randomUUID), the user table is "user" with column "name".
+--
+-- IMPORTANT: These functions are required at runtime by the app and must be
+-- preserved. They are defined here in SQL only (not in Drizzle's schema), so a
+-- fresh `drizzle-kit push` will NOT create them — a fresh database must be set
+-- up by running `drizzle-kit migrate` so this migration is applied. Do not
+-- delete or "regenerate away" this file.
 
 --> statement-breakpoint
 CREATE OR REPLACE FUNCTION public.get_dashboard_stats(p_user_id text)

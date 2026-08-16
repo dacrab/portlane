@@ -289,8 +289,8 @@ export const actions: Actions = {
 
 		try {
 			await inviteClientByEmail(email, params.id)
-		} catch (e) {
-			return fail(400, { error: (e as Error).message })
+		} catch {
+			return fail(400, { error: DB_ERROR })
 		}
 	},
 }

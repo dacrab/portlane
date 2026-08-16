@@ -11,7 +11,10 @@ import {
 	isProjectClient,
 	uploadProjectFile,
 } from '$lib/server/project'
-import { createCheckoutSession } from '$lib/server/stripe'
+import {
+	createInvoiceCheckoutSession,
+	InvoiceCheckoutError,
+} from '$lib/server/invoices'
 import type { Actions, PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals, url }) => {
@@ -169,35 +172,16 @@ export const actions: Actions = {
 		const invoiceId = str(form, 'invoiceId')
 		if (!invoiceId) return fail(400, { missing: true })
 
-		const db = useDb()
-		const [invoice] = await db
-			.select({
-				id: schema.invoices.id,
-				amountCents: schema.invoices.amountCents,
-				currency: schema.invoices.currency,
-				projectName: sql<string>`(SELECT name FROM project WHERE id = ${schema.invoices.projectId})`,
-			})
-			.from(schema.invoices)
-			.where(
-				and(
-					eq(schema.invoices.id, invoiceId),
-					eq(schema.invoices.clientId, locals.user.userId),
-				),
+		try {
+			return await createInvoiceCheckoutSession(
+				invoiceId,
+				locals.user.userId,
+				reqUrl.origin,
 			)
-			.limit(1)
-
-		if (!invoice) return fail(404, { error: 'Invoice not found' })
-
-		const result = await createCheckoutSession(
-			{
-				id: invoice.id,
-				amount_cents: invoice.amountCents,
-				currency: invoice.currency,
-				project_name: invoice.projectName,
-			},
-			reqUrl.origin,
-		)
-
-		return { url: result.url }
+		} catch (e) {
+			if (e instanceof InvoiceCheckoutError)
+				return fail(e.code === 'not_found' ? 404 : 400, { error: e.message })
+			throw e
+		}
 	},
 }

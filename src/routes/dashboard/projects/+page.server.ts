@@ -59,8 +59,8 @@ export const actions: Actions = {
 		if (client_email) {
 			try {
 				await inviteClientByEmail(client_email, project.id)
-			} catch (e) {
-				return fail(200, { error: (e as Error).message })
+			} catch {
+				return fail(400, { error: DB_ERROR })
 			}
 		}
 

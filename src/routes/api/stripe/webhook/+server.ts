@@ -31,6 +31,8 @@ export const POST: RequestHandler = async ({ request }) => {
 		client_reference_id: unknown
 		id: unknown
 		payment_intent: unknown
+		payment_status: unknown
+		amount_total: unknown
 	}
 	const invoiceId =
 		typeof session.client_reference_id === 'string'
@@ -38,11 +40,24 @@ export const POST: RequestHandler = async ({ request }) => {
 			: null
 	if (!invoiceId) return text('ok')
 
+	if (session.payment_status !== 'paid') return text('ok')
+
 	const sessionId = typeof session.id === 'string' ? session.id : null
 	const paymentIntent =
 		typeof session.payment_intent === 'string' ? session.payment_intent : null
+	const amountTotal =
+		typeof session.amount_total === 'number' ? session.amount_total : null
+	if (amountTotal === null) return text('ok')
 
 	const db = useDb()
+	const [invoice] = await db
+		.select({ amountCents: schema.invoices.amountCents })
+		.from(schema.invoices)
+		.where(eq(schema.invoices.id, invoiceId))
+		.limit(1)
+
+	if (!invoice || invoice.amountCents !== amountTotal) return text('ok')
+
 	await db
 		.update(schema.invoices)
 		.set({

@@ -120,6 +120,9 @@ export async function uploadProjectFile(
 export async function inviteClientByEmail(email: string, projectId: string) {
 	const db = useDb()
 
+	// The create-project dialog promises a magic-link email, but no mail
+	// function exists yet. The client account is created and attached to the
+	// project so they can sign in, but no email is sent.
 	const [user] = await db
 		.insert(schema.users)
 		.values({
