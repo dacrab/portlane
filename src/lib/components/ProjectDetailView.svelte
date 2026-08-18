@@ -18,8 +18,6 @@ import { fmtDate, fmtMoney, statusBadge, today } from '$lib/fmt'
 import { milestoneDone, milestoneTotal } from '$lib/milestones'
 import type { PageData } from '../../routes/portal/$types'
 
-type WithProfile = { profiles: { name: string | null } | null }
-
 let {
 	data,
 }: {
@@ -31,11 +29,6 @@ let comment = $state('')
 let note = $state('')
 let submittingApproval = $state(false)
 
-const freelancerName = $derived(
-	('profiles' in data.project
-		? (data.project as WithProfile).profiles?.name
-		: null) ?? 'Your freelancer',
-)
 const total = $derived(milestoneTotal(data.milestones))
 const done = $derived(milestoneDone(data.milestones))
 const isClient = $derived(data.invoices.length > 0)
@@ -53,7 +46,7 @@ const isClient = $derived(data.invoices.length > 0)
 				<div>
 					<p class="text-xs font-semibold uppercase tracking-widest text-muted mb-1">Project</p>
 					<h1 class="text-xl font-bold tracking-tight text-heading">{data.project.name}</h1>
-					<p class="mt-0.5 text-sm text-faint">Managed by {freelancerName}</p>
+					<p class="mt-0.5 text-sm text-faint">Managed by {data.project.freelancerName}</p>
 				</div>
 				<span class="badge badge-accent shrink-0 mt-1">{data.project.status.replace('_', ' ')}</span>
 			</div>

@@ -19,14 +19,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 			.where(eq(users.id, session.user.id))
 			.limit(1)
 
-		if (rows.length > 0) {
-			const row = rows[0]
-			if (row) {
-				event.locals.user = {
-					userId: row.id,
-					email: row.email,
-					role: row.role,
-				}
+		const row = rows[0]
+		if (row) {
+			event.locals.user = {
+				userId: row.id,
+				email: row.email,
+				role: row.role,
 			}
 		}
 	}
