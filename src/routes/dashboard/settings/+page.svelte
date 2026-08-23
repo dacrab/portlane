@@ -9,14 +9,9 @@ let { data, form }: { data: PageData; form: ActionData } = $props()
 
 $effect(() => {
 	if (form?.profile_saved) toast.success('Profile updated')
-	if (form?.profile_error) toast.error(form.profile_error)
-	if (form && 'password_saved' in form) toast.success('Password updated')
-	if (
-		form &&
-		'password_error' in form &&
-		typeof form.password_error === 'string'
-	)
-		toast.error(form.password_error)
+	if (typeof form?.profile_error === 'string') toast.error(form.profile_error)
+	if (form?.password_saved) toast.success('Password updated')
+	if (typeof form?.password_error === 'string') toast.error(form.password_error)
 })
 
 let deleteForm: HTMLFormElement
@@ -77,6 +72,10 @@ function confirmDeleteAccount() {
 			</div>
 
 			<form method="POST" action="?/change_password" use:enhance class="space-y-4">
+				<div>
+					<label for="current_password" class="mb-1.5 block text-xs font-medium text-muted">Current password</label>
+					<input id="current_password" name="current_password" type="password" required autocomplete="current-password" class="input" placeholder="••••••••" />
+				</div>
 				<div>
 					<label for="password" class="mb-1.5 block text-xs font-medium text-muted">New password</label>
 					<input id="password" name="password" type="password" required minlength={PASSWORD_MIN_LENGTH} autocomplete="new-password" class="input" placeholder="••••••••" />

@@ -8,7 +8,7 @@ A client portal for freelancers and studios. Replace messy email threads and sha
 - Manage projects with milestones, due dates, and status tracking
 - Track time, upload files, and write internal notes
 - Create and send invoices, track payment status
-- Invite clients via email — no account setup needed on their end
+- Invite clients by email — a client account is created and linked to the project (no emails are sent; share the portal link or their sign-in email)
 
 **For your clients**
 - A private portal per project with the timeline, files, and invoices
@@ -29,11 +29,11 @@ Set up environment variables via [Doppler](https://doppler.com) or directly in `
 
 ```env
 DATABASE_URL=postgresql://user:password@ep-xxx.us-east-1.aws.neon.tech/neondb?sslmode=require
-BETTER_AUTH_SECRET=your-secret
-BETTER_AUTH_URL=http://localhost:3000
+BETTER_AUTH_SECRET=your-secret-at-least-32-chars
 STRIPE_SECRET_KEY=sk_test_your-secret-key
 STRIPE_WEBHOOK_SECRET=whsec_your-webhook-secret
 PUBLIC_APP_URL=http://localhost:3000
+CRON_SECRET=your-cron-secret
 ```
 
 Generate and apply migrations, then start:
@@ -44,14 +44,25 @@ bun run db:migrate
 bun dev
 ```
 
+## How it works
+
+- **Auth** — Better Auth with email & password (`hooks.server.ts` is the single handler; sessions are enriched with the user's role on every request).
+- **Files** — uploads go to Vercel Blob with `access: 'private'`. Downloads go through `GET /api/file-url?path=…`, which authorizes the caller against the project (owner or linked client) and returns a presigned URL valid for 5 minutes.
+- **Payments** — creating a checkout session persists `stripe_session_id` on the invoice *immediately*, so repeat checkouts are rejected and clients can't double-pay via parallel tabs; the Stripe webhook flips status to `paid` after verifying the amount matches.
+- **Client invites & approvals** — inviting links an existing user by email or creates one (name derived from the address); approve/revision actions run through SQL functions that re-check membership server-side.
+- **Route guards** — shared `requireOwner` / `requireClient` helpers (`src/lib/server/guard.ts`) centralize the 401/403 + ownership checks used by dashboard and portal actions.
+- **Account deletion** — deletes content authored/uploaded by the user and invoices where they were the client, then removes the user (their own projects cascade). Vercel Blobs are deleted best-effort.
+- **Blob sweep cron** — `GET /api/cron/blob-sweep` (weekly per `vercel.json`) lists all blobs, diffs them against paths referenced by the `file` table, and deletes unreferenced blobs older than 7 days. Guarded by `Authorization: Bearer <CRON_SECRET>` (constant-time compare).
+
 ## Tech stack
 
 - **SvelteKit 2 (Svelte 5)** — full-stack framework with file-based routing
-- **Better Auth** — authentication (email magic links, session management)
+- **Better Auth** — authentication (email & password, session management)
 - **Drizzle ORM** — typed database queries over PostgreSQL (Neon)
 - **Stripe** — invoicing and payment processing
+- **Vercel Blob** — private file storage with presigned downloads
 - **Tailwind CSS v4** — utility-first styling
-- **Biome** — linting and formatting
+- **Biome** — linting and formatting · **Vitest** · **Knip**
 
 ## License
 

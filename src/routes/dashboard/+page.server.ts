@@ -36,6 +36,12 @@ export const load: PageServerLoad = async ({ locals }) => {
 	}>(sql`SELECT * FROM get_dashboard_stats(${userId})`)
 	const s = stats.rows[0]
 
+	const [profile] = await db
+		.select({ name: schema.users.name })
+		.from(schema.users)
+		.where(eq(schema.users.id, userId))
+		.limit(1)
+
 	const activity = await db.execute<{
 		body: string
 		created_at: string
@@ -61,7 +67,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		hasProject: projects.length > 0,
 		hasClient: (s?.total_clients ?? 0) > 0,
 		hasInvoice: (s?.total_invoices ?? 0) > 0,
-		hasProfile: !!locals.user.email,
+		hasProfile: !!profile?.name.trim(),
 	}
 
 	return {

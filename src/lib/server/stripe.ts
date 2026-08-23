@@ -10,7 +10,7 @@ export async function createCheckoutSession(
 		project_name?: string | null
 	},
 	origin: string,
-): Promise<{ url: string }> {
+): Promise<{ url: string; sessionId: string }> {
 	const key = env.STRIPE_SECRET_KEY
 	if (!key) throw new Error('STRIPE_SECRET_KEY is not configured')
 
@@ -30,5 +30,5 @@ export async function createCheckoutSession(
 
 	if (!session.url) throw new Error('Stripe returned a session without a URL')
 
-	return { url: session.url }
+	return { url: session.url, sessionId: session.id }
 }

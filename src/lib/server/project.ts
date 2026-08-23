@@ -1,3 +1,4 @@
+import { put } from '@vercel/blob'
 import { and, eq, sql } from 'drizzle-orm'
 import { MAX_FILE_SIZE } from '$lib/constants'
 import { useDb } from '$lib/server/db'
@@ -89,23 +90,37 @@ const ALLOWED_MIME_PREFIXES = [
 	'text/',
 ]
 
+export class FileUploadError extends Error {
+	constructor(
+		readonly code: 'too_large' | 'unsupported_type',
+		message: string,
+	) {
+		super(message)
+	}
+}
+
 export async function uploadProjectFile(
 	projectId: string,
 	userId: string,
 	file: File,
 ) {
 	if (file.size > MAX_FILE_SIZE)
-		throw new Error('File exceeds maximum size of 100 MB')
+		throw new FileUploadError(
+			'too_large',
+			'File exceeds maximum size of 100 MB',
+		)
 
 	const allowed = ALLOWED_MIME_PREFIXES.some((p) => file.type.startsWith(p))
 	if (!allowed && file.type !== '')
-		throw new Error(`File type "${file.type}" is not supported`)
+		throw new FileUploadError(
+			'unsupported_type',
+			`File type "${file.type}" is not supported`,
+		)
 
 	const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
 	const path = `${projectId}/${crypto.randomUUID()}-${safeName}`
 
-	const { put } = await import('@vercel/blob')
-	const blob = await put(path, file, { access: 'public' })
+	const blob = await put(path, file, { access: 'private' })
 
 	const db = useDb()
 	await db.insert(schema.files).values({
@@ -117,27 +132,44 @@ export async function uploadProjectFile(
 	})
 }
 
+function nameFromEmail(email: string): string {
+	const local = email.split('@')[0] ?? ''
+	return (
+		local
+			.split(/[._-]+/)
+			.filter(Boolean)
+			.map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+			.join(' ') || email
+	)
+}
+
 export async function inviteClientByEmail(email: string, projectId: string) {
 	const db = useDb()
 
-	// The create-project dialog promises a magic-link email, but no mail
-	// function exists yet. The client account is created and attached to the
-	// project so they can sign in, but no email is sent.
-	const [user] = await db
-		.insert(schema.users)
-		.values({
-			email,
-			name: '',
-			role: 'client',
-		})
-		.returning({ id: schema.users.id })
+	const [existing] = await db
+		.select({ id: schema.users.id })
+		.from(schema.users)
+		.where(eq(schema.users.email, email))
+		.limit(1)
 
-	if (!user) throw new Error('Failed to create user')
+	let clientId = existing?.id
+	if (!clientId) {
+		const [user] = await db
+			.insert(schema.users)
+			.values({
+				email,
+				name: nameFromEmail(email),
+				role: 'client',
+			})
+			.returning({ id: schema.users.id })
+		if (!user) throw new Error('Failed to create user')
+		clientId = user.id
+	}
 
-	await db.insert(schema.projectClients).values({
-		projectId,
-		clientId: user.id,
-	})
+	await db
+		.insert(schema.projectClients)
+		.values({ projectId, clientId })
+		.onConflictDoNothing()
 }
 
 export const getHomeRoute = (role: string | undefined) =>

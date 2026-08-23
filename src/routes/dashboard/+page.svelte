@@ -40,7 +40,7 @@ function dismissOnboarding() {
 	onboardingDismissed = true
 }
 
-const showOnboarding = $derived(!onboardingDismissed && !data.onboardingDone)
+const showOnboarding = $derived(!(onboardingDismissed || data.onboardingDone))
 
 const isOverdue = (due: string | null) => due && due < today()
 
@@ -64,7 +64,7 @@ const stats = $derived([
 		color: '#15803d',
 	},
 	{
-		label: 'Revenue',
+		label: 'Revenue (all-time)',
 		value: fmtMoney(data.revenueMTD),
 		icon: IconCurrencyDollarRegular,
 		color: '#1d4ed8',
@@ -100,7 +100,7 @@ const onboardingSteps = $derived([
 	<div class="flex items-start justify-between gap-4">
 		<div>
 			<p class="mb-1 text-xs font-semibold uppercase tracking-widest text-muted">Overview</p>
-			<h1 class="page-title">Good morning 👋</h1>
+			<h1 class="page-title">Welcome back</h1>
 			<p class="mt-0.5 text-sm text-muted">
 				{new Date().toLocaleDateString(LOCALE, { weekday: 'long', month: 'long', day: 'numeric' })}
 			</p>

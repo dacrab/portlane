@@ -2,37 +2,22 @@ import { error, fail } from '@sveltejs/kit'
 import { sql } from 'drizzle-orm'
 import { useDb } from '$lib/server/db'
 import { str } from '$lib/server/form'
-import {
-	createInvoiceCheckoutSession,
-	InvoiceCheckoutError,
-} from '$lib/server/invoices'
+import { type InvoiceDetailRow, runInvoiceCheckout } from '$lib/server/invoices'
 import type { Actions, PageServerLoad } from './$types'
-
-interface InvoiceDetail {
-	id: string
-	project_id: string
-	freelancer_id: string
-	client_id: string
-	amount_cents: number
-	currency: string
-	status: string
-	due_date: string | null
-	stripe_session_id: string | null
-	stripe_payment_intent_id: string | null
-	last_reminder_sent_at: string | null
-	created_at: string
-	project_name: string
-	project_description: string | null
-	freelancer_name: string
-	client_name: string
-}
 
 export const load: PageServerLoad = async ({ locals, params }) => {
 	if (!locals.user) error(401)
 	const db = useDb()
 
 	const [invoice] = (
-		await db.execute<InvoiceDetail & Record<string, unknown>>(sql`
+		await db.execute<
+			InvoiceDetailRow & {
+				project_name: string
+				project_description: string | null
+				freelancer_name: string
+				client_name: string
+			}
+		>(sql`
 		SELECT i.*, p.name AS project_name, p.description AS project_description,
 			u_f.name AS freelancer_name, u_c.name AS client_name
 		FROM invoice i
@@ -41,7 +26,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		JOIN "user" u_c ON u_c.id = i.client_id
 		WHERE i.id = ${params.id}
 	`)
-	).rows as InvoiceDetail[]
+	).rows
 
 	if (!invoice) error(404, 'Invoice not found')
 
@@ -57,21 +42,11 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
 export const actions: Actions = {
 	checkout: async ({ locals, request, url: reqUrl }) => {
-		if (!locals.user) error(401)
+		if (!locals.user) return fail(401, { error: 'Unauthorized' })
 		const form = await request.formData()
 		const invoiceId = str(form, 'invoiceId')
-		if (!invoiceId) return fail(400, { missing: true })
+		if (!invoiceId) return fail(400, { error: 'Invoice ID required' })
 
-		try {
-			return await createInvoiceCheckoutSession(
-				invoiceId,
-				locals.user.userId,
-				reqUrl.origin,
-			)
-		} catch (e) {
-			if (e instanceof InvoiceCheckoutError)
-				return fail(e.code === 'not_found' ? 404 : 400, { error: e.message })
-			throw e
-		}
+		return runInvoiceCheckout(invoiceId, locals.user.userId, reqUrl.origin)
 	},
 }

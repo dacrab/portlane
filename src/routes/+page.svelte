@@ -112,7 +112,7 @@ const reviews = [
 				<div class="flex flex-col gap-[0.875rem]">
 					<span class="text-[0.6875rem] font-bold tracking-[0.06em]" style="color:var(--color-border)">01</span>
 					<h3 class="m-0 mb-2 text-[1.0625rem] font-semibold -tracking-[0.02em]" style="color:var(--color-text-heading)">Invite your client with one link</h3>
-					<p class="m-0 text-[0.9375rem] leading-[1.65]" style="color:var(--color-text-muted)">No account needed on their end. A magic link lands in their inbox and they're in — straight to their project.</p>
+					<p class="m-0 text-[0.9375rem] leading-[1.65]" style="color:var(--color-text-muted)">Add them by email and share their private portal link — they're in, straight to their project.</p>
 				</div>
 				<div class="flex flex-col gap-[0.875rem]">
 					<span class="text-[0.6875rem] font-bold tracking-[0.06em]" style="color:var(--color-border)">02</span>

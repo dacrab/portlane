@@ -1,17 +1,22 @@
 import { error, fail, redirect } from '@sveltejs/kit'
+import { del } from '@vercel/blob'
 import { and, desc, eq, sql } from 'drizzle-orm'
+import { PROJECT_STATUS_ITEMS } from '$lib/fmt'
 import { useDb } from '$lib/server/db'
 import * as schema from '$lib/server/db/schema'
 import { DB_ERROR, formFile, int, str } from '$lib/server/form'
+import { requireOwner } from '$lib/server/guard'
 import {
+	FileUploadError,
 	getProjectComments,
 	getProjectFiles,
 	getProjectMilestones,
 	inviteClientByEmail,
-	isProjectOwner,
 	uploadProjectFile,
 } from '$lib/server/project'
 import type { Actions, PageServerLoad } from './$types'
+
+const validStatuses: string[] = PROJECT_STATUS_ITEMS.map((s) => s.value)
 
 export const load: PageServerLoad = async ({ locals, params }) => {
 	if (!locals.user) error(401, 'Unauthorized')
@@ -68,9 +73,8 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
 export const actions: Actions = {
 	log_time: async ({ locals, params, request }) => {
-		if (!locals.user) return fail(401, { error: 'Not authenticated' })
-		if (!(await isProjectOwner(params.id, locals.user.userId)))
-			return fail(403, { error: 'Not your project' })
+		const guard = await requireOwner(locals, params.id)
+		if (guard.err) return guard.err
 		const form = await request.formData()
 		const minutes = int(form, 'minutes')
 		const description = str(form, 'description') || null
@@ -78,8 +82,8 @@ export const actions: Actions = {
 		const db = useDb()
 		try {
 			await db.insert(schema.timeEntries).values({
-				projectId: params.id,
-				userId: locals.user.userId,
+				projectId: guard.projectId,
+				userId: guard.userId,
 				minutes,
 				description,
 			})
@@ -89,16 +93,15 @@ export const actions: Actions = {
 	},
 
 	save_note: async ({ locals, params, request }) => {
-		if (!locals.user) return fail(401, { error: 'Not authenticated' })
-		if (!(await isProjectOwner(params.id, locals.user.userId)))
-			return fail(403, { error: 'Not your project' })
+		const guard = await requireOwner(locals, params.id)
+		if (guard.err) return guard.err
 		const form = await request.formData()
 		const body = str(form, 'body')
 		const db = useDb()
 		try {
 			await db
 				.insert(schema.projectNotes)
-				.values({ projectId: params.id, body })
+				.values({ projectId: guard.projectId, body })
 				.onConflictDoUpdate({
 					target: schema.projectNotes.projectId,
 					set: { body },
@@ -109,17 +112,16 @@ export const actions: Actions = {
 	},
 
 	comment: async ({ locals, params, request }) => {
-		if (!locals.user) return fail(401, { error: 'Not authenticated' })
-		if (!(await isProjectOwner(params.id, locals.user.userId)))
-			return fail(403, { error: 'Not your project' })
+		const guard = await requireOwner(locals, params.id)
+		if (guard.err) return guard.err
 		const form = await request.formData()
 		const body = str(form, 'body')
 		if (!body) return fail(400, { error: 'Comment body is required' })
 		const db = useDb()
 		try {
 			await db.insert(schema.comments).values({
-				projectId: params.id,
-				authorId: locals.user.userId,
+				projectId: guard.projectId,
+				authorId: guard.userId,
 				body,
 			})
 		} catch {
@@ -128,7 +130,8 @@ export const actions: Actions = {
 	},
 
 	toggle_milestone: async ({ locals, params, request }) => {
-		if (!locals.user) return fail(401, { error: 'Not authenticated' })
+		const guard = await requireOwner(locals, params.id)
+		if (guard.err) return guard.err
 		const form = await request.formData()
 		const id = str(form, 'id')
 		const completed = form.get('completed') === 'true'
@@ -139,107 +142,97 @@ export const actions: Actions = {
 			.where(
 				and(
 					eq(schema.milestones.id, id),
-					eq(schema.milestones.projectId, params.id),
-					sql`${params.id} IN (SELECT id FROM project WHERE id = ${params.id} AND freelancer_id = ${locals.user.userId})`,
+					eq(schema.milestones.projectId, guard.projectId),
 				),
 			)
 	},
 
 	add_milestone: async ({ locals, params, request }) => {
-		if (!locals.user) return fail(401, { error: 'Not authenticated' })
-		if (!(await isProjectOwner(params.id, locals.user.userId)))
-			return fail(403, { error: 'Not your project' })
+		const guard = await requireOwner(locals, params.id)
+		if (guard.err) return guard.err
 		const form = await request.formData()
 		const name = str(form, 'name')
 		if (!name) return fail(400, { error: 'Name is required' })
 		const db = useDb()
-		await db.execute(sql`SELECT add_milestone(${params.id}, ${name})`)
-	},
-
-	upload_file: async ({ locals, params, request }) => {
-		if (!locals.user) return fail(401, { error: 'Not authenticated' })
-		if (!(await isProjectOwner(params.id, locals.user.userId)))
-			return fail(403, { error: 'Not your project' })
-		const form = await request.formData()
-		const file = formFile(form, 'file')
-		if (!file?.size) return fail(400, { error: 'No file provided' })
 		try {
-			await uploadProjectFile(params.id, locals.user.userId, file)
+			await db.execute(sql`SELECT add_milestone(${guard.projectId}, ${name})`)
 		} catch {
 			return fail(500, { error: DB_ERROR })
 		}
 	},
 
-	delete_file: async ({ locals, request }) => {
-		if (!locals.user) return fail(401, { error: 'Not authenticated' })
+	upload_file: async ({ locals, params, request }) => {
+		const guard = await requireOwner(locals, params.id)
+		if (guard.err) return guard.err
+		const form = await request.formData()
+		const file = formFile(form, 'file')
+		if (!file?.size) return fail(400, { error: 'No file provided' })
+		try {
+			await uploadProjectFile(guard.projectId, guard.userId, file)
+		} catch (e) {
+			if (e instanceof FileUploadError) {
+				const status = e.code === 'too_large' ? 413 : 415
+				return fail(status, { error: e.message })
+			}
+			return fail(500, { error: DB_ERROR })
+		}
+	},
+
+	delete_file: async ({ locals, params, request }) => {
+		const guard = await requireOwner(locals, params.id)
+		if (guard.err) return guard.err
 		const form = await request.formData()
 		const id = str(form, 'id')
 		const db = useDb()
 
 		const [file] = await db
-			.select({
-				storagePath: schema.files.storagePath,
-				projectId: schema.files.projectId,
-			})
+			.select({ storagePath: schema.files.storagePath })
 			.from(schema.files)
-			.where(eq(schema.files.id, id))
-			.limit(1)
-
-		if (!file) return fail(404, { error: 'File not found' })
-
-		const [owner] = await db
-			.select({ id: schema.projects.id })
-			.from(schema.projects)
 			.where(
 				and(
-					eq(schema.projects.id, file.projectId),
-					eq(schema.projects.freelancerId, locals.user.userId),
+					eq(schema.files.id, id),
+					eq(schema.files.projectId, guard.projectId),
 				),
 			)
 			.limit(1)
 
-		if (!owner) return fail(403, { error: 'Not your project' })
+		if (!file) return fail(404, { error: 'File not found' })
 
 		try {
-			const { del } = await import('@vercel/blob')
 			await del(file.storagePath)
-		} catch {}
+		} catch {
+			// Blob deletion is best-effort; the row is removed regardless.
+		}
 
 		await db.delete(schema.files).where(eq(schema.files.id, id))
 	},
 
 	update_status: async ({ locals, params, request }) => {
-		if (!locals.user) return fail(401, { error: 'Not authenticated' })
+		const guard = await requireOwner(locals, params.id)
+		if (guard.err) return guard.err
 		const form = await request.formData()
 		const status = str(form, 'status')
+		if (!validStatuses.includes(status))
+			return fail(400, { error: 'Invalid status' })
 		const db = useDb()
 		try {
 			await db
 				.update(schema.projects)
 				.set({ status })
-				.where(
-					and(
-						eq(schema.projects.id, params.id),
-						eq(schema.projects.freelancerId, locals.user.userId),
-					),
-				)
+				.where(eq(schema.projects.id, guard.projectId))
 		} catch {
 			return fail(500, { error: DB_ERROR })
 		}
 	},
 
 	delete_project: async ({ locals, params }) => {
-		if (!locals.user) return fail(401, { error: 'Not authenticated' })
+		const guard = await requireOwner(locals, params.id)
+		if (guard.err) return guard.err
 		const db = useDb()
 		try {
 			await db
 				.delete(schema.projects)
-				.where(
-					and(
-						eq(schema.projects.id, params.id),
-						eq(schema.projects.freelancerId, locals.user.userId),
-					),
-				)
+				.where(eq(schema.projects.id, guard.projectId))
 		} catch {
 			return fail(500, { error: DB_ERROR })
 		}
@@ -247,9 +240,8 @@ export const actions: Actions = {
 	},
 
 	remove_client: async ({ locals, params, request }) => {
-		if (!locals.user) return fail(401, { error: 'Not authenticated' })
-		if (!(await isProjectOwner(params.id, locals.user.userId)))
-			return fail(403, { error: 'Not your project' })
+		const guard = await requireOwner(locals, params.id)
+		if (guard.err) return guard.err
 		const form = await request.formData()
 		const client_id = str(form, 'client_id')
 		const db = useDb()
@@ -258,7 +250,7 @@ export const actions: Actions = {
 				.delete(schema.projectClients)
 				.where(
 					and(
-						eq(schema.projectClients.projectId, params.id),
+						eq(schema.projectClients.projectId, guard.projectId),
 						eq(schema.projectClients.clientId, client_id),
 					),
 				)
@@ -268,29 +260,17 @@ export const actions: Actions = {
 	},
 
 	invite_client: async ({ locals, params, request }) => {
-		if (!locals.user) return fail(401, { error: 'Not authenticated' })
+		const guard = await requireOwner(locals, params.id)
+		if (guard.err) return guard.err
 		const form = await request.formData()
 		const email = str(form, 'email').toLowerCase()
-		if (!email) return fail(400, { error: 'Email is required' })
-
-		const db = useDb()
-		const [owner] = await db
-			.select({ id: schema.projects.id })
-			.from(schema.projects)
-			.where(
-				and(
-					eq(schema.projects.id, params.id),
-					eq(schema.projects.freelancerId, locals.user.userId),
-				),
-			)
-			.limit(1)
-
-		if (!owner) return fail(403, { error: 'Not your project' })
+		if (!(email && /^\S+@\S+\.\S+$/.test(email)))
+			return fail(400, { error: 'A valid email is required' })
 
 		try {
-			await inviteClientByEmail(email, params.id)
+			await inviteClientByEmail(email, guard.projectId)
 		} catch {
-			return fail(400, { error: DB_ERROR })
+			return fail(500, { error: DB_ERROR })
 		}
 	},
 }

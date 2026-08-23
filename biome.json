@@ -3,15 +3,81 @@
 	"vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
 	"css": { "parser": { "tailwindDirectives": true } },
 	"formatter": { "enabled": true, "indentStyle": "tab" },
+	"javascript": {
+		"formatter": { "quoteStyle": "single", "semicolons": "asNeeded" }
+	},
+	"assist": {
+		"actions": {
+			"source": { "organizeImports": "on" }
+		}
+	},
 	"linter": {
 		"enabled": true,
 		"rules": {
-			"style": { "noNonNullAssertion": "error" },
-			"suspicious": { "noExplicitAny": "error", "noConsole": "warn" }
+			"preset": "recommended",
+			"a11y": {
+				"noSvgWithoutTitle": "off",
+				"useButtonType": "warn"
+			},
+			"complexity": {
+				"noExcessiveCognitiveComplexity": {
+					"level": "warn",
+					"options": { "maxAllowedComplexity": 15 }
+				},
+				"noForEach": "off",
+				"noUselessUndefined": "error",
+				"useLiteralKeys": "off",
+				"useSimplifiedLogicExpression": "warn"
+			},
+			"correctness": {
+				"noUnusedFunctionParameters": "warn",
+				"noUnusedImports": "error",
+				"noUnusedVariables": "error",
+				"useExhaustiveDependencies": "warn",
+				"useHookAtTopLevel": "off"
+			},
+			"performance": {
+				"noAccumulatingSpread": "warn",
+				"noDelete": "warn"
+			},
+			"security": {
+				"noDangerouslySetInnerHtml": "warn"
+			},
+			"suspicious": {
+				"noArrayIndexKey": "warn",
+				"noCommentText": "off",
+				"noConsole": "warn",
+				"noDebugger": "error",
+				"noConfusingVoidType": "error",
+				"noDoubleEquals": "error",
+				"noExplicitAny": "error",
+				"noImplicitAnyLet": "warn",
+				"noMisleadingInstantiator": "error",
+				"noRedeclare": "error",
+				"noSelfCompare": "error",
+				"noVar": "error"
+			},
+			"style": {
+				"noNonNullAssertion": "warn",
+				"noParameterAssign": "error",
+				"noUselessElse": "error",
+				"noUnusedTemplateLiteral": "error",
+				"useCollapsedElseIf": "warn",
+				"useConsistentArrayType": {
+					"level": "error",
+					"options": { "syntax": "shorthand" }
+				},
+				"useConsistentBuiltinInstantiation": "error",
+				"useConst": "error",
+				"useDefaultParameterLast": "error",
+				"useImportType": "error",
+				"useSelfClosingElements": "warn",
+				"useShorthandAssign": "error",
+				"useSingleVarDeclarator": "error",
+				"useTemplate": "error",
+				"useThrowOnlyError": "error"
+			}
 		}
-	},
-	"javascript": {
-		"formatter": { "quoteStyle": "single", "semicolons": "asNeeded" }
 	},
 	"overrides": [
 		{
@@ -19,8 +85,19 @@
 			"linter": {
 				"rules": {
 					"correctness": {
+						"noUnusedFunctionParameters": "off",
 						"noUnusedImports": "off",
 						"noUnusedVariables": "off"
+					}
+				}
+			}
+		},
+		{
+			"includes": ["**/*.{test,spec}.ts"],
+			"linter": {
+				"rules": {
+					"suspicious": {
+						"noConsole": "off"
 					}
 				}
 			}

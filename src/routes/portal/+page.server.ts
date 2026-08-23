@@ -3,18 +3,16 @@ import { and, desc, eq, getTableColumns, sql } from 'drizzle-orm'
 import { useDb } from '$lib/server/db'
 import * as schema from '$lib/server/db/schema'
 import { DB_ERROR, formFile, str } from '$lib/server/form'
+import { requireClient } from '$lib/server/guard'
+import { runInvoiceCheckout } from '$lib/server/invoices'
 import {
 	addComment,
+	FileUploadError,
 	getProjectComments,
 	getProjectFiles,
 	getProjectMilestones,
-	isProjectClient,
 	uploadProjectFile,
 } from '$lib/server/project'
-import {
-	createInvoiceCheckoutSession,
-	InvoiceCheckoutError,
-} from '$lib/server/invoices'
 import type { Actions, PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals, url }) => {
@@ -111,77 +109,78 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	}
 }
 
+type ClientGuardResult =
+	| { err: ReturnType<typeof fail> }
+	| { err?: undefined; userId: string; projectId: string }
+
+async function clientGuard(
+	locals: App.Locals,
+	url: URL,
+): Promise<ClientGuardResult> {
+	const projectId = url.searchParams.get('project')
+	if (!projectId) return { err: fail(400, { error: 'Missing project' }) }
+	const guard = await requireClient(locals, projectId)
+	if (guard.err) return { err: guard.err }
+	return { userId: guard.userId, projectId: guard.projectId }
+}
+
 export const actions: Actions = {
 	comment: async ({ locals, url, request }) => {
-		if (!locals.user) error(401)
-		const projectId = url.searchParams.get('project')
-		if (!projectId) error(400, 'Missing project')
-		if (!(await isProjectClient(projectId, locals.user.userId))) error(403)
+		const guard = await clientGuard(locals, url)
+		if (guard.err) return guard.err
 		const form = await request.formData()
 		const body = str(form, 'body')
-		if (!body) return
+		if (!body) return fail(400, { error: 'Message body is required' })
 		try {
-			await addComment(projectId, locals.user.userId, body)
+			await addComment(guard.projectId, guard.userId, body)
 		} catch {
 			return fail(500, { error: DB_ERROR })
 		}
 	},
 
 	approve: async ({ locals, url, request }) => {
-		if (!locals.user) error(401)
-		const projectId = url.searchParams.get('project')
-		if (!projectId) error(400, 'Missing project')
-		if (!(await isProjectClient(projectId, locals.user.userId))) error(403)
+		const guard = await clientGuard(locals, url)
+		if (guard.err) return guard.err
 		const note = str(await request.formData(), 'note') || null
 		const db = useDb()
 		await db.execute(
-			sql`SELECT approve_project(${projectId}, ${locals.user.userId}, ${note})`,
+			sql`SELECT approve_project(${guard.projectId}, ${guard.userId}, ${note})`,
 		)
 	},
 
 	request_revision: async ({ locals, url, request }) => {
-		if (!locals.user) error(401)
-		const projectId = url.searchParams.get('project')
-		if (!projectId) error(400, 'Missing project')
-		if (!(await isProjectClient(projectId, locals.user.userId))) error(403)
+		const guard = await clientGuard(locals, url)
+		if (guard.err) return guard.err
 		const note = str(await request.formData(), 'note') || null
 		const db = useDb()
 		await db.execute(
-			sql`SELECT request_revision(${projectId}, ${locals.user.userId}, ${note})`,
+			sql`SELECT request_revision(${guard.projectId}, ${guard.userId}, ${note})`,
 		)
 	},
 
 	upload_file: async ({ locals, url, request }) => {
-		if (!locals.user) error(401)
-		const projectId = url.searchParams.get('project')
-		if (!projectId) error(400, 'Missing project')
-		if (!(await isProjectClient(projectId, locals.user.userId))) error(403)
+		const guard = await clientGuard(locals, url)
+		if (guard.err) return guard.err
 		const form = await request.formData()
 		const file = formFile(form, 'file')
-		if (!file?.size) return
+		if (!file?.size) return fail(400, { error: 'No file provided' })
 		try {
-			await uploadProjectFile(projectId, locals.user.userId, file)
-		} catch {
-			error(500, DB_ERROR)
+			await uploadProjectFile(guard.projectId, guard.userId, file)
+		} catch (e) {
+			if (e instanceof FileUploadError) {
+				const status = e.code === 'too_large' ? 413 : 415
+				return fail(status, { error: e.message })
+			}
+			return fail(500, { error: DB_ERROR })
 		}
 	},
 
 	checkout: async ({ locals, request, url: reqUrl }) => {
-		if (!locals.user) error(401)
+		if (!locals.user) return fail(401, { error: 'Unauthorized' })
 		const form = await request.formData()
 		const invoiceId = str(form, 'invoiceId')
-		if (!invoiceId) return fail(400, { missing: true })
+		if (!invoiceId) return fail(400, { error: 'Invoice ID required' })
 
-		try {
-			return await createInvoiceCheckoutSession(
-				invoiceId,
-				locals.user.userId,
-				reqUrl.origin,
-			)
-		} catch (e) {
-			if (e instanceof InvoiceCheckoutError)
-				return fail(e.code === 'not_found' ? 404 : 400, { error: e.message })
-			throw e
-		}
+		return runInvoiceCheckout(invoiceId, locals.user.userId, reqUrl.origin)
 	},
 }

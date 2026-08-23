@@ -28,6 +28,7 @@
 		"@tailwindcss/vite": "^4.3.3",
 		"@types/node": "^26.1.1",
 		"drizzle-kit": "^0.31.10",
+		"knip": "^6.26.0",
 		"svelte": "^5.56.6",
 		"svelte-check": "^4.7.3",
 		"typescript": "^6.0.3",

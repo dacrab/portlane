@@ -17,16 +17,10 @@ let showForm = $state(false)
 let selectedProject = $state('')
 let selectedClient = $state('')
 
-let invoiceStatusOverrides = $state<Record<string, string>>({})
-
 type ProjectLight = {
 	id: string
 	name: string
 	clients: { id: string; name: string | null }[] | null
-}
-
-function getStatus(inv: { id: string; status: string }) {
-	return invoiceStatusOverrides[inv.id] ?? inv.status
 }
 
 const clients = $derived(
@@ -118,7 +112,7 @@ const statusItems = INVOICE_STATUS_ITEMS
 				</div>
 				<div>
 					<label for="inv_amount" class="mb-1.5 block text-xs font-medium text-muted">Amount (USD)</label>
-					<input id="inv_amount" name="amount" type="number" min="0" step="0.01" required placeholder="500.00" class="input" />
+					<input id="inv_amount" name="amount" type="number" min="0.01" step="0.01" required placeholder="500.00" class="input" />
 				</div>
 				<div>
 					<p class="mb-1.5 text-xs font-medium text-muted">
@@ -161,14 +155,13 @@ const statusItems = INVOICE_STATUS_ITEMS
 						<form id="inv-status-{inv.id}" method="POST" action="?/update_status"
 							use:enhance={toastEnhance({ successMsg: 'Status updated' })}>
 							<input type="hidden" name="id" value={inv.id} />
-							<input type="hidden" name="status" value={getStatus(inv)} />
+							<input type="hidden" name="status" value={inv.status} />
 							<AppSelect
-								value={getStatus(inv)}
+								value={inv.status}
 								items={statusItems}
 								onchange={(v: string) => {
-									invoiceStatusOverrides[inv.id] = v;
 									const el = document.getElementById(`inv-status-${inv.id}`);
-									if (el instanceof HTMLFormElement) el.requestSubmit();
+									if (el instanceof HTMLFormElement && v !== inv.status) el.requestSubmit();
 								}}
 							/>
 						</form>

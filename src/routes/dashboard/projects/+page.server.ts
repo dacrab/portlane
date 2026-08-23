@@ -1,5 +1,6 @@
 import { error, fail, redirect } from '@sveltejs/kit'
 import { desc, eq, sql } from 'drizzle-orm'
+import { PROJECT_STATUS_ITEMS } from '$lib/fmt'
 import { useDb } from '$lib/server/db'
 import * as schema from '$lib/server/db/schema'
 import { DB_ERROR, str } from '$lib/server/form'
@@ -41,29 +42,34 @@ export const actions: Actions = {
 		const client_email = str(form, 'client_email').toLowerCase() || null
 
 		if (!name) return fail(400, { error: 'Name is required' })
+		if (!PROJECT_STATUS_ITEMS.some((s) => s.value === status))
+			return fail(400, { error: 'Invalid status' })
+		if (due_date && !/^\d{4}-\d{2}-\d{2}$/.test(due_date))
+			return fail(400, { error: 'Invalid due date' })
 
 		const db = useDb()
-		const [project] = await db
-			.insert(schema.projects)
-			.values({
-				name,
-				description,
-				dueDate: due_date,
-				status,
-				freelancerId: locals.user.userId,
-			})
-			.returning({ id: schema.projects.id })
+		let projectId: string
+		try {
+			const [project] = await db
+				.insert(schema.projects)
+				.values({
+					name,
+					description,
+					dueDate: due_date,
+					status,
+					freelancerId: locals.user.userId,
+				})
+				.returning({ id: schema.projects.id })
+			if (!project) return fail(500, { error: DB_ERROR })
+			projectId = project.id
 
-		if (!project) return fail(500, { error: DB_ERROR })
-
-		if (client_email) {
-			try {
+			if (client_email) {
 				await inviteClientByEmail(client_email, project.id)
-			} catch {
-				return fail(400, { error: DB_ERROR })
 			}
+		} catch {
+			return fail(400, { error: DB_ERROR })
 		}
 
-		redirect(303, `/dashboard/projects/${project.id}`)
+		redirect(303, `/dashboard/projects/${projectId}`)
 	},
 }

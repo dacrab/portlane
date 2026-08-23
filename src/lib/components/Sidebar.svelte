@@ -39,8 +39,8 @@ function toggleDark() {
 	}
 }
 
-const settingsItem = navItems[4]
-if (!settingsItem) throw new Error('Missing settings nav item')
+const navLinks = navItems.slice(0, 4)
+const bottomLinks = navItems.slice(4)
 </script>
 
 <aside
@@ -64,7 +64,7 @@ if (!settingsItem) throw new Error('Missing settings nav item')
 
 	<!-- Nav -->
 	<nav class="flex flex-1 flex-col gap-0.5 px-1.5 py-2.5">
-		{#each navItems.slice(0, 4) as item}
+		{#each navLinks as item}
 			{@const active = page.url.pathname === item.href || (item.href !== '/dashboard' && page.url.pathname.startsWith(item.href))}
 			<a href={item.href} class="nav-item relative {active ? 'active' : ''} {collapsed ? 'justify-center px-0' : ''}" title={collapsed ? item.label : ''}>
 				{#if active}<item.B class="h-[15px] w-[15px] shrink-0" />{:else}<item.R class="h-[15px] w-[15px] shrink-0" />{/if}
@@ -94,10 +94,12 @@ if (!settingsItem) throw new Error('Missing settings nav item')
 					{#if !collapsed}<span class="whitespace-nowrap">Dark mode</span>{/if}
 				{/if}
 			</button>
-			<a href={settingsItem.href} class="nav-item {page.url.pathname === settingsItem.href ? 'active' : ''} {collapsed ? 'justify-center px-0' : ''}" title={collapsed ? settingsItem.label : ''}>
-				{#if page.url.pathname === settingsItem.href}<settingsItem.B class="h-[15px] w-[15px] shrink-0" />{:else}<settingsItem.R class="h-[15px] w-[15px] shrink-0" />{/if}
-				{#if !collapsed}<span class="whitespace-nowrap">{settingsItem.label}</span>{/if}
-			</a>
+			{#each bottomLinks as item}
+				<a href={item.href} class="nav-item {page.url.pathname === item.href ? 'active' : ''} {collapsed ? 'justify-center px-0' : ''}" title={collapsed ? item.label : ''}>
+					{#if page.url.pathname === item.href}<item.B class="h-[15px] w-[15px] shrink-0" />{:else}<item.R class="h-[15px] w-[15px] shrink-0" />{/if}
+					{#if !collapsed}<span class="whitespace-nowrap">{item.label}</span>{/if}
+				</a>
+			{/each}
 			{#if collapsed}
 				<button onclick={toggle} class="nav-item w-full justify-center px-0" title="Expand">
 					<IconSidebarSimpleRegular class="h-[15px] w-[15px] shrink-0" />

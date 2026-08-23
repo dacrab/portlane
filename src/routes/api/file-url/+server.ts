@@ -1,8 +1,11 @@
 import { error, json } from '@sveltejs/kit'
-import { and, eq } from 'drizzle-orm'
+import { issueSignedToken, presignUrl } from '@vercel/blob'
+import { and, eq, or } from 'drizzle-orm'
 import { useDb } from '$lib/server/db'
 import * as schema from '$lib/server/db/schema'
 import type { RequestHandler } from './$types'
+
+const LINK_TTL_MS = 5 * 60 * 1000
 
 export const GET: RequestHandler = async ({ url, locals }) => {
 	if (!locals.user) error(401)
@@ -14,29 +17,38 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 	if (!projectId) error(400, 'Invalid path')
 
 	const db = useDb()
-	const [access] = await db
-		.select({ one: schema.projectClients.projectId })
-		.from(schema.projectClients)
-		.where(
-			and(
-				eq(schema.projectClients.projectId, projectId),
-				eq(schema.projectClients.clientId, locals.user.userId),
-			),
-		)
-		.limit(1)
-
-	const [owned] = await db
+	const [allowed] = await db
 		.select({ one: schema.projects.id })
 		.from(schema.projects)
+		.leftJoin(
+			schema.projectClients,
+			eq(schema.projectClients.projectId, schema.projects.id),
+		)
 		.where(
 			and(
 				eq(schema.projects.id, projectId),
-				eq(schema.projects.freelancerId, locals.user.userId),
+				or(
+					eq(schema.projects.freelancerId, locals.user.userId),
+					eq(schema.projectClients.clientId, locals.user.userId),
+				),
 			),
 		)
 		.limit(1)
 
-	if (!access && !owned) error(403, 'Forbidden')
+	if (!allowed) error(403, 'Forbidden')
 
-	return json({ url: path })
+	const validUntil = Date.now() + LINK_TTL_MS
+	const token = await issueSignedToken({
+		pathname: path,
+		operations: ['get'],
+		validUntil,
+	})
+	const { presignedUrl } = await presignUrl(token, {
+		access: 'private',
+		operation: 'get',
+		pathname: path,
+		validUntil,
+	})
+
+	return json({ url: presignedUrl })
 }

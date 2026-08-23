@@ -10,8 +10,8 @@ import IconThumbsUpRegular from 'phosphor-icons-svelte/IconThumbsUpRegular.svelt
 import { toast } from 'svelte-sonner'
 import { enhance } from '$app/forms'
 import { downloadFile } from '$lib/client/download'
-import { toastEnhance } from '$lib/client/enhance'
-import CommentThread from '$lib/components/CommentThread.svelte'
+import { checkoutEnhance, toastEnhance } from '$lib/client/enhance'
+import Avatar from '$lib/components/Avatar.svelte'
 import ProgressBar from '$lib/components/ProgressBar.svelte'
 import SectionHeader from '$lib/components/SectionHeader.svelte'
 import { fmtDate, fmtMoney, statusBadge, today } from '$lib/fmt'
@@ -31,7 +31,6 @@ let submittingApproval = $state(false)
 
 const total = $derived(milestoneTotal(data.milestones))
 const done = $derived(milestoneDone(data.milestones))
-const isClient = $derived(data.invoices.length > 0)
 </script>
 
 <!-- Project detail: two-column -->
@@ -86,14 +85,8 @@ const isClient = $derived(data.invoices.length > 0)
 				<div class="space-y-2">
 					{#each data.invoices as inv}
 						<div class="relative flex items-center justify-between rounded-lg px-3 py-3" style="border:1px solid var(--color-border-subtle)">
-							{#if isClient && (inv.status === 'sent' || inv.status === 'overdue') && !inv.stripeSessionId}
-								<form method="POST" action="?/checkout" use:enhance={() => {
-									return async ({ result }) => {
-										if (result.type !== 'success') return;
-										const d = result.data as Record<string, unknown> | undefined;
-										if (typeof d?.url === 'string') window.location.href = d.url;
-									};
-									}}
+							{#if (inv.status === 'sent' || inv.status === 'overdue') && !inv.stripeSessionId}
+								<form method="POST" action="?/checkout" use:enhance={checkoutEnhance()}
 									class="absolute inset-0 z-10 cursor-pointer" style="background:transparent">
 									<input type="hidden" name="invoiceId" value={inv.id} />
 								</form>
@@ -101,7 +94,7 @@ const isClient = $derived(data.invoices.length > 0)
 							<div>
 								<p class="text-sm font-semibold text-heading">{fmtMoney(inv.amountCents)}</p>
 								<p class="text-xs mt-0.5" class:text-danger={inv.dueDate && inv.dueDate < today() && inv.status !== 'paid'} class:text-faint={!(inv.dueDate && inv.dueDate < today() && inv.status !== 'paid')}>
-									{inv.dueDate ? `Due ${fmtDate(inv.dueDate)}` : fmtDate(inv.createdAt ?? '')}
+									{inv.dueDate ? `Due ${fmtDate(inv.dueDate)}` : fmtDate(inv.createdAt)}
 								</p>
 							</div>
 							<span class="{statusBadge[inv.status] ?? 'badge badge-neutral'}">{inv.status}</span>
@@ -181,20 +174,31 @@ const isClient = $derived(data.invoices.length > 0)
 		</div>
 
 		<!-- Comments -->
-		{#if data.project}
-			<div class="card">
-				<CommentThread
-					userId={data.user?.userId}
-					initial={data.comments}
-				/>
-				<form method="POST" action="?/comment"
-					use:enhance={toastEnhance({ beforeUpdate: () => { comment = '' } })}
-					class="flex gap-2">
-					<input name="body" bind:value={comment} required placeholder="Write a message…" class="input" />
-					<button type="submit" class="btn btn-primary shrink-0">Send</button>
-				</form>
-			</div>
-		{/if}
+		<div class="card">
+			<SectionHeader title="Messages" count={data.comments.length || undefined} />
+			{#if data.comments.length > 0}
+				<div class="space-y-3 mb-4 max-h-80 overflow-y-auto">
+					{#each data.comments as c (c.id)}
+						{@const isMe = c.authorId === data.user?.userId}
+						<div class="flex items-start gap-2.5" class:flex-row-reverse={isMe}>
+							<Avatar name={c.name ?? '?'} size={7} />
+							<div class="rounded-lg px-3 py-2.5 max-w-[85%]"
+								style="background:{isMe ? 'var(--color-accent-50)' : 'var(--color-bg)'}">
+								<p class="text-sm" style="color:{isMe ? 'var(--color-accent-700)' : 'var(--color-text)'}">{c.body}</p>
+							</div>
+						</div>
+					{/each}
+				</div>
+			{:else}
+				<p class="mb-4 text-sm text-faint">No messages yet.</p>
+			{/if}
+			<form method="POST" action="?/comment"
+				use:enhance={toastEnhance({ beforeUpdate: () => { comment = '' } })}
+				class="flex gap-2">
+				<input name="body" bind:value={comment} required placeholder="Write a message…" class="input" />
+				<button type="submit" class="btn btn-primary shrink-0">Send</button>
+			</form>
+		</div>
 
 	</div>
 </div>

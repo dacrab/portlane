@@ -108,7 +108,7 @@ function exportTimeCSV() {
 					<AppSelect
 						bind:value={projectStatus}
 						items={PROJECT_STATUS_ITEMS}
-						onchange={(v: string) => { projectStatus = v; const el = document.getElementById('status-form'); if (el instanceof HTMLFormElement) el.requestSubmit(); }}
+						onchange={() => { const el = document.getElementById('status-form'); if (el instanceof HTMLFormElement) el.requestSubmit(); }}
 					/>
 				</form>
 			</div>
@@ -292,7 +292,7 @@ function exportTimeCSV() {
 								const d = result.data as Record<string, unknown> | undefined;
 								toast.error(typeof d?.error === 'string' ? d.error : 'Invitation failed');
 							} else {
-								toast.success('Invitation sent', { description: 'The client will receive a magic link to access the portal.' });
+								toast.success('Client added to project', { description: 'They can sign in to the portal with this email.' });
 							}
 						};
 					}}

@@ -5,5 +5,7 @@ export async function downloadFile(path: string, name: string) {
 	const a = document.createElement('a')
 	a.href = url
 	a.download = name
+	a.target = '_blank'
+	a.rel = 'noopener'
 	a.click()
 }

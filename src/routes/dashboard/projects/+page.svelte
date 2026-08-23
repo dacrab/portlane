@@ -23,10 +23,6 @@ let { data, form }: { data: PageData; form: ActionData } = $props()
 let open = $state(page.url.searchParams.has('new'))
 let loading = $state(false)
 
-$effect(() => {
-	if (form?.error) open = true
-})
-
 let showArchived = $state(false)
 
 function progress(p: PItem) {
@@ -121,7 +117,7 @@ function focusOnMount(node: HTMLElement) {
 				Invite client <span class="text-faint">(optional)</span>
 			</label>
 			<input id="client_email" name="client_email" type="email" class="input" placeholder="client@company.com" />
-			<p class="mt-1 text-xs text-faint">They'll receive a magic link to access the portal.</p>
+			<p class="mt-1 text-xs text-faint">Creates a client account linked to this project — they can sign in with this email.</p>
 		</div>
 
 		<div class="mt-auto flex gap-3 pt-4 divide-top">

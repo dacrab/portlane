@@ -22,8 +22,8 @@ let { data }: { data: PageData } = $props()
 					<div class="flex-1 min-w-0">
 						<p class="text-sm font-semibold text-heading">{p.name}</p>
 						<p class="text-xs text-faint">
-							Freelancer
-							{#if p.dueDate} · Due {fmtDate(p.dueDate)}{/if}
+							{#if p.freelancerName}Managed by {p.freelancerName}{/if}
+							{#if p.dueDate}{#if p.freelancerName} · {/if}Due {fmtDate(p.dueDate)}{/if}
 						</p>
 					</div>
 					<span class="badge badge-neutral shrink-0">{p.status.replace('_', ' ')}</span>
