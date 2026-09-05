@@ -15,7 +15,7 @@ export async function requireOwner(
 	return { userId: locals.user.userId, projectId }
 }
 
-export async function requireClient(
+async function requireClient(
 	locals: App.Locals,
 	projectId: string,
 ): Promise<GuardResult> {
@@ -23,4 +23,13 @@ export async function requireClient(
 	if (!(await isProjectClient(projectId, locals.user.userId)))
 		return { err: fail(403, { error: 'Not your project' }) }
 	return { userId: locals.user.userId, projectId }
+}
+
+export async function requireClientFromUrl(
+	locals: App.Locals,
+	url: URL,
+): Promise<GuardResult> {
+	const projectId = url.searchParams.get('project')
+	if (!projectId) return { err: fail(400, { error: 'Missing project' }) }
+	return requireClient(locals, projectId)
 }

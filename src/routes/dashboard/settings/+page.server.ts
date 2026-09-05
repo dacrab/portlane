@@ -89,18 +89,23 @@ export const actions: Actions = {
 
 			await auth.api.signOut({ headers: request.headers })
 
-			await db
-				.delete(schema.comments)
-				.where(eq(schema.comments.authorId, userId))
-			await db.delete(schema.files).where(eq(schema.files.uploadedBy, userId))
-			await db
-				.delete(schema.timeEntries)
-				.where(eq(schema.timeEntries.userId, userId))
-			await db
-				.delete(schema.invoices)
-				.where(eq(schema.invoices.clientId, userId))
-
-			await db.delete(schema.users).where(eq(schema.users.id, userId))
+			// The neon-http driver has no interactive transactions; batch()
+			// runs every statement in one atomic non-interactive transaction.
+			await db.batch([
+				db.delete(schema.comments).where(eq(schema.comments.authorId, userId)),
+				db.delete(schema.files).where(eq(schema.files.uploadedBy, userId)),
+				db
+					.delete(schema.timeEntries)
+					.where(eq(schema.timeEntries.userId, userId)),
+				db
+					.delete(schema.invoices)
+					.where(eq(schema.invoices.freelancerId, userId)),
+				db.delete(schema.invoices).where(eq(schema.invoices.clientId, userId)),
+				db
+					.delete(schema.projects)
+					.where(eq(schema.projects.freelancerId, userId)),
+				db.delete(schema.users).where(eq(schema.users.id, userId)),
+			])
 
 			// Blob deletion is best-effort; a sweep job should collect any orphans.
 			if (uploads.length > 0) {

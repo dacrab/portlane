@@ -3,8 +3,8 @@ import { and, desc, eq, getTableColumns, sql } from 'drizzle-orm'
 import { useDb } from '$lib/server/db'
 import * as schema from '$lib/server/db/schema'
 import { DB_ERROR, formFile, str } from '$lib/server/form'
-import { requireClient } from '$lib/server/guard'
-import { runInvoiceCheckout } from '$lib/server/invoices'
+import { requireClientFromUrl } from '$lib/server/guard'
+import { handleCheckoutAction } from '$lib/server/invoices'
 import {
 	addComment,
 	FileUploadError,
@@ -109,24 +109,9 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	}
 }
 
-type ClientGuardResult =
-	| { err: ReturnType<typeof fail> }
-	| { err?: undefined; userId: string; projectId: string }
-
-async function clientGuard(
-	locals: App.Locals,
-	url: URL,
-): Promise<ClientGuardResult> {
-	const projectId = url.searchParams.get('project')
-	if (!projectId) return { err: fail(400, { error: 'Missing project' }) }
-	const guard = await requireClient(locals, projectId)
-	if (guard.err) return { err: guard.err }
-	return { userId: guard.userId, projectId: guard.projectId }
-}
-
 export const actions: Actions = {
 	comment: async ({ locals, url, request }) => {
-		const guard = await clientGuard(locals, url)
+		const guard = await requireClientFromUrl(locals, url)
 		if (guard.err) return guard.err
 		const form = await request.formData()
 		const body = str(form, 'body')
@@ -139,7 +124,7 @@ export const actions: Actions = {
 	},
 
 	approve: async ({ locals, url, request }) => {
-		const guard = await clientGuard(locals, url)
+		const guard = await requireClientFromUrl(locals, url)
 		if (guard.err) return guard.err
 		const note = str(await request.formData(), 'note') || null
 		const db = useDb()
@@ -149,7 +134,7 @@ export const actions: Actions = {
 	},
 
 	request_revision: async ({ locals, url, request }) => {
-		const guard = await clientGuard(locals, url)
+		const guard = await requireClientFromUrl(locals, url)
 		if (guard.err) return guard.err
 		const note = str(await request.formData(), 'note') || null
 		const db = useDb()
@@ -159,7 +144,7 @@ export const actions: Actions = {
 	},
 
 	upload_file: async ({ locals, url, request }) => {
-		const guard = await clientGuard(locals, url)
+		const guard = await requireClientFromUrl(locals, url)
 		if (guard.err) return guard.err
 		const form = await request.formData()
 		const file = formFile(form, 'file')
@@ -176,11 +161,7 @@ export const actions: Actions = {
 	},
 
 	checkout: async ({ locals, request, url: reqUrl }) => {
-		if (!locals.user) return fail(401, { error: 'Unauthorized' })
 		const form = await request.formData()
-		const invoiceId = str(form, 'invoiceId')
-		if (!invoiceId) return fail(400, { error: 'Invoice ID required' })
-
-		return runInvoiceCheckout(invoiceId, locals.user.userId, reqUrl.origin)
+		return handleCheckoutAction(locals, form, reqUrl.origin)
 	},
 }

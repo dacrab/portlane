@@ -44,6 +44,7 @@
 		"bits-ui": "^2.18.1",
 		"drizzle-orm": "^0.45.2",
 		"phosphor-icons-svelte": "^2.1.0",
+		"resend": "^6.26.0",
 		"stripe": "^22.3.2",
 		"svelte-sonner": "^1.1.1"
 	}
