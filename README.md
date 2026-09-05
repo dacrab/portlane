@@ -48,11 +48,9 @@ bun dev
 
 - **Auth** — Better Auth with email & password (`hooks.server.ts` is the single handler; sessions are enriched with the user's role on every request).
 - **Files** — uploads go to Vercel Blob with `access: 'private'`. Downloads go through `GET /api/file-url?path=…`, which authorizes the caller against the project (owner or linked client) and returns a presigned URL valid for 5 minutes.
-- **Payments** — creating a checkout session persists `stripe_session_id` on the invoice *immediately*, so repeat checkouts are rejected and clients can't double-pay via parallel tabs; the Stripe webhook flips status to `paid` after verifying the amount matches.
-- **Client invites & approvals** — inviting links an existing user by email or creates one (name derived from the address); approve/revision actions run through SQL functions that re-check membership server-side.
-- **Route guards** — shared `requireOwner` / `requireClient` helpers (`src/lib/server/guard.ts`) centralize the 401/403 + ownership checks used by dashboard and portal actions.
-- **Account deletion** — deletes content authored/uploaded by the user and invoices where they were the client, then removes the user (their own projects cascade). Vercel Blobs are deleted best-effort.
-- **Blob sweep cron** — `GET /api/cron/blob-sweep` (weekly per `vercel.json`) lists all blobs, diffs them against paths referenced by the `file` table, and deletes unreferenced blobs older than 7 days. Guarded by `Authorization: Bearer <CRON_SECRET>` (constant-time compare).
+- **Payments** — invoice checkout sessions are single-use, so clients can't double-pay via parallel tabs; the Stripe webhook flips status to `paid` after verifying the amount matches.
+- **Client invites & approvals** — inviting links an existing user by email or creates one; approve/revision actions always re-check project membership server-side.
+- **Account deletion** — deletes content authored/uploaded by the user and invoices where they were the client, then removes the user (their own projects cascade). Stored files are deleted best-effort; a weekly cleanup job removes anything left behind.
 
 ## Tech stack
 

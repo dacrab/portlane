@@ -8,9 +8,18 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 	if (locals.user.role === 'client') redirect(303, '/portal')
 
 	const db = useDb()
-	const unread = await db.execute<{ count: number }>(
-		sql`SELECT COUNT(*)::int AS count FROM get_unread_comments(${locals.user.userId})`,
-	)
+	const unread = await db.execute<{
+		id: string
+		body: string
+		created_at: string
+		author_name: string
+		project_id: string
+		project_name: string
+	}>(sql`SELECT * FROM get_unread_comments(${locals.user.userId})`)
 
-	return { user: locals.user, unreadComments: unread.rows[0]?.count ?? 0 }
+	return {
+		user: locals.user,
+		unreadComments: unread.rows.length,
+		unreadCommentRows: unread.rows ?? [],
+	}
 }

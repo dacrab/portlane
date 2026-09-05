@@ -11,8 +11,7 @@ async function submit(e: Event) {
 	e.preventDefault()
 	error = ''
 	loading = true
-	// @ts-expect-error - better-auth client types don't include email/password methods on the svelte wrapper
-	const { error: err } = await authClient.forgetPassword({
+	const { error: err } = await authClient.requestPasswordReset({
 		email,
 		redirectTo: '/reset-password',
 	})

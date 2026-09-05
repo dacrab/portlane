@@ -83,14 +83,15 @@ const done = $derived(milestoneDone(data.milestones))
 			<div class="card">
 				<SectionHeader title="Invoices" />
 				<div class="space-y-2">
-					{#each data.invoices as inv}
-						<div class="relative flex items-center justify-between rounded-lg px-3 py-3" style="border:1px solid var(--color-border-subtle)">
-							{#if (inv.status === 'sent' || inv.status === 'overdue') && !inv.stripeSessionId}
-								<form method="POST" action="?/checkout" use:enhance={checkoutEnhance()}
-									class="absolute inset-0 z-10 cursor-pointer" style="background:transparent">
-									<input type="hidden" name="invoiceId" value={inv.id} />
-								</form>
-							{/if}
+				{#each data.invoices as inv}
+					<div class="relative flex items-center justify-between rounded-lg px-3 py-3" style="border:1px solid var(--color-border-subtle)">
+						{#if (inv.status === 'sent' || inv.status === 'overdue') && !inv.stripeSessionId}
+							<form method="POST" action="?/checkout" use:enhance={checkoutEnhance()}
+								class="absolute inset-0 z-10 cursor-pointer" style="background:transparent">
+								<input type="hidden" name="invoiceId" value={inv.id} />
+								<button type="submit" aria-label="Pay invoice {fmtMoney(inv.amountCents)}" class="h-full w-full cursor-pointer" style="background:transparent"></button>
+							</form>
+						{/if}
 							<div>
 								<p class="text-sm font-semibold text-heading">{fmtMoney(inv.amountCents)}</p>
 								<p class="text-xs mt-0.5" class:text-danger={inv.dueDate && inv.dueDate < today() && inv.status !== 'paid'} class:text-faint={!(inv.dueDate && inv.dueDate < today() && inv.status !== 'paid')}>

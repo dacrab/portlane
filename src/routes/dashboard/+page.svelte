@@ -27,7 +27,7 @@ let { data }: { data: PageData } = $props()
 
 // Auto-dismiss: mark all as read when the dashboard is visited
 onMount(() => {
-	if (data.unreadComments.length > 0) {
+	if (data.unreadCommentRows.length > 0) {
 		fetch('?/mark_read', { method: 'POST' }).then(() => invalidateAll())
 	}
 })
@@ -111,15 +111,15 @@ const onboardingSteps = $derived([
 	</div>
 
 	<!-- Unread client comments (auto-dismissed on mount) -->
-	{#if data.unreadComments.length > 0}
+	{#if data.unreadCommentRows.length > 0}
 		<div class="rounded-xl overflow-hidden card p-0">
 			<div class="flex items-center gap-2 px-5 py-3.5 divide-bottom">
 				<span class="text-accent"><IconBellRegular class="h-4 w-4" /></span>
 				<span class="text-sm font-semibold text-heading">New client messages</span>
-				<span class="flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-semibold bg-accent-pill">{data.unreadComments.length}</span>
+				<span class="flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-semibold bg-accent-pill">{data.unreadCommentRows.length}</span>
 			</div>
 			<div>
-				{#each data.unreadComments as c}
+				{#each data.unreadCommentRows as c}
 					<a href="/dashboard/projects/{c.project_id}"
 						class="flex items-start gap-3 px-5 py-4 transition-colors hover-bg no-underline divide-bottom">
 						<Avatar name={c.author_name ?? '?'} size={7} />

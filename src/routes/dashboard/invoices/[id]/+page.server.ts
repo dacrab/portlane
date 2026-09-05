@@ -1,8 +1,10 @@
-import { error, fail } from '@sveltejs/kit'
+import { error } from '@sveltejs/kit'
 import { sql } from 'drizzle-orm'
 import { useDb } from '$lib/server/db'
-import { str } from '$lib/server/form'
-import { type InvoiceDetailRow, runInvoiceCheckout } from '$lib/server/invoices'
+import {
+	handleCheckoutAction,
+	type InvoiceDetailRow,
+} from '$lib/server/invoices'
 import type { Actions, PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals, params }) => {
@@ -42,11 +44,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
 export const actions: Actions = {
 	checkout: async ({ locals, request, url: reqUrl }) => {
-		if (!locals.user) return fail(401, { error: 'Unauthorized' })
 		const form = await request.formData()
-		const invoiceId = str(form, 'invoiceId')
-		if (!invoiceId) return fail(400, { error: 'Invoice ID required' })
-
-		return runInvoiceCheckout(invoiceId, locals.user.userId, reqUrl.origin)
+		return handleCheckoutAction(locals, form, reqUrl.origin)
 	},
 }

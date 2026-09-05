@@ -2,6 +2,7 @@ import { fail } from '@sveltejs/kit'
 import { and, eq, or, sql } from 'drizzle-orm'
 import { useDb } from '$lib/server/db'
 import * as schema from '$lib/server/db/schema'
+import { str } from '$lib/server/form'
 import { createCheckoutSession } from '$lib/server/stripe'
 
 export interface InvoiceDetailRow {
@@ -87,7 +88,7 @@ type CheckoutResult =
 	| { url: string }
 	| ReturnType<typeof fail<{ error: string }>>
 
-export async function runInvoiceCheckout(
+async function runInvoiceCheckout(
 	invoiceId: string,
 	userId: string,
 	origin: string,
@@ -99,4 +100,15 @@ export async function runInvoiceCheckout(
 			return fail(e.code === 'not_found' ? 404 : 400, { error: e.message })
 		throw e
 	}
+}
+
+export async function handleCheckoutAction(
+	locals: App.Locals,
+	form: FormData,
+	origin: string,
+): Promise<CheckoutResult> {
+	if (!locals.user) return fail(401, { error: 'Unauthorized' })
+	const invoiceId = str(form, 'invoiceId')
+	if (!invoiceId) return fail(400, { error: 'Invoice ID required' })
+	return runInvoiceCheckout(invoiceId, locals.user.userId, origin)
 }

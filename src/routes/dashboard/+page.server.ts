@@ -50,15 +50,6 @@ export const load: PageServerLoad = async ({ locals }) => {
 		project_name: string
 	}>(sql`SELECT * FROM get_activity_feed(${userId}, 5)`)
 
-	const unread = await db.execute<{
-		id: string
-		body: string
-		created_at: string
-		author_name: string
-		project_id: string
-		project_name: string
-	}>(sql`SELECT * FROM get_unread_comments(${userId})`)
-
 	const activeFallback = projects.filter(
 		(p) => p.status !== 'completed' && p.status !== 'archived',
 	).length
@@ -77,7 +68,6 @@ export const load: PageServerLoad = async ({ locals }) => {
 		pending: s?.review_projects ?? 0,
 		revenueMTD: s?.revenue_mtd ?? 0,
 		activity: activity.rows ?? [],
-		unreadComments: unread.rows ?? [],
 		onboarding,
 		onboardingDone: Object.values(onboarding).every(Boolean),
 	}
