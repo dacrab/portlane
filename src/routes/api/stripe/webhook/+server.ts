@@ -15,7 +15,9 @@ interface PaidSession {
 
 function extractPaidSession(event: Stripe.Event): PaidSession | null {
 	if (event.type !== 'checkout.session.completed') return null
-	const session = event.data.object as Stripe.Checkout.Session
+	// Narrowed by the type check above: Stripe.Event is a discriminated union and
+	// CheckoutSessionCompletedEvent.data.object is typed as Checkout.Session.
+	const session = event.data.object
 	if (session.payment_status !== 'paid') return null
 	if (!session.client_reference_id || session.amount_total == null) return null
 	return {
