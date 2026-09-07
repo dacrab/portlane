@@ -8,8 +8,11 @@ import { PASSWORD_MIN_LENGTH } from '$lib/constants'
 import { useDb } from '$lib/server/db'
 import * as schema from '$lib/server/db/schema'
 
+const secret = env.BETTER_AUTH_SECRET
+if (!secret) throw new Error('BETTER_AUTH_SECRET is not configured')
+
 export const auth = betterAuth({
-	secret: env.BETTER_AUTH_SECRET ?? '',
+	secret,
 	baseURL: PUBLIC_APP_URL,
 	database: drizzleAdapter(useDb(), {
 		provider: 'pg',

@@ -44,7 +44,7 @@ type PItem = {
 	clientCount: number
 }
 
-const items = $derived(data.projects as PItem[])
+const items = $derived(data.projects)
 
 const visible = $derived(
 	showArchived ? items : items.filter((p) => p.status !== 'archived'),

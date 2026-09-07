@@ -58,7 +58,7 @@
 				"noVar": "error"
 			},
 			"style": {
-				"noNonNullAssertion": "warn",
+				"noNonNullAssertion": "error",
 				"noParameterAssign": "error",
 				"noUselessElse": "error",
 				"noUnusedTemplateLiteral": "error",
