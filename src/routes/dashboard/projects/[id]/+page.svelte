@@ -27,6 +27,7 @@ import {
 	milestoneProgress,
 	milestoneTotal,
 } from '$lib/milestones'
+import { asRecord } from '$lib/records'
 import { confirmDelete } from '$lib/ui/confirm'
 import type { PageData } from './$types'
 
@@ -289,8 +290,8 @@ function exportTimeCSV() {
 							inviteEmail = '';
 							await update();
 							if (result.type === 'failure') {
-								const d = result.data as Record<string, unknown> | undefined;
-								toast.error(typeof d?.error === 'string' ? d.error : 'Invitation failed');
+								const error = asRecord(result.data)?.error
+								toast.error(typeof error === 'string' ? error : 'Invitation failed')
 							} else {
 								toast.success('Client added to project', { description: 'They can sign in to the portal with this email.' });
 							}

@@ -1,10 +1,10 @@
+import { DEFAULT_CURRENCY } from '$lib/constants'
+
 interface InvoiceLineItemInput {
 	amount_cents: number
 	currency?: string
 	project_name?: string | null
 }
-
-import { DEFAULT_CURRENCY } from '$lib/constants'
 
 export function buildInvoiceLineItems(invoice: InvoiceLineItemInput) {
 	return [

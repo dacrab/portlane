@@ -1,8 +1,11 @@
+import { fail } from '@sveltejs/kit'
 import { put } from '@vercel/blob'
 import { and, eq, sql } from 'drizzle-orm'
 import { MAX_FILE_SIZE } from '$lib/constants'
 import { useDb } from '$lib/server/db'
+import type { UserRole } from '$lib/server/db/schema'
 import * as schema from '$lib/server/db/schema'
+import { DB_ERROR, formFile } from '$lib/server/form'
 
 export async function isProjectOwner(projectId: string, userId: string) {
 	const db = useDb()
@@ -82,6 +85,8 @@ export async function addComment(
 	})
 }
 
+// Broad on purpose: freelancers hand over all kinds of deliverables (images,
+// PDFs, archives, plain-text exports).
 const ALLOWED_MIME_PREFIXES = [
 	'image/',
 	'application/pdf',
@@ -90,7 +95,18 @@ const ALLOWED_MIME_PREFIXES = [
 	'text/',
 ]
 
-export class FileUploadError extends Error {
+// The prefixes above are broad, so anything a browser *executes* when served has
+// to be named explicitly. The blob keeps the content type we pass to `put`, so
+// this is the last line of defence against storing an active-content payload.
+// Only types that would otherwise pass the prefix filter need listing.
+const BLOCKED_MIME_TYPES = new Set([
+	'image/svg+xml',
+	'text/html',
+	'text/xml',
+	'text/javascript',
+])
+
+class FileUploadError extends Error {
 	constructor(
 		readonly code: 'too_large' | 'unsupported_type',
 		message: string,
@@ -99,7 +115,7 @@ export class FileUploadError extends Error {
 	}
 }
 
-export async function uploadProjectFile(
+async function uploadProjectFile(
 	projectId: string,
 	userId: string,
 	file: File,
@@ -110,8 +126,17 @@ export async function uploadProjectFile(
 			'File exceeds maximum size of 100 MB',
 		)
 
+	// An empty content type must be rejected, not waved through: it is
+	// client-controlled, so treating "unknown" as "allowed" hands the
+	// validation decision to the uploader.
+	if (!file.type)
+		throw new FileUploadError(
+			'unsupported_type',
+			'File type could not be determined',
+		)
+
 	const allowed = ALLOWED_MIME_PREFIXES.some((p) => file.type.startsWith(p))
-	if (!allowed && file.type !== '')
+	if (!allowed || BLOCKED_MIME_TYPES.has(file.type))
 		throw new FileUploadError(
 			'unsupported_type',
 			`File type "${file.type}" is not supported`,
@@ -120,7 +145,13 @@ export async function uploadProjectFile(
 	const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
 	const path = `${projectId}/${crypto.randomUUID()}-${safeName}`
 
-	const blob = await put(path, file, { access: 'private' })
+	// Pin the stored content type to the type we just validated. Left to itself
+	// `put` infers it from the pathname, so a file named `x.html` uploaded as
+	// `text/plain` would be served as HTML.
+	const blob = await put(path, file, {
+		access: 'private',
+		contentType: file.type,
+	})
 
 	const db = useDb()
 	await db.insert(schema.files).values({
@@ -130,6 +161,29 @@ export async function uploadProjectFile(
 		storagePath: blob.url,
 		sizeBytes: file.size,
 	})
+}
+
+/**
+ * Shared `upload_file` handler for the owner and client project views. The
+ * caller supplies the guard's ids; this validates the file and maps upload
+ * failures onto HTTP status codes.
+ */
+export async function handleUploadFileAction(
+	projectId: string,
+	userId: string,
+	form: FormData,
+) {
+	const file = formFile(form, 'file')
+	if (!file?.size) return fail(400, { error: 'No file provided' })
+	try {
+		await uploadProjectFile(projectId, userId, file)
+	} catch (e) {
+		if (e instanceof FileUploadError) {
+			const status = e.code === 'too_large' ? 413 : 415
+			return fail(status, { error: e.message })
+		}
+		return fail(500, { error: DB_ERROR })
+	}
 }
 
 function nameFromEmail(email: string): string {
@@ -172,5 +226,5 @@ export async function inviteClientByEmail(email: string, projectId: string) {
 		.onConflictDoNothing()
 }
 
-export const getHomeRoute = (role: string | undefined) =>
+export const getHomeRoute = (role: UserRole | undefined) =>
 	role === 'client' ? '/portal' : '/dashboard'

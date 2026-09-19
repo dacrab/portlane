@@ -2,16 +2,15 @@ import { error, fail, redirect } from '@sveltejs/kit'
 import { and, desc, eq, getTableColumns, sql } from 'drizzle-orm'
 import { useDb } from '$lib/server/db'
 import * as schema from '$lib/server/db/schema'
-import { DB_ERROR, formFile, str } from '$lib/server/form'
+import { DB_ERROR, str } from '$lib/server/form'
 import { requireClientFromUrl } from '$lib/server/guard'
 import { handleCheckoutAction } from '$lib/server/invoices'
 import {
 	addComment,
-	FileUploadError,
 	getProjectComments,
 	getProjectFiles,
 	getProjectMilestones,
-	uploadProjectFile,
+	handleUploadFileAction,
 } from '$lib/server/project'
 import type { Actions, PageServerLoad } from './$types'
 
@@ -146,18 +145,11 @@ export const actions: Actions = {
 	upload_file: async ({ locals, url, request }) => {
 		const guard = await requireClientFromUrl(locals, url)
 		if (guard.err) return guard.err
-		const form = await request.formData()
-		const file = formFile(form, 'file')
-		if (!file?.size) return fail(400, { error: 'No file provided' })
-		try {
-			await uploadProjectFile(guard.projectId, guard.userId, file)
-		} catch (e) {
-			if (e instanceof FileUploadError) {
-				const status = e.code === 'too_large' ? 413 : 415
-				return fail(status, { error: e.message })
-			}
-			return fail(500, { error: DB_ERROR })
-		}
+		return handleUploadFileAction(
+			guard.projectId,
+			guard.userId,
+			await request.formData(),
+		)
 	},
 
 	checkout: async ({ locals, request, url: reqUrl }) => {

@@ -32,7 +32,12 @@ export const fmtDateTime = (iso: string): string =>
 		minute: '2-digit',
 	})
 
-export const today = (): string => new Date().toISOString().split('T')[0] ?? ''
+/** Local `YYYY-MM-DD` (not UTC), so it compares correctly against stored due dates. */
+export const today = (): string => {
+	const d = new Date()
+	const pad = (n: number) => String(n).padStart(2, '0')
+	return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
 
 const projectStatuses = [
 	'planning',
