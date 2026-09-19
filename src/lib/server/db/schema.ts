@@ -15,6 +15,9 @@ import { DEFAULT_CURRENCY } from '$lib/constants'
 
 const genId = () => crypto.randomUUID()
 
+export const USER_ROLES = ['freelancer', 'client'] as const
+export type UserRole = (typeof USER_ROLES)[number]
+
 export const users = pgTable(
 	'user',
 	{
@@ -23,7 +26,7 @@ export const users = pgTable(
 		email: text('email').notNull().unique(),
 		emailVerified: boolean('email_verified').default(false).notNull(),
 		image: text('image'),
-		role: text('role').default('freelancer').notNull(),
+		role: text('role').$type<UserRole>().default('freelancer').notNull(),
 		lastReadCommentsAt: timestamp('last_read_comments_at', {
 			withTimezone: true,
 			mode: 'string',

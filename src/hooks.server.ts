@@ -2,11 +2,12 @@ import type { Handle } from '@sveltejs/kit'
 import { svelteKitHandler } from 'better-auth/svelte-kit'
 import { eq } from 'drizzle-orm'
 import { building } from '$app/environment'
-import { auth } from '$lib/server/auth'
+import { getAuth } from '$lib/server/auth'
 import { useDb } from '$lib/server/db'
 import { users } from '$lib/server/db/schema'
 
 export const handle: Handle = async ({ event, resolve }) => {
+	const auth = getAuth()
 	const session = await auth.api.getSession({
 		headers: event.request.headers,
 	})

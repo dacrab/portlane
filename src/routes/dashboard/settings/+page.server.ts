@@ -3,7 +3,7 @@ import { del } from '@vercel/blob'
 import { APIError } from 'better-auth/api'
 import { eq } from 'drizzle-orm'
 import { PASSWORD_MIN_LENGTH } from '$lib/constants'
-import { auth } from '$lib/server/auth'
+import { getAuth } from '$lib/server/auth'
 import { useDb } from '$lib/server/db'
 import * as schema from '$lib/server/db/schema'
 import { DB_ERROR, str } from '$lib/server/form'
@@ -61,7 +61,7 @@ export const actions: Actions = {
 			return fail(400, { password_error: 'Passwords do not match' })
 
 		try {
-			await auth.api.changePassword({
+			await getAuth().api.changePassword({
 				body: { currentPassword, newPassword: password },
 				headers: request.headers,
 			})
@@ -87,7 +87,7 @@ export const actions: Actions = {
 				.from(schema.files)
 				.where(eq(schema.files.uploadedBy, userId))
 
-			await auth.api.signOut({ headers: request.headers })
+			await getAuth().api.signOut({ headers: request.headers })
 
 			// The neon-http driver has no interactive transactions; batch()
 			// runs every statement in one atomic non-interactive transaction.

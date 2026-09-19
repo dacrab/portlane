@@ -1,5 +1,6 @@
 import type { SubmitFunction } from '@sveltejs/kit'
 import { toast } from 'svelte-sonner'
+import { asRecord } from '$lib/records'
 
 export interface ToastEnhanceOptions {
 	successMsg?: string
@@ -8,19 +9,18 @@ export interface ToastEnhanceOptions {
 	beforeUpdate?: () => void
 }
 
-function failMessage(
-	data: Record<string, unknown> | undefined,
-	fallback: string,
-): string {
-	return typeof data?.error === 'string' ? data.error : fallback
+function failMessage(data: unknown, fallback: string): string {
+	const error = asRecord(data)?.error
+	return typeof error === 'string' ? error : fallback
 }
 
 export function toastEnhance(opts: ToastEnhanceOptions = {}): SubmitFunction {
 	return () => {
 		return async ({ result, update }) => {
 			if (result.type === 'failure') {
-				const data = result.data as Record<string, unknown> | undefined
-				toast.error(failMessage(data, opts.errorMsg ?? 'Something went wrong'))
+				toast.error(
+					failMessage(result.data, opts.errorMsg ?? 'Something went wrong'),
+				)
 				await update()
 			} else if (result.type === 'error') {
 				toast.error('Something went wrong')
@@ -38,15 +38,14 @@ export function checkoutEnhance(): SubmitFunction {
 	return () => {
 		return async ({ result, update }) => {
 			if (result.type === 'success') {
-				const data = result.data as Record<string, unknown> | undefined
-				if (typeof data?.url === 'string') {
-					window.location.href = data.url
+				const url = asRecord(result.data)?.url
+				if (typeof url === 'string') {
+					window.location.href = url
 					return
 				}
 			}
 			if (result.type === 'failure') {
-				const data = result.data as Record<string, unknown> | undefined
-				toast.error(failMessage(data, 'Checkout failed'))
+				toast.error(failMessage(result.data, 'Checkout failed'))
 			} else if (result.type === 'error') {
 				toast.error('Something went wrong')
 			}

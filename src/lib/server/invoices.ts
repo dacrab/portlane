@@ -5,6 +5,8 @@ import * as schema from '$lib/server/db/schema'
 import { str } from '$lib/server/form'
 import { createCheckoutSession } from '$lib/server/stripe'
 
+// The index signature is required by drizzle's `db.execute<TRow>` constraint;
+// the explicit fields below are what callers may rely on.
 export interface InvoiceDetailRow {
 	[key: string]: unknown
 	id: string

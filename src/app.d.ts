@@ -1,7 +1,7 @@
 type LocalUser = {
 	userId: string
 	email: string
-	role: string
+	role: 'freelancer' | 'client'
 }
 
 declare global {

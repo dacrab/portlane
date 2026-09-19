@@ -58,7 +58,22 @@ export const POST: RequestHandler = async ({ request }) => {
 		.where(eq(schema.invoices.id, paid.invoiceId))
 		.limit(1)
 
-	if (!invoice || invoice.amountCents !== paid.amountTotal) return text('ok')
+	// Money was taken but the invoice cannot be marked paid (missing row, or the
+	// charged amount disagrees with the one we recorded). Ack so Stripe stops
+	// retrying, but never swallow it: this needs a human.
+	if (!invoice || invoice.amountCents !== paid.amountTotal) {
+		// biome-ignore lint/suspicious/noConsole: payment/invoice mismatch surfaces in server logs
+		console.error(
+			'[stripe-webhook] paid session does not match its invoice — manual review required',
+			{
+				sessionId: paid.sessionId,
+				invoiceId: paid.invoiceId,
+				paidCents: paid.amountTotal,
+				invoiceCents: invoice?.amountCents ?? null,
+			},
+		)
+		return text('ok')
+	}
 
 	await db
 		.update(schema.invoices)

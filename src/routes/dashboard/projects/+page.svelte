@@ -15,6 +15,7 @@ import {
 	statusLabel,
 	today,
 } from '$lib/fmt'
+import { asRecord } from '$lib/records'
 
 import type { ActionData, PageData } from './$types'
 
@@ -72,8 +73,8 @@ function focusOnMount(node: HTMLElement) {
 			return async ({ result, update }) => {
 				loading = false;
 				if (result.type === 'failure') {
-					const data = result.data as Record<string, unknown> | undefined
-					toast.error(typeof data?.error === 'string' ? data.error : 'Failed to create project');
+					const error = asRecord(result.data)?.error
+					toast.error(typeof error === 'string' ? error : 'Failed to create project')
 				}
 				await update();
 			};

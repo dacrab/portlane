@@ -4,15 +4,14 @@ import { and, desc, eq, sql } from 'drizzle-orm'
 import { PROJECT_STATUS_ITEMS } from '$lib/fmt'
 import { useDb } from '$lib/server/db'
 import * as schema from '$lib/server/db/schema'
-import { DB_ERROR, formFile, int, str } from '$lib/server/form'
+import { DB_ERROR, int, str } from '$lib/server/form'
 import { requireOwner } from '$lib/server/guard'
 import {
-	FileUploadError,
 	getProjectComments,
 	getProjectFiles,
 	getProjectMilestones,
+	handleUploadFileAction,
 	inviteClientByEmail,
-	uploadProjectFile,
 } from '$lib/server/project'
 import type { Actions, PageServerLoad } from './$types'
 
@@ -164,18 +163,11 @@ export const actions: Actions = {
 	upload_file: async ({ locals, params, request }) => {
 		const guard = await requireOwner(locals, params.id)
 		if (guard.err) return guard.err
-		const form = await request.formData()
-		const file = formFile(form, 'file')
-		if (!file?.size) return fail(400, { error: 'No file provided' })
-		try {
-			await uploadProjectFile(guard.projectId, guard.userId, file)
-		} catch (e) {
-			if (e instanceof FileUploadError) {
-				const status = e.code === 'too_large' ? 413 : 415
-				return fail(status, { error: e.message })
-			}
-			return fail(500, { error: DB_ERROR })
-		}
+		return handleUploadFileAction(
+			guard.projectId,
+			guard.userId,
+			await request.formData(),
+		)
 	},
 
 	delete_file: async ({ locals, params, request }) => {

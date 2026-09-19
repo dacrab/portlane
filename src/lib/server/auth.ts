@@ -8,39 +8,50 @@ import { PASSWORD_MIN_LENGTH } from '$lib/constants'
 import { useDb } from '$lib/server/db'
 import * as schema from '$lib/server/db/schema'
 
-const secret = env.BETTER_AUTH_SECRET
-if (!secret) throw new Error('BETTER_AUTH_SECRET is not configured')
+function createAuth() {
+	const secret = env.BETTER_AUTH_SECRET
+	if (!secret) throw new Error('BETTER_AUTH_SECRET is not configured')
 
-export const auth = betterAuth({
-	secret,
-	baseURL: PUBLIC_APP_URL,
-	database: drizzleAdapter(useDb(), {
-		provider: 'pg',
-		schema,
-	}),
-	emailAndPassword: {
-		enabled: true,
-		minPasswordLength: PASSWORD_MIN_LENGTH,
-		sendResetPassword: async ({ user, url }) => {
-			const apiKey = env.RESEND_API_KEY
-			if (!apiKey || apiKey.startsWith('re_test')) {
-				// biome-ignore lint/suspicious/noConsole: local dev logs the reset link instead of sending email
-				console.info(`[reset-password] ${url}`)
-				return
-			}
-			const { Resend } = await import('resend')
-			const resend = new Resend(apiKey)
-			const { error } = await resend.emails.send({
-				from: env.EMAIL_FROM ?? 'Portlane <onboarding@resend.dev>',
-				to: user.email,
-				subject: 'Reset your Portlane password',
-				html: `<p>Hi ${user.name},</p><p>Click the link below to reset your Portlane password:</p><p><a href="${url}">Reset your password</a></p><p>If you didn't request this, you can ignore this email.</p>`,
-			})
-			if (error) {
-				// biome-ignore lint/suspicious/noConsole: email send failures surface in server logs without failing the request
-				console.error('[reset-password] Failed to send reset email:', error)
-			}
+	return betterAuth({
+		secret,
+		baseURL: PUBLIC_APP_URL,
+		database: drizzleAdapter(useDb(), {
+			provider: 'pg',
+			schema,
+		}),
+		emailAndPassword: {
+			enabled: true,
+			minPasswordLength: PASSWORD_MIN_LENGTH,
+			sendResetPassword: async ({ user, url }) => {
+				const apiKey = env.RESEND_API_KEY
+				if (!apiKey || apiKey.startsWith('re_test')) {
+					// biome-ignore lint/suspicious/noConsole: local dev logs the reset link instead of sending email
+					console.info(`[reset-password] ${url}`)
+					return
+				}
+				const { Resend } = await import('resend')
+				const resend = new Resend(apiKey)
+				const { error } = await resend.emails.send({
+					from: env.EMAIL_FROM ?? 'Portlane <onboarding@resend.dev>',
+					to: user.email,
+					subject: 'Reset your Portlane password',
+					html: `<p>Hi ${user.name},</p><p>Click the link below to reset your Portlane password:</p><p><a href="${url}">Reset your password</a></p><p>If you didn't request this, you can ignore this email.</p>`,
+				})
+				if (error) {
+					// biome-ignore lint/suspicious/noConsole: email send failures surface in server logs without failing the request
+					console.error('[reset-password] Failed to send reset email:', error)
+				}
+			},
 		},
-	},
-	plugins: [sveltekitCookies(getRequestEvent)],
-})
+		plugins: [sveltekitCookies(getRequestEvent)],
+	})
+}
+
+// Built on first use rather than at import: the postbuild analysis step (and any
+// other tooling) imports this module without runtime secrets configured.
+let auth: ReturnType<typeof createAuth> | null = null
+
+export function getAuth(): ReturnType<typeof createAuth> {
+	if (!auth) auth = createAuth()
+	return auth
+}

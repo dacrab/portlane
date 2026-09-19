@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
 	fmtDate,
 	fmtDateLong,
@@ -8,6 +8,7 @@ import {
 	PROJECT_STATUS_ITEMS,
 	statusBadge,
 	statusLabel,
+	today,
 } from './fmt'
 
 describe('fmtMoney', () => {
@@ -35,6 +36,20 @@ describe('date formatting', () => {
 
 	it('formats date and time', () => {
 		expect(fmtDateTime('2026-06-03T14:30:00')).toBe('Jun 3, 02:30 PM')
+	})
+})
+
+describe('today', () => {
+	it('returns the local calendar date, not the UTC one', () => {
+		const now = new Date()
+		// Late-evening local times sit on the next UTC day in western zones.
+		now.setHours(23, 30, 0, 0)
+		vi.setSystemTime(now)
+		const pad = (n: number) => String(n).padStart(2, '0')
+		expect(today()).toBe(
+			`${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`,
+		)
+		vi.useRealTimers()
 	})
 })
 
