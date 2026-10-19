@@ -1,6 +1,6 @@
 import { redirect } from '@sveltejs/kit'
 import { sql } from 'drizzle-orm'
-import { useDb } from '$lib/server/db'
+import { useDb } from '#lib/server/db.js'
 import type { LayoutServerLoad } from './$types'
 
 export const load: LayoutServerLoad = async ({ locals }) => {

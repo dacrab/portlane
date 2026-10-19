@@ -1,6 +1,6 @@
 <script lang="ts">
+import { navItems } from '#lib/nav.js'
 import { page } from '$app/state'
-import { navItems } from '$lib/nav'
 
 let { unreadComments = 0 }: { unreadComments?: number } = $props()
 </script>

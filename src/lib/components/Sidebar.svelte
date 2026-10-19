@@ -4,10 +4,10 @@ import IconSidebarSimpleRegular from 'phosphor-icons-svelte/IconSidebarSimpleReg
 import IconSignOutRegular from 'phosphor-icons-svelte/IconSignOutRegular.svelte'
 import IconSunRegular from 'phosphor-icons-svelte/IconSunRegular.svelte'
 import { onMount } from 'svelte'
+import { authClient } from '#lib/auth-client.js'
+import { navItems } from '#lib/nav.js'
+import { sidebarCollapsed } from '#lib/stores.svelte.js'
 import { page } from '$app/state'
-import { authClient } from '$lib/auth-client'
-import { navItems } from '$lib/nav'
-import { sidebarCollapsed } from '$lib/stores.svelte'
 
 let {
 	user,
