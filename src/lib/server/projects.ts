@@ -1,6 +1,7 @@
 import { fail } from '@sveltejs/kit'
 import { and, desc, eq, getTableColumns, max, ne, sql } from 'drizzle-orm'
 import { MAX_FILE_SIZE } from '$lib/constants'
+import { sendPasswordSetupEmail } from '$lib/server/auth'
 import { useDb } from '$lib/server/db'
 import type { UserRole } from '$lib/server/db/schema'
 import * as schema from '$lib/server/db/schema'
@@ -568,6 +569,27 @@ export async function inviteClientByEmail(email: string, projectId: string) {
 		.insert(schema.projectClients)
 		.values({ projectId, clientId })
 		.onConflictDoNothing()
+
+	// An invited client has no password until they set one; email the link that
+	// lets them activate the account. Skipped for anyone who can already sign in.
+	if (await needsActivation(clientId)) {
+		await sendPasswordSetupEmail(email)
+	}
+}
+
+/** True when the user has no password credential yet (i.e. never activated). */
+async function needsActivation(userId: string): Promise<boolean> {
+	const [credential] = await useDb()
+		.select({ id: schema.accounts.id })
+		.from(schema.accounts)
+		.where(
+			and(
+				eq(schema.accounts.userId, userId),
+				eq(schema.accounts.providerId, 'credential'),
+			),
+		)
+		.limit(1)
+	return !credential
 }
 
 export const getHomeRoute = (role: UserRole | undefined) =>

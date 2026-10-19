@@ -1,26 +1,31 @@
 <script lang="ts">
 import IconArrowRightRegular from 'phosphor-icons-svelte/IconArrowRightRegular.svelte'
 import IconCheckRegular from 'phosphor-icons-svelte/IconCheckRegular.svelte'
-import IconStarFill from 'phosphor-icons-svelte/IconStarFill.svelte'
 
-const reviews = [
+const features = [
 	{
-		quote:
-			"My clients stopped asking 'where's the file?' within the first week.",
-		name: 'Maya R.',
-		role: 'Brand Designer',
+		title: 'Projects & milestones',
+		body: 'Plan the work, track progress, and check milestones off as you go.',
 	},
 	{
-		quote:
-			"Invoicing used to take me an afternoon. Now it's five minutes and it looks great.",
-		name: 'Tom H.',
-		role: 'Freelance Developer',
+		title: 'Files, in one place',
+		body: 'Share deliverables in the project timeline instead of scattered email attachments.',
 	},
 	{
-		quote:
-			'The portal makes us look like a much bigger studio. Clients notice.',
-		name: 'Sara K.',
-		role: 'Creative Director',
+		title: 'Invoices & payments',
+		body: 'Draft, send, and get paid online — with automatic overdue reminders.',
+	},
+	{
+		title: 'Comments',
+		body: 'One thread per project, so feedback never gets lost.',
+	},
+	{
+		title: 'Client portal',
+		body: 'A private, login-protected space your clients can actually use.',
+	},
+	{
+		title: 'Time & notes',
+		body: 'Log hours and keep internal notes that clients never see.',
 	},
 ]
 </script>
@@ -36,10 +41,10 @@ const reviews = [
 			</a>
 			<nav class="flex items-center gap-7 max-md:hidden">
 				<a href="#how" class="text-sm no-underline" style="color:var(--color-text-muted)">How it works</a>
-				<a href="#reviews" class="text-sm no-underline" style="color:var(--color-text-muted)">Reviews</a>
+				<a href="#features" class="text-sm no-underline" style="color:var(--color-text-muted)">Features</a>
 				<a href="/login" class="text-sm no-underline" style="color:var(--color-text-muted)">Log in</a>
 			</nav>
-			<a href="/signup" class="btn btn-primary">Start free trial</a>
+			<a href="/signup" class="btn btn-primary">Get started</a>
 		</div>
 	</header>
 
@@ -51,15 +56,9 @@ const reviews = [
 				<p class="m-0 mb-8 max-w-[38ch] leading-[1.7]" style="font-size:1.0625rem;color:var(--color-text-muted)">Portlane gives every project a private workspace — timeline, files, invoices, and approvals in one place. Your clients will actually use it.</p>
 				<div class="mb-6 flex flex-wrap items-center gap-5">
 				<a href="/signup" class="btn btn-primary btn-lg">
-					Start free trial <IconArrowRightRegular class="h-[0.875rem] w-[0.875rem] shrink-0" />
+					Get started <IconArrowRightRegular class="h-[0.875rem] w-[0.875rem] shrink-0" />
 				</a>
-					<span class="text-xs" style="color:var(--color-text-faint)">Free forever for 1 project · No credit card</span>
-				</div>
-				<div class="flex items-center gap-1" style="color:#f59e0b">
-					{#each Array(5) as _}
-						<IconStarFill class="h-[0.875rem] w-[0.875rem]" />
-					{/each}
-					<span class="ml-1 text-xs" style="color:var(--color-text-muted)">Loved by 800+ freelancers</span>
+					<span class="text-xs" style="color:var(--color-text-faint)">Free to use · No credit card required</span>
 				</div>
 			</div>
 
@@ -95,14 +94,6 @@ const reviews = [
 		</div>
 	</section>
 
-	<!-- Logos / trust strip -->
-	<div class="mx-auto flex max-w-[68rem] flex-wrap items-center gap-6 border-b px-8 py-6 text-xs" style="color:var(--color-text-faint);border-color:var(--color-border)">
-		<span>Used by freelancers at</span>
-		{#each ['Figma', 'Shopify', 'Stripe', 'Webflow', 'Vercel'] as co}
-			<span class="font-semibold -tracking-[0.01em]" style="color:var(--color-border)">{co}</span>
-		{/each}
-	</div>
-
 	<!-- How it works -->
 	<section id="how" class="px-8 py-20" style="background:var(--color-bg-elevated)">
 		<div class="mx-auto max-w-[68rem]">
@@ -112,7 +103,7 @@ const reviews = [
 				<div class="flex flex-col gap-[0.875rem]">
 					<span class="text-[0.6875rem] font-bold tracking-[0.06em]" style="color:var(--color-border)">01</span>
 					<h3 class="m-0 mb-2 text-[1.0625rem] font-semibold -tracking-[0.02em]" style="color:var(--color-text-heading)">Invite your client with one link</h3>
-					<p class="m-0 text-[0.9375rem] leading-[1.65]" style="color:var(--color-text-muted)">Add them by email and share their private portal link — they're in, straight to their project.</p>
+					<p class="m-0 text-[0.9375rem] leading-[1.65]" style="color:var(--color-text-muted)">Add a client by email and they get a secure link to set a password and open their private project portal.</p>
 				</div>
 				<div class="flex flex-col gap-[0.875rem]">
 					<span class="text-[0.6875rem] font-bold tracking-[0.06em]" style="color:var(--color-border)">02</span>
@@ -136,7 +127,7 @@ const reviews = [
 				<h2 class="mb-4 text-[clamp(1.75rem,3.5vw,2.5rem)] font-extrabold leading-[1.1] -tracking-[0.035em]" style="color:var(--color-text-heading)">Get paid faster.</h2>
 				<p class="m-0 mb-6 text-base leading-[1.7]" style="color:var(--color-text-muted)">Create an invoice in seconds, send it inside the portal, and let clients pay in one click. No PDFs flying around in email.</p>
 				<ul class="m-0 flex list-none flex-col gap-[0.625rem] p-0">
-					{#each ['Draft → sent → paid tracking','Clients pay without an account','Attach invoices to milestones'] as item}
+					{#each ['Draft → sent → paid tracking','Clients pay in one click from the portal','Automatic overdue reminders'] as item}
 						<li class="flex items-center gap-2 text-[0.9375rem]" style="color:var(--color-text)"><span style="color:var(--color-text-heading)"><IconCheckRegular class="h-4 w-4 shrink-0" /></span>{item}</li>
 					{/each}
 				</ul>
@@ -158,22 +149,16 @@ const reviews = [
 		</div>
 	</section>
 
-	<!-- Reviews -->
-	<section id="reviews" class="px-8 py-20" style="background:var(--color-bg-elevated)">
+	<!-- Features -->
+	<section id="features" class="px-8 py-20" style="background:var(--color-bg-elevated)">
 		<div class="mx-auto max-w-[68rem]">
-			<p class="m-0 mb-3 text-[0.75rem] font-semibold uppercase tracking-[0.07em]" style="color:var(--color-text-heading)">Reviews</p>
-			<h2 class="m-0 mb-12 text-[clamp(1.75rem,3.5vw,2.5rem)] font-extrabold leading-[1.1] -tracking-[0.035em]" style="color:var(--color-text-heading)">Built for the work you do.</h2>
+			<p class="m-0 mb-3 text-[0.75rem] font-semibold uppercase tracking-[0.07em]" style="color:var(--color-text-heading)">Features</p>
+			<h2 class="m-0 mb-12 text-[clamp(1.75rem,3.5vw,2.5rem)] font-extrabold leading-[1.1] -tracking-[0.035em]" style="color:var(--color-text-heading)">Everything in one workspace.</h2>
 			<div class="grid gap-6 md:grid-cols-3">
-				{#each reviews as { quote, name, role }}
-					<div class="flex flex-col gap-4 rounded-xl border p-6" style="background:var(--color-bg-elevated);border-color:var(--color-border)">
-						<div class="flex gap-[0.2rem]" style="color:#f59e0b">
-							{#each Array(5) as _}<IconStarFill class="h-[0.8125rem] w-[0.8125rem]" />{/each}
-						</div>
-						<p class="m-0 flex-1 text-[0.9375rem] leading-[1.6]" style="color:var(--color-text)">{quote}</p>
-						<div class="flex flex-col gap-[0.125rem]">
-							<span class="text-sm font-semibold" style="color:var(--color-text-heading)">{name}</span>
-							<span class="text-xs" style="color:var(--color-text-faint)">{role}</span>
-						</div>
+				{#each features as { title, body }}
+					<div class="flex flex-col gap-2 rounded-xl border p-6" style="background:var(--color-bg-elevated);border-color:var(--color-border)">
+						<h3 class="m-0 text-[1.0625rem] font-semibold -tracking-[0.02em]" style="color:var(--color-text-heading)">{title}</h3>
+						<p class="m-0 text-[0.9375rem] leading-[1.6]" style="color:var(--color-text-muted)">{body}</p>
 					</div>
 				{/each}
 			</div>
@@ -186,7 +171,7 @@ const reviews = [
 			<h2 class="m-0 text-[clamp(1.75rem,3.5vw,2.5rem)] font-extrabold -tracking-[0.035em]" style="color:var(--color-text-heading)">Ready to impress your clients?</h2>
 			<p class="m-0 mb-2 text-base" style="color:var(--color-text-muted)">Set up your first project in under 5 minutes.</p>
 			<a href="/signup" class="btn btn-primary btn-lg">
-				Start free trial <IconArrowRightRegular class="h-[0.875rem] w-[0.875rem] shrink-0" />
+				Get started <IconArrowRightRegular class="h-[0.875rem] w-[0.875rem] shrink-0" />
 			</a>
 		</div>
 	</section>

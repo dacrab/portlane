@@ -1,6 +1,17 @@
 import type { Action } from '@sveltejs/kit'
 import { fail } from '@sveltejs/kit'
-import { and, desc, eq, getTableColumns, inArray, ne, or } from 'drizzle-orm'
+import {
+	and,
+	desc,
+	eq,
+	getTableColumns,
+	inArray,
+	isNotNull,
+	isNull,
+	lt,
+	ne,
+	or,
+} from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
 import { useDb } from '$lib/server/db'
 import * as schema from '$lib/server/db/schema'
@@ -227,3 +238,90 @@ async function handleCheckoutAction(
 /** Shared `checkout` form action for every route that renders a "Pay now" button. */
 export const checkoutAction: Action = async ({ locals, request, url }) =>
 	handleCheckoutAction(locals, await request.formData(), url.origin)
+
+// ---------------------------------------------------------------------------
+// Reminders
+// ---------------------------------------------------------------------------
+
+/** How long to wait before reminding about the same invoice again. */
+const REMINDER_INTERVAL_DAYS = 7
+
+export interface InvoiceReminder {
+	invoiceId: string
+	amountCents: number
+	currency: string
+	dueDate: string | null
+	projectName: string
+	clientName: string
+	clientEmail: string
+	freelancerName: string
+}
+
+/** Flips unpaid invoices past their due date to `overdue`. Returns the count. */
+export async function markOverdueInvoices(today: string): Promise<number> {
+	const updated = await useDb()
+		.update(schema.invoices)
+		.set({ status: 'overdue' })
+		.where(
+			and(
+				eq(schema.invoices.status, 'sent'),
+				isNotNull(schema.invoices.dueDate),
+				lt(schema.invoices.dueDate, today),
+			),
+		)
+		.returning({ id: schema.invoices.id })
+	return updated.length
+}
+
+/** Unpaid, past-due invoices that haven't been reminded within the interval. */
+export async function getInvoicesNeedingReminder(
+	now: Date,
+): Promise<InvoiceReminder[]> {
+	const db = useDb()
+	const today = now.toISOString().slice(0, 10)
+	const cutoff = new Date(
+		now.getTime() - REMINDER_INTERVAL_DAYS * 86_400_000,
+	).toISOString()
+	const freelancer = alias(schema.users, 'freelancer')
+	return db
+		.select({
+			invoiceId: schema.invoices.id,
+			amountCents: schema.invoices.amountCents,
+			currency: schema.invoices.currency,
+			dueDate: schema.invoices.dueDate,
+			projectName: schema.projects.name,
+			clientName: schema.users.name,
+			clientEmail: schema.users.email,
+			freelancerName: freelancer.name,
+		})
+		.from(schema.invoices)
+		.innerJoin(
+			schema.projects,
+			eq(schema.projects.id, schema.invoices.projectId),
+		)
+		.innerJoin(schema.users, eq(schema.users.id, schema.invoices.clientId))
+		.innerJoin(freelancer, eq(freelancer.id, schema.invoices.freelancerId))
+		.where(
+			and(
+				inArray(schema.invoices.status, ['sent', 'overdue']),
+				isNotNull(schema.invoices.dueDate),
+				lt(schema.invoices.dueDate, today),
+				or(
+					isNull(schema.invoices.lastReminderSentAt),
+					lt(schema.invoices.lastReminderSentAt, cutoff),
+				),
+			),
+		)
+}
+
+/** Stamps the reminder time so the same invoice isn't emailed again too soon. */
+export async function markInvoicesReminded(
+	invoiceIds: string[],
+	at: Date,
+): Promise<void> {
+	if (invoiceIds.length === 0) return
+	await useDb()
+		.update(schema.invoices)
+		.set({ lastReminderSentAt: at.toISOString() })
+		.where(inArray(schema.invoices.id, invoiceIds))
+}
