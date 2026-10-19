@@ -4,7 +4,10 @@ import {
 	fmtDateLong,
 	fmtDateTime,
 	fmtMoney,
+	fmtSize,
 	INVOICE_STATUS_ITEMS,
+	isInvoiceStatus,
+	isProjectStatus,
 	PROJECT_STATUS_ITEMS,
 	statusBadge,
 	statusLabel,
@@ -22,6 +25,17 @@ describe('fmtMoney', () => {
 
 	it('supports a custom currency', () => {
 		expect(fmtMoney(1050, 'EUR')).toBe('€10.50')
+	})
+})
+
+describe('fmtSize', () => {
+	it('formats bytes as megabytes with one decimal', () => {
+		expect(fmtSize(5 * 1024 * 1024)).toBe('5.0 MB')
+	})
+
+	it('returns an em dash when the size is unknown', () => {
+		expect(fmtSize(null)).toBe('—')
+		expect(fmtSize(0)).toBe('—')
 	})
 })
 
@@ -85,5 +99,12 @@ describe('status maps', () => {
 			'paid',
 			'overdue',
 		])
+	})
+
+	it('validates statuses against their own domain', () => {
+		expect(isProjectStatus('review')).toBe(true)
+		expect(isProjectStatus('paid')).toBe(false)
+		expect(isInvoiceStatus('overdue')).toBe(true)
+		expect(isInvoiceStatus('archived')).toBe(false)
 	})
 })

@@ -3,7 +3,7 @@ import IconArrowRightRegular from 'phosphor-icons-svelte/IconArrowRightRegular.s
 import IconFileTextRegular from 'phosphor-icons-svelte/IconFileTextRegular.svelte'
 import { toast } from 'svelte-sonner'
 import { enhance } from '$app/forms'
-import { toastEnhance } from '$lib/client/enhance'
+import { submitForm, toastEnhance } from '$lib/client/enhance'
 import ActionDeleteButton from '$lib/components/ActionDeleteButton.svelte'
 import AppDatePicker from '$lib/components/AppDatePicker.svelte'
 import AppSelect from '$lib/components/AppSelect.svelte'
@@ -20,7 +20,7 @@ let selectedClient = $state('')
 type ProjectLight = {
 	id: string
 	name: string
-	clients: { id: string; name: string | null }[] | null
+	clients: { id: string; name: string }[]
 }
 
 const clients = $derived(
@@ -29,21 +29,19 @@ const clients = $derived(
 )
 
 const clientItems = $derived(
-	clients.map((c) => ({ value: c.id, label: c.name ?? c.id })),
+	clients.map((c) => ({ value: c.id, label: c.name })),
 )
 
 const stats = $derived({
 	total: data.invoices.length,
 	outstanding: data.invoices
 		.filter((i) => i.status === 'sent')
-		.reduce((s, i) => s + i.amount_cents, 0),
+		.reduce((s, i) => s + i.amountCents, 0),
 	paid: data.invoices
 		.filter((i) => i.status === 'paid')
-		.reduce((s, i) => s + i.amount_cents, 0),
+		.reduce((s, i) => s + i.amountCents, 0),
 	overdue: data.invoices.filter((i) => i.status === 'overdue').length,
 })
-
-const statusItems = INVOICE_STATUS_ITEMS
 </script>
 
 <div class="space-y-8">
@@ -144,13 +142,13 @@ const statusItems = INVOICE_STATUS_ITEMS
 			{#each data.invoices as inv}
 				<div class="flex items-center gap-4 px-6 py-4 divide-bottom">
 					<div class="flex-1 min-w-0">
-						<p class="text-sm font-medium text-body">{inv.project_name ?? '—'}</p>
-						<p class="mt-0.5 text-xs text-faint">{inv.client_name ?? '—'}</p>
+						<p class="text-sm font-medium text-body">{inv.projectName}</p>
+						<p class="mt-0.5 text-xs text-faint">{inv.clientName}</p>
 					</div>
 					<p class="hidden sm:block text-sm text-faint shrink-0">
-						{inv.due_date ? fmtDate(inv.due_date) : '—'}
+						{inv.dueDate ? fmtDate(inv.dueDate) : '—'}
 					</p>
-					<p class="text-sm font-semibold text-heading shrink-0">{fmtMoney(inv.amount_cents)}</p>
+					<p class="text-sm font-semibold text-heading shrink-0">{fmtMoney(inv.amountCents)}</p>
 					<div class="w-28 shrink-0">
 						<form id="inv-status-{inv.id}" method="POST" action="?/update_status"
 							use:enhance={toastEnhance({ successMsg: 'Status updated' })}>
@@ -158,10 +156,9 @@ const statusItems = INVOICE_STATUS_ITEMS
 							<input type="hidden" name="status" value={inv.status} />
 							<AppSelect
 								value={inv.status}
-								items={statusItems}
+								items={INVOICE_STATUS_ITEMS}
 								onchange={(v: string) => {
-									const el = document.getElementById(`inv-status-${inv.id}`);
-									if (el instanceof HTMLFormElement && v !== inv.status) el.requestSubmit();
+									if (v !== inv.status) submitForm(`inv-status-${inv.id}`)
 								}}
 							/>
 						</form>

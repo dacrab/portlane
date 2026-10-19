@@ -1,7 +1,7 @@
 <script lang="ts">
 import { goto } from '$app/navigation'
 import { page } from '$app/state'
-import { authClient } from '$lib/auth-client'
+import { authClient, authError } from '$lib/auth-client'
 import AuthCard from '$lib/components/AuthCard.svelte'
 import { PASSWORD_MIN_LENGTH } from '$lib/constants'
 
@@ -33,7 +33,7 @@ async function submit(e: Event) {
 	})
 	loading = false
 	if (err) {
-		error = err.message ?? err.statusText ?? 'Could not reset password'
+		error = authError(err, 'Could not reset password')
 		return
 	}
 	goto('/login')

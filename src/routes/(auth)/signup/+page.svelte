@@ -1,6 +1,6 @@
 <script lang="ts">
 import { goto } from '$app/navigation'
-import { authClient } from '$lib/auth-client'
+import { authClient, authError } from '$lib/auth-client'
 import AuthCard from '$lib/components/AuthCard.svelte'
 
 let name = $state('')
@@ -20,7 +20,7 @@ async function submit(e: Event) {
 	})
 	loading = false
 	if (err) {
-		error = err.message ?? err.statusText ?? 'Sign up failed'
+		error = authError(err, 'Sign up failed')
 		return
 	}
 	goto('/dashboard')

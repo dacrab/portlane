@@ -1,73 +1,33 @@
 import { error } from '@sveltejs/kit'
-import { and, desc, eq, ne, sql } from 'drizzle-orm'
-import { useDb } from '$lib/server/db'
-import * as schema from '$lib/server/db/schema'
+import { getRecentComments, markCommentsRead } from '$lib/server/comments'
+import { getDashboardStats } from '$lib/server/dashboard'
+import { getDashboardProjects } from '$lib/server/projects'
 import type { Actions, PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) error(401)
 	const userId = locals.user.userId
 
-	const db = useDb()
-
-	const projects = await db
-		.select({
-			id: schema.projects.id,
-			name: schema.projects.name,
-			status: schema.projects.status,
-			dueDate: schema.projects.dueDate,
-		})
-		.from(schema.projects)
-		.where(
-			and(
-				eq(schema.projects.freelancerId, userId),
-				ne(schema.projects.status, 'archived'),
-			),
-		)
-		.orderBy(desc(schema.projects.createdAt))
-
-	const stats = await db.execute<{
-		active_projects: number
-		completed_projects: number
-		review_projects: number
-		revenue_mtd: number
-		total_invoices: number
-		total_clients: number
-	}>(sql`SELECT * FROM get_dashboard_stats(${userId})`)
-	const s = stats.rows[0]
-
-	const [profile] = await db
-		.select({ name: schema.users.name })
-		.from(schema.users)
-		.where(eq(schema.users.id, userId))
-		.limit(1)
-
-	const activity = await db.execute<{
-		body: string
-		created_at: string
-		author_name: string
-		project_id: string
-		project_name: string
-	}>(sql`SELECT * FROM get_activity_feed(${userId}, 5)`)
-
-	const activeFallback = projects.filter(
-		(p) => p.status !== 'completed' && p.status !== 'archived',
-	).length
+	const [projects, stats, activity] = await Promise.all([
+		getDashboardProjects(userId),
+		getDashboardStats(userId),
+		getRecentComments(userId, 5),
+	])
 
 	const onboarding = {
 		hasProject: projects.length > 0,
-		hasClient: (s?.total_clients ?? 0) > 0,
-		hasInvoice: (s?.total_invoices ?? 0) > 0,
-		hasProfile: !!profile?.name.trim(),
+		hasClient: stats.totalClients > 0,
+		hasInvoice: stats.totalInvoices > 0,
+		hasProfile: !!stats.profileName.trim(),
 	}
 
 	return {
 		projects,
-		active: s?.active_projects ?? activeFallback,
-		completed: s?.completed_projects ?? 0,
-		pending: s?.review_projects ?? 0,
-		revenueMTD: s?.revenue_mtd ?? 0,
-		activity: activity.rows ?? [],
+		active: projects.filter((p) => p.status !== 'completed').length,
+		completed: projects.filter((p) => p.status === 'completed').length,
+		pending: projects.filter((p) => p.status === 'review').length,
+		revenue: stats.revenue,
+		activity,
 		onboarding,
 		onboardingDone: Object.values(onboarding).every(Boolean),
 	}
@@ -76,7 +36,6 @@ export const load: PageServerLoad = async ({ locals }) => {
 export const actions: Actions = {
 	mark_read: async ({ locals }) => {
 		if (!locals.user) error(401)
-		const db = useDb()
-		await db.execute(sql`SELECT mark_comments_read(${locals.user.userId})`)
+		await markCommentsRead(locals.user.userId)
 	},
 }

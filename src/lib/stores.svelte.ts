@@ -1,20 +1,17 @@
 import { browser } from '$app/environment'
 
-const initial: boolean = browser
-	? localStorage.getItem('sidebar_collapsed') === 'true'
-	: false
-let _collapsed = $state(initial)
+const STORAGE_KEY = 'sidebar_collapsed'
+let collapsed = $state(browser && localStorage.getItem(STORAGE_KEY) === 'true')
 
 export const sidebarCollapsed = {
 	get value() {
-		return _collapsed
+		return collapsed
 	},
 	set value(v: boolean) {
-		_collapsed = v
-		if (browser) localStorage.setItem('sidebar_collapsed', String(v))
+		collapsed = v
+		if (browser) localStorage.setItem(STORAGE_KEY, String(v))
 	},
 	toggle() {
-		_collapsed = !_collapsed
-		if (browser) localStorage.setItem('sidebar_collapsed', String(_collapsed))
+		this.value = !this.value
 	},
 }

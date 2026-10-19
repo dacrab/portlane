@@ -1,33 +1,16 @@
 import { error, fail, redirect } from '@sveltejs/kit'
-import { desc, eq, sql } from 'drizzle-orm'
-import { PROJECT_STATUS_ITEMS } from '$lib/fmt'
-import { useDb } from '$lib/server/db'
-import * as schema from '$lib/server/db/schema'
+import { isProjectStatus } from '$lib/fmt'
 import { DB_ERROR, str } from '$lib/server/form'
-import { inviteClientByEmail } from '$lib/server/project'
+import {
+	createProject,
+	getProjectList,
+	inviteClientByEmail,
+} from '$lib/server/projects'
 import type { Actions, PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) error(401)
-	const db = useDb()
-
-	const projects = await db
-		.select({
-			id: schema.projects.id,
-			freelancerId: schema.projects.freelancerId,
-			name: schema.projects.name,
-			description: schema.projects.description,
-			status: schema.projects.status,
-			dueDate: schema.projects.dueDate,
-			createdAt: schema.projects.createdAt,
-			completedMilestones: sql<number>`(SELECT COUNT(*) FROM milestone WHERE project_id = ${schema.projects.id} AND completed = true)::int`,
-			totalMilestones: sql<number>`(SELECT COUNT(*) FROM milestone WHERE project_id = ${schema.projects.id})::int`,
-			clientCount: sql<number>`(SELECT COUNT(*) FROM project_client WHERE project_id = ${schema.projects.id})::int`,
-		})
-		.from(schema.projects)
-		.where(eq(schema.projects.freelancerId, locals.user.userId))
-		.orderBy(desc(schema.projects.createdAt))
-
+	const projects = await getProjectList(locals.user.userId)
 	return { projects }
 }
 
@@ -42,30 +25,20 @@ export const actions: Actions = {
 		const client_email = str(form, 'client_email').toLowerCase() || null
 
 		if (!name) return fail(400, { error: 'Name is required' })
-		if (!PROJECT_STATUS_ITEMS.some((s) => s.value === status))
-			return fail(400, { error: 'Invalid status' })
+		if (!isProjectStatus(status)) return fail(400, { error: 'Invalid status' })
 		if (due_date && !/^\d{4}-\d{2}-\d{2}$/.test(due_date))
 			return fail(400, { error: 'Invalid due date' })
 
-		const db = useDb()
 		let projectId: string
 		try {
-			const [project] = await db
-				.insert(schema.projects)
-				.values({
-					name,
-					description,
-					dueDate: due_date,
-					status,
-					freelancerId: locals.user.userId,
-				})
-				.returning({ id: schema.projects.id })
-			if (!project) return fail(500, { error: DB_ERROR })
-			projectId = project.id
-
-			if (client_email) {
-				await inviteClientByEmail(client_email, project.id)
-			}
+			projectId = await createProject({
+				name,
+				description,
+				dueDate: due_date,
+				status,
+				freelancerId: locals.user.userId,
+			})
+			if (client_email) await inviteClientByEmail(client_email, projectId)
 		} catch {
 			return fail(400, { error: DB_ERROR })
 		}

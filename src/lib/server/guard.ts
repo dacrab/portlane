@@ -1,8 +1,8 @@
 import { fail } from '@sveltejs/kit'
-import { isProjectClient, isProjectOwner } from '$lib/server/project'
+import { isProjectClient, isProjectOwner } from '$lib/server/projects'
 
 type GuardResult =
-	| { err: ReturnType<typeof fail>; userId?: never; projectId?: never }
+	| { err: ReturnType<typeof fail> }
 	| { err?: never; userId: string; projectId: string }
 
 export async function requireOwner(

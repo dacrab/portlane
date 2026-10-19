@@ -19,5 +19,4 @@ let { children, data } = $props()
 	</main>
 </div>
 
-
 <MobileNav unreadComments={data.unreadComments} />

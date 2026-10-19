@@ -1,7 +1,7 @@
 {
 	"crons": [
 		{
-			"path": "/api/cron/blob-sweep",
+			"path": "/api/cron/storage-sweep",
 			"schedule": "0 3 * * 1"
 		}
 	]

@@ -65,7 +65,7 @@ const stats = $derived([
 	},
 	{
 		label: 'Revenue (all-time)',
-		value: fmtMoney(data.revenueMTD),
+		value: fmtMoney(data.revenue),
 		icon: IconCurrencyDollarRegular,
 		color: '#1d4ed8',
 	},
@@ -120,17 +120,17 @@ const onboardingSteps = $derived([
 			</div>
 			<div>
 				{#each data.unreadCommentRows as c}
-					<a href="/dashboard/projects/{c.project_id}"
+					<a href="/dashboard/projects/{c.projectId}"
 						class="flex items-start gap-3 px-5 py-4 transition-colors hover-bg no-underline divide-bottom">
-						<Avatar name={c.author_name ?? '?'} size={7} />
+						<Avatar name={c.authorName} size={7} />
 						<div class="flex-1 min-w-0">
 							<p class="text-xs text-faint">
-								<span class="font-medium text-body">{c.author_name ?? 'Client'}</span>
+								<span class="font-medium text-body">{c.authorName}</span>
 								{' '}commented on{' '}
-								<span class="font-medium text-body">{c.project_name}</span>
+								<span class="font-medium text-body">{c.projectName}</span>
 							</p>
 							<p class="mt-0.5 text-sm truncate text-body">{c.body}</p>
-							<p class="mt-0.5 text-xs text-faint">{fmtDateTime(c.created_at ?? '')}</p>
+							<p class="mt-0.5 text-xs text-faint">{fmtDateTime(c.createdAt)}</p>
 						</div>
 					</a>
 				{/each}
@@ -227,14 +227,14 @@ const onboardingSteps = $derived([
 					{#each data.activity as a}
 						<div class="px-5 py-4">
 							<div class="flex items-start gap-2.5">
-								<Avatar name={a.author_name ?? '?'} size={6} />
+								<Avatar name={a.authorName} size={6} />
 								<div class="flex-1 min-w-0">
 									<p class="text-xs text-faint">
-										<span class="font-medium text-body">{a.author_name ?? 'Someone'}</span>
-										on <span class="text-body">{a.project_name}</span>
+										<span class="font-medium text-body">{a.authorName}</span>
+										on <span class="text-body">{a.projectName}</span>
 									</p>
 									<p class="mt-0.5 text-sm truncate text-body">{a.body}</p>
-									<p class="mt-0.5 text-xs text-faint">{fmtDateTime(a.created_at ?? '')}</p>
+									<p class="mt-0.5 text-xs text-faint">{fmtDateTime(a.createdAt)}</p>
 								</div>
 							</div>
 						</div>

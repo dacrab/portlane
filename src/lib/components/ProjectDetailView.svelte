@@ -10,11 +10,15 @@ import IconThumbsUpRegular from 'phosphor-icons-svelte/IconThumbsUpRegular.svelt
 import { toast } from 'svelte-sonner'
 import { enhance } from '$app/forms'
 import { downloadFile } from '$lib/client/download'
-import { checkoutEnhance, toastEnhance } from '$lib/client/enhance'
+import {
+	checkoutEnhance,
+	submitOnFilePick,
+	toastEnhance,
+} from '$lib/client/enhance'
 import Avatar from '$lib/components/Avatar.svelte'
 import ProgressBar from '$lib/components/ProgressBar.svelte'
 import SectionHeader from '$lib/components/SectionHeader.svelte'
-import { fmtDate, fmtMoney, statusBadge, today } from '$lib/fmt'
+import { fmtDate, fmtMoney, fmtSize, statusBadge, today } from '$lib/fmt'
 import { milestoneDone, milestoneTotal } from '$lib/milestones'
 import type { PageData } from '../../routes/portal/$types'
 
@@ -154,7 +158,7 @@ const done = $derived(milestoneDone(data.milestones))
 							<div class="flex-1 min-w-0">
 								<p class="truncate text-sm font-medium text-body">{f.name}</p>
 								<p class="text-xs text-faint mt-0.5">
-									{f.sizeBytes ? (f.sizeBytes / 1024 / 1024).toFixed(1) + ' MB' : '—'} · {fmtDate(f.createdAt ?? '')}
+									{fmtSize(f.sizeBytes)} · {fmtDate(f.createdAt ?? '')}
 								</p>
 							</div>
 							<button onclick={() => downloadFile(f.storagePath, f.name)} class="btn-icon shrink-0" title="Download">
@@ -169,7 +173,7 @@ const done = $derived(milestoneDone(data.milestones))
 				class="{data.files.length > 0 ? 'pt-3 divide-top' : ''}">
 				<label class="flex cursor-pointer items-center gap-1.5 text-xs font-medium text-accent">
 					<IconPlusRegular class="h-3 w-3" /> Upload a file
-					<input type="file" name="file" class="hidden" onchange={(e: Event) => { const t = e.target; if (t instanceof HTMLInputElement && t.form instanceof HTMLFormElement) t.form.requestSubmit(); }} />
+					<input type="file" name="file" class="hidden" onchange={submitOnFilePick} />
 				</label>
 			</form>
 		</div>
