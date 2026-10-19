@@ -1,6 +1,3 @@
-// Each nav item ships a Regular + Bold icon pair. We import both explicitly
-// (rather than a single dynamic component) so Svelte can inline and tree-shake
-// them — switching icon weight at runtime without a dynamic import boundary.
 import IconFileTextBold from 'phosphor-icons-svelte/IconFileTextBold.svelte'
 import IconFileTextRegular from 'phosphor-icons-svelte/IconFileTextRegular.svelte'
 import IconFolderOpenBold from 'phosphor-icons-svelte/IconFolderOpenBold.svelte'

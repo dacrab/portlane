@@ -63,7 +63,6 @@ function focusOnMount(node: HTMLElement) {
 }
 </script>
 
-<!-- Slide-over modal -->
 <SlideOver bind:open title="New project" description="Fill in the details to get started.">
 	<form
 		method="POST"
@@ -130,7 +129,6 @@ function focusOnMount(node: HTMLElement) {
 	</form>
 </SlideOver>
 
-<!-- Page -->
 <div class="space-y-8">
 	<div class="flex items-center justify-between">
 		<div>

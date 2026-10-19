@@ -12,12 +12,6 @@ import { PUBLIC_APP_URL } from '$app/env/public'
 
 let checked = false
 
-/**
- * Fails fast, once, listing every missing variable the app cannot run without,
- * instead of letting a cryptic error surface mid-request. Optional integrations
- * (Resend, the cron secret) degrade gracefully and are validated where they're
- * used. Called from `handle`, so env is read at runtime — never at build time.
- */
 export function assertServerEnv(): void {
 	if (checked) return
 

@@ -36,9 +36,7 @@ function confirmDeleteAccount() {
 		<p class="mt-0.5 text-sm text-muted">Manage your account and preferences.</p>
 	</div>
 
-	<!-- Profile + Password side by side -->
 	<div class="grid gap-6 lg:grid-cols-2">
-		<!-- Profile -->
 		<div class="card space-y-5">
 			<div class="flex items-center gap-4">
 				<Avatar name={data.profile?.name ?? data.email ?? '?'} size={12} />
@@ -64,7 +62,6 @@ function confirmDeleteAccount() {
 			</form>
 		</div>
 
-		<!-- Password -->
 		<div class="card space-y-5">
 			<div>
 				<p class="text-sm font-semibold text-heading">Change password</p>
@@ -91,7 +88,6 @@ function confirmDeleteAccount() {
 		</div>
 	</div>
 
-	<!-- Danger zone -->
 	<div class="card card-danger space-y-4" style="max-width:42rem">
 		<div>
 			<p class="text-sm font-semibold text-danger">Danger zone</p>

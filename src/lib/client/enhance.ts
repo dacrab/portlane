@@ -2,13 +2,11 @@ import { toast } from 'svelte-sonner'
 import { asRecord } from '#lib/records.js'
 import type { SubmitFunction } from '$app/forms'
 
-/** Submits the form with the given element id — e.g. from an `AppSelect` change handler. */
 export function submitForm(id: string) {
 	const form = document.getElementById(id)
 	if (form instanceof HTMLFormElement) form.requestSubmit()
 }
 
-/** `onchange` handler for a hidden file input: submits its form once a file is picked. */
 export function submitOnFilePick(event: Event) {
 	const target = event.target
 	if (target instanceof HTMLInputElement) target.form?.requestSubmit()
@@ -17,7 +15,6 @@ export function submitOnFilePick(event: Event) {
 export interface ToastEnhanceOptions {
 	successMsg?: string
 	errorMsg?: string
-	/** Runs on success, right before the default `update()` invalidation. */
 	beforeUpdate?: () => void
 }
 
@@ -45,7 +42,6 @@ export function toastEnhance(opts: ToastEnhanceOptions = {}): SubmitFunction {
 	}
 }
 
-/** Submits an invoice-checkout form and redirects to Stripe, surfacing failures as toasts. */
 export function checkoutEnhance(): SubmitFunction {
 	return () => {
 		return async ({ result, update }) => {

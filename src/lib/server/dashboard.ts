@@ -9,7 +9,6 @@ export interface DashboardStats {
 	profileName: string
 }
 
-/** Aggregate counters plus the freelancer's display name, for the dashboard. */
 export async function getDashboardStats(
 	freelancerId: string,
 ): Promise<DashboardStats> {

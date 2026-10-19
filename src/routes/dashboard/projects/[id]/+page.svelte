@@ -105,7 +105,6 @@ function exportTimeCSV() {
 </script>
 
 <div class="space-y-6">
-	<!-- Header -->
 	<div class="flex items-start gap-3">
 		<a href="/dashboard/projects" class="btn-icon mt-1 shrink-0"><IconArrowLeftRegular class="h-4 w-4" /></a>
 		<div class="flex-1 min-w-0">
@@ -149,17 +148,13 @@ function exportTimeCSV() {
 		</div>
 	</div>
 
-	<!-- Progress bar -->
 	{#if totalMilestones > 0}
 		<ProgressBar current={doneMilestones} total={totalMilestones} label="Overall progress" />
 	{/if}
 
-	<!-- Main grid -->
 	<div class="grid gap-5 lg:grid-cols-[1fr_22rem]">
-		<!-- Left: milestones + time tracking + comments -->
 		<div class="space-y-5">
 
-			<!-- Milestones -->
 			<div class="card">
 				<SectionHeader title="Milestones" count={totalMilestones > 0 ? `${doneMilestones}/${totalMilestones} done` : undefined} />
 				{#if milestones.length === 0}
@@ -197,7 +192,6 @@ function exportTimeCSV() {
 				</form>
 			</div>
 
-			<!-- Time tracking -->
 			<div class="card">
 				<div class="mb-4 flex items-center justify-between">
 					<p class="card-label mb-0">Time tracking</p>
@@ -239,7 +233,6 @@ function exportTimeCSV() {
 				</form>
 			</div>
 
-			<!-- Comments -->
 			<div class="card">
 				<SectionHeader title="Comments" icon={IconChatTextRegular} count={comments.length || undefined} />
 				{#if comments.length === 0}
@@ -271,9 +264,7 @@ function exportTimeCSV() {
 			</div>
 		</div>
 
-		<!-- Right column -->
 		<div class="space-y-5">
-			<!-- Clients -->
 			<div class="card">
 				<SectionHeader title="Clients" />
 				{#if clients.length === 0}
@@ -318,7 +309,6 @@ function exportTimeCSV() {
 				</form>
 			</div>
 
-			<!-- Files -->
 			<div class="card">
 				<SectionHeader title="Files" />
 				{#if files.length === 0}
@@ -352,7 +342,6 @@ function exportTimeCSV() {
 				</form>
 			</div>
 
-			<!-- Internal notes -->
 			<div class="card">
 				<SectionHeader title="Internal notes" icon={IconNoteRegular} />
 				<form method="POST" action="?/save_note"

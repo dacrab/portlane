@@ -47,7 +47,6 @@ const bottomLinks = navItems.slice(4)
 	class="flex h-screen shrink-0 flex-col transition-[width] duration-200"
 	style="background:var(--color-sidebar-bg);width:{collapsed ? '3.25rem' : '13rem'};overflow:hidden;border-right:1px solid rgba(255,255,255,0.05)"
 >
-	<!-- Logo -->
 	<div class="flex items-center gap-2 px-3 py-3.5" style="border-bottom:1px solid rgba(255,255,255,0.05)">
 		<a href="/" class="flex items-center gap-2 min-w-0" title="Portlane">
 			<img src="/favicon.svg" alt="Portlane" class="h-5 w-5 shrink-0 opacity-90" />
@@ -62,7 +61,6 @@ const bottomLinks = navItems.slice(4)
 		{/if}
 	</div>
 
-	<!-- Nav -->
 	<nav class="flex flex-1 flex-col gap-0.5 px-1.5 py-2.5">
 		{#each navLinks as item}
 			{@const active = page.url.pathname === item.href || (item.href !== '/dashboard' && page.url.pathname.startsWith(item.href))}
@@ -81,7 +79,6 @@ const bottomLinks = navItems.slice(4)
 		{/each}
 	</nav>
 
-	<!-- Bottom -->
 	<div class="px-1.5 pb-2.5" style="border-top:1px solid rgba(255,255,255,0.05)">
 		<div class="pt-2 flex flex-col gap-0.5">
 			<button onclick={toggleDark} class="nav-item w-full {collapsed ? 'justify-center px-0' : ''}"
@@ -107,7 +104,6 @@ const bottomLinks = navItems.slice(4)
 			{/if}
 		</div>
 
-		<!-- User -->
 		<div class="mt-2 pt-2" style="border-top:1px solid rgba(255,255,255,0.05)">
 			{#if !collapsed}
 				<div class="flex items-center gap-2 rounded-md px-2 py-1.5" style="background:rgba(255,255,255,0.03)">

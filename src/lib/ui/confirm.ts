@@ -8,7 +8,6 @@ function confirmDelete(message: string, form: HTMLFormElement) {
 	})
 }
 
-/** `onclick` handler: confirms, then submits the button's enclosing form. */
 export function confirmDeleteFromEvent(message: string, event: MouseEvent) {
 	const target = event.currentTarget
 	const form = target instanceof Element ? target.closest('form') : null

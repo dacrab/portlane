@@ -15,8 +15,6 @@ interface PaidSession {
 
 function extractPaidSession(event: Stripe.Event): PaidSession | null {
 	if (event.type !== 'checkout.session.completed') return null
-	// Narrowed by the type check above: Stripe.Event is a discriminated union and
-	// CheckoutSessionCompletedEvent.data.object is typed as Checkout.Session.
 	const session = event.data.object
 	if (session.payment_status !== 'paid') return null
 	if (!session.client_reference_id || session.amount_total == null) return null
@@ -62,9 +60,6 @@ export const POST: RequestHandler = async ({ request }) => {
 		.where(eq(schema.invoices.id, paid.invoiceId))
 		.limit(1)
 
-	// Money was taken but the invoice cannot be marked paid (missing row, or the
-	// charged amount disagrees with the one we recorded). Ack so Stripe stops
-	// retrying, but never swallow it: this needs a human.
 	if (!invoice || invoice.amountCents !== paid.amountTotal) {
 		// biome-ignore lint/suspicious/noConsole: payment/invoice mismatch surfaces in server logs
 		console.error(

@@ -24,11 +24,6 @@ export async function updateUserName(userId: string, name: string) {
 		.where(eq(schema.users.id, userId))
 }
 
-/**
- * Erases everything owned by a user. The neon-http driver has no interactive
- * transactions, so batch() runs every statement atomically. Stored objects are
- * removed best-effort afterwards; the sweep cron collects any leftovers.
- */
 export async function deleteUserAccount(userId: string) {
 	const db = useDb()
 	const uploads = await db
@@ -49,8 +44,6 @@ export async function deleteUserAccount(userId: string) {
 	if (uploads.length > 0) {
 		try {
 			await deleteObjects(uploads.map((f) => f.storagePath))
-		} catch {
-			// Best-effort — the sweep cron will collect any orphans.
-		}
+		} catch {}
 	}
 }

@@ -17,8 +17,6 @@ import {
 
 const DOWNLOAD_TTL_SECONDS = 5 * 60
 
-// Built on first use rather than at import, so tooling can import modules that
-// depend on storage without runtime secrets configured.
 let client: S3Client | null = null
 
 function useS3(): S3Client {
@@ -31,7 +29,6 @@ function useS3(): S3Client {
 	client = new S3Client({
 		region: AWS_REGION || 'us-east-1',
 		endpoint: AWS_ENDPOINT_URL_S3,
-		// Neon Object Storage is path-style only.
 		forcePathStyle: true,
 		credentials: { accessKeyId, secretAccessKey },
 	})
@@ -44,7 +41,6 @@ function bucket(): string {
 	return name
 }
 
-/** Stores an object and returns the key it was written under. */
 export async function putObject(
 	key: string,
 	body: Buffer,
@@ -71,7 +67,6 @@ export async function deleteObjects(keys: string[]): Promise<void> {
 	)
 }
 
-/** Short-lived signed URL so private objects can be fetched directly. */
 export async function presignDownload(key: string): Promise<string> {
 	return getSignedUrl(
 		useS3(),
