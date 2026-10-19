@@ -16,7 +16,6 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    # Steps that shell out to `doppler run` need the token in their own env.
     env:
       DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
     steps:
