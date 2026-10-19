@@ -1,11 +1,23 @@
+import * as Sentry from '@sentry/sveltekit'
 import type { Handle, HandleServerError } from '@sveltejs/kit/hooks'
+import { sequence } from '@sveltejs/kit/hooks'
 import { svelteKitHandler } from 'better-auth/svelte-kit'
 import { getAuth } from '#lib/server/auth.js'
 import { assertServerEnv } from '#lib/server/env.js'
-import { building } from '$app/env'
+import { building, dev } from '$app/env'
+import { SENTRY_DSN } from '$app/env/private'
 import { PUBLIC_APP_URL } from '$app/env/public'
 
-export const handle: Handle = async ({ event, resolve }) => {
+// Error monitoring is opt-in: with no DSN the SDK stays disabled, so local dev
+// and CI behave exactly as before.
+Sentry.init({
+	dsn: SENTRY_DSN || undefined,
+	enabled: Boolean(SENTRY_DSN),
+	environment: dev ? 'development' : 'production',
+	tracesSampleRate: 0.1,
+})
+
+const appHandle: Handle = async ({ event, resolve }) => {
 	assertServerEnv()
 
 	const auth = getAuth()
@@ -19,6 +31,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 			email: session.user.email,
 			role: session.user.role === 'client' ? 'client' : 'freelancer',
 		}
+		// Attach the user to any error/trace raised while handling this request.
+		Sentry.setUser({ id: session.user.id, email: session.user.email })
 	}
 
 	const response = await svelteKitHandler({ event, resolve, auth, building })
@@ -43,10 +57,13 @@ export const handle: Handle = async ({ event, resolve }) => {
 	return response
 }
 
-// Unexpected errors are logged server-side and never leaked to the client.
-// App errors (from `error(...)`) and framework 4xx keep their own message and
-// status — we only override the 5xx cases.
-export const handleError: HandleServerError = ({ kind, error }) => {
+// `sentryHandle` wraps the app so requests are traced and thrown errors captured.
+export const handle = sequence(Sentry.sentryHandle(), appHandle)
+
+// Unexpected errors are logged server-side, reported to Sentry by the wrapper,
+// and never leaked to the client. App errors (from `error(...)`) and framework
+// 4xx keep their own message and status — we only override the 5xx cases.
+const appHandleError: HandleServerError = ({ kind, error }) => {
 	if (kind === 'unknown') {
 		// biome-ignore lint/suspicious/noConsole: server errors must reach the logs
 		console.error('[server-error]', error)
@@ -61,3 +78,5 @@ export const handleError: HandleServerError = ({ kind, error }) => {
 		}
 	}
 }
+
+export const handleError = Sentry.handleErrorWithSentry(appHandleError)

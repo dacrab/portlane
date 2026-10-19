@@ -58,6 +58,7 @@ bun dev
 - **Reminders** — a daily cron moves past-due invoices to `overdue` and emails the client at most once a week (`lastReminderSentAt`).
 - **Client invites & approvals** — inviting links an existing user or creates one, then emails a set-password link; approve/revision actions always re-check project membership server-side.
 - **Account deletion** — deletes content authored/uploaded by the user and invoices where they were the client, then removes the user (their own projects cascade). Stored files are deleted best-effort; a weekly cleanup job removes anything left behind.
+- **Observability** — Sentry captures server and browser errors (wired through `handleError`); it stays disabled unless `SENTRY_DSN`/`PUBLIC_SENTRY_DSN` are set, and builds upload source maps via `SENTRY_ORG`/`SENTRY_PROJECT`/`SENTRY_AUTH_TOKEN`.
 
 ## Deployment
 
@@ -82,6 +83,9 @@ The app runs on Vercel against a Neon project (Postgres + Object Storage).
    Password resets, client invites, and payment reminders all send through
    Resend. Without `RESEND_API_KEY` the links are logged instead of sent, and
    Resend's `onboarding@resend.dev` sender can only reach the account owner.
+6. **Sentry (optional)** — set `SENTRY_DSN` and `PUBLIC_SENTRY_DSN` to capture
+   errors, plus `SENTRY_ORG`/`SENTRY_PROJECT`/`SENTRY_AUTH_TOKEN` so builds create
+   a release and upload source maps. With no DSN the SDK is disabled.
 
 ### Pre-launch checklist
 
@@ -92,15 +96,17 @@ The app runs on Vercel against a Neon project (Postgres + Object Storage).
 - [ ] Stripe webhook registered and `STRIPE_WEBHOOK_SECRET` set
 - [ ] `CRON_SECRET` set in the Vercel project
 - [ ] Resend sending domain verified (`EMAIL_FROM`, not `onboarding@resend.dev`)
+- [ ] Sentry DSN set and a release with source maps uploaded
 - [ ] `/api/health` responds `{"ok":true}` after deploy
 
 ## Tech stack
 
-- **SvelteKit 2 (Svelte 5)** — full-stack framework with file-based routing
+- **SvelteKit 3 (Svelte 5)** — full-stack framework with file-based routing
 - **Better Auth** — authentication (email & password, session management)
 - **Drizzle ORM** — typed database queries over PostgreSQL (Neon)
 - **Stripe** — invoicing and payment processing
 - **Neon Object Storage** — private file storage (S3-compatible) with presigned downloads
+- **Sentry** — server + browser error monitoring with source-map uploads
 - **Tailwind CSS v4** — utility-first styling
 - **Biome** — linting and formatting · **Vitest** · **Knip**
 
