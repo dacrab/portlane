@@ -1,6 +1,6 @@
 import { error, fail } from '@sveltejs/kit'
-import { isInvoiceStatus } from '$lib/fmt'
-import { DB_ERROR, num, str } from '$lib/server/form'
+import { isInvoiceStatus } from '#lib/fmt.js'
+import { DB_ERROR, num, str } from '#lib/server/form.js'
 import {
 	checkoutAction,
 	createInvoice,
@@ -8,8 +8,8 @@ import {
 	getFreelancerInvoices,
 	getInvoiceProjects,
 	setInvoiceStatus,
-} from '$lib/server/invoices'
-import { isProjectClient, isProjectOwner } from '$lib/server/projects'
+} from '#lib/server/invoices.js'
+import { isProjectClient, isProjectOwner } from '#lib/server/projects.js'
 import type { Actions, PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals }) => {

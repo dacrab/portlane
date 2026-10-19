@@ -1,12 +1,12 @@
 import { fail } from '@sveltejs/kit'
 import { and, desc, eq, getTableColumns, max, ne, sql } from 'drizzle-orm'
-import { MAX_FILE_SIZE } from '$lib/constants'
-import { sendPasswordSetupEmail } from '$lib/server/auth'
-import { useDb } from '$lib/server/db'
-import type { UserRole } from '$lib/server/db/schema'
-import * as schema from '$lib/server/db/schema'
-import { DB_ERROR, formFile } from '$lib/server/form'
-import { deleteObjects, putObject } from '$lib/server/storage'
+import { MAX_FILE_SIZE } from '#lib/constants.js'
+import { sendPasswordSetupEmail } from '#lib/server/auth.js'
+import type { UserRole } from '#lib/server/db/schema.js'
+import * as schema from '#lib/server/db/schema.js'
+import { useDb } from '#lib/server/db.js'
+import { DB_ERROR, formFile } from '#lib/server/form.js'
+import { deleteObjects, putObject } from '#lib/server/storage.js'
 
 // ---------------------------------------------------------------------------
 // Membership

@@ -1,9 +1,9 @@
-import type { Handle, HandleServerError } from '@sveltejs/kit'
+import type { Handle, HandleServerError } from '@sveltejs/kit/hooks'
 import { svelteKitHandler } from 'better-auth/svelte-kit'
-import { building } from '$app/environment'
-import { PUBLIC_APP_URL } from '$env/static/public'
-import { getAuth } from '$lib/server/auth'
-import { assertServerEnv } from '$lib/server/env'
+import { getAuth } from '#lib/server/auth.js'
+import { assertServerEnv } from '#lib/server/env.js'
+import { building } from '$app/env'
+import { PUBLIC_APP_URL } from '$app/env/public'
 
 export const handle: Handle = async ({ event, resolve }) => {
 	assertServerEnv()
@@ -44,11 +44,20 @@ export const handle: Handle = async ({ event, resolve }) => {
 }
 
 // Unexpected errors are logged server-side and never leaked to the client.
-// Expected errors (from `error(...)`) keep their original message and status.
-export const handleError: HandleServerError = ({ error, status }) => {
-	if (status >= 500) {
+// App errors (from `error(...)`) and framework 4xx keep their own message and
+// status — we only override the 5xx cases.
+export const handleError: HandleServerError = ({ kind, error }) => {
+	if (kind === 'unknown') {
 		// biome-ignore lint/suspicious/noConsole: server errors must reach the logs
 		console.error('[server-error]', error)
-		return { message: 'Something went wrong. Please try again.' }
+		return { status: 500, message: 'Something went wrong. Please try again.' }
+	}
+	if (kind === 'framework' && error.status >= 500) {
+		// biome-ignore lint/suspicious/noConsole: server errors must reach the logs
+		console.error('[server-error]', error)
+		return {
+			status: error.status,
+			message: 'Something went wrong. Please try again.',
+		}
 	}
 }

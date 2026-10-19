@@ -1,7 +1,10 @@
 import { error, fail, redirect } from '@sveltejs/kit'
-import { DB_ERROR, str } from '$lib/server/form'
-import { requireClientFromUrl } from '$lib/server/guard'
-import { checkoutAction, getClientProjectInvoices } from '$lib/server/invoices'
+import { DB_ERROR, str } from '#lib/server/form.js'
+import { requireClientFromUrl } from '#lib/server/guard.js'
+import {
+	checkoutAction,
+	getClientProjectInvoices,
+} from '#lib/server/invoices.js'
 import {
 	addComment,
 	approveProject,
@@ -13,7 +16,7 @@ import {
 	handleUploadFileAction,
 	isProjectClient,
 	requestRevision,
-} from '$lib/server/projects'
+} from '#lib/server/projects.js'
 import type { Actions, PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals, url }) => {

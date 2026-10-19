@@ -1,4 +1,4 @@
-import { browser } from '$app/environment'
+import { browser } from '$app/env'
 
 const STORAGE_KEY = 'sidebar_collapsed'
 let collapsed = $state(browser && localStorage.getItem(STORAGE_KEY) === 'true')

@@ -1,5 +1,5 @@
 import { redirect } from '@sveltejs/kit'
-import { getUnreadComments } from '$lib/server/comments'
+import { getUnreadComments } from '#lib/server/comments.js'
 import type { LayoutServerLoad } from './$types'
 
 export const load: LayoutServerLoad = async ({ locals }) => {

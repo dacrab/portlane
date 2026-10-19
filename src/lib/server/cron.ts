@@ -1,6 +1,5 @@
 import { createHash, timingSafeEqual } from 'node:crypto'
-import { json } from '@sveltejs/kit'
-import { env } from '$env/dynamic/private'
+import { CRON_SECRET } from '$app/env/private'
 
 /** Constant-time comparison of a presented token against the configured secret. */
 function secretMatches(presented: string | null, secret: string): boolean {
@@ -15,16 +14,16 @@ function secretMatches(presented: string | null, secret: string): boolean {
  * Returns a Response to short-circuit with when unauthorized, otherwise null.
  */
 export function requireCron(request: Request): Response | null {
-	const secret = env.CRON_SECRET
+	const secret = CRON_SECRET
 	if (!secret) {
 		// biome-ignore lint/suspicious/noConsole: cron misconfiguration belongs in server logs
 		console.error('[cron] CRON_SECRET is not configured')
-		return json({ error: 'Cron not configured' }, { status: 500 })
+		return Response.json({ error: 'Cron not configured' }, { status: 500 })
 	}
 	const presented =
 		request.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ?? null
 	if (!secretMatches(presented, secret)) {
-		return json({ error: 'Unauthorized' }, { status: 401 })
+		return Response.json({ error: 'Unauthorized' }, { status: 401 })
 	}
 	return null
 }

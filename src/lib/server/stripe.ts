@@ -1,6 +1,6 @@
 import Stripe from 'stripe'
-import { env } from '$env/dynamic/private'
-import { buildInvoiceLineItems } from '$lib/stripe'
+import { buildInvoiceLineItems } from '#lib/stripe.js'
+import { STRIPE_SECRET_KEY } from '$app/env/private'
 
 export async function createCheckoutSession(
 	invoice: {
@@ -11,7 +11,8 @@ export async function createCheckoutSession(
 	},
 	origin: string,
 ): Promise<{ url: string; sessionId: string }> {
-	const key = env.STRIPE_SECRET_KEY
+	const key = STRIPE_SECRET_KEY
+
 	if (!key) throw new Error('STRIPE_SECRET_KEY is not configured')
 
 	const stripe = new Stripe(key)

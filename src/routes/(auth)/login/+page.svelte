@@ -1,7 +1,7 @@
 <script lang="ts">
+import { authClient, authError } from '#lib/auth-client.js'
+import AuthCard from '#lib/components/AuthCard.svelte'
 import { goto } from '$app/navigation'
-import { authClient, authError } from '$lib/auth-client'
-import AuthCard from '$lib/components/AuthCard.svelte'
 
 let email = $state('')
 let password = $state('')

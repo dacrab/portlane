@@ -1,6 +1,6 @@
 import { and, count, countDistinct, eq, sum } from 'drizzle-orm'
-import { useDb } from '$lib/server/db'
-import * as schema from '$lib/server/db/schema'
+import * as schema from '#lib/server/db/schema.js'
+import { useDb } from '#lib/server/db.js'
 
 export interface DashboardStats {
 	revenue: number

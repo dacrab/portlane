@@ -1,6 +1,6 @@
 {
 	"$schema": "https://unpkg.com/knip@6/schema.json",
-	"entry": ["src/routes/**/*.svelte", "src/routes/**/*.ts"],
+	"entry": ["src/routes/**/*.svelte", "src/routes/**/*.ts", "src/env.ts"],
 	"project": ["src/**/*.svelte", "src/**/*.ts"],
 	"ignoreDependencies": ["auth", "@better-auth/core"],
 	"ignoreBinaries": ["doppler"]

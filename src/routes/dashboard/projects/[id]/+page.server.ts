@@ -1,7 +1,7 @@
 import { error, fail, redirect } from '@sveltejs/kit'
-import { isProjectStatus } from '$lib/fmt'
-import { DB_ERROR, int, str } from '$lib/server/form'
-import { requireOwner } from '$lib/server/guard'
+import { isProjectStatus } from '#lib/fmt.js'
+import { DB_ERROR, int, str } from '#lib/server/form.js'
+import { requireOwner } from '#lib/server/guard.js'
 import {
 	addComment,
 	addMilestone,
@@ -21,7 +21,7 @@ import {
 	saveProjectNote,
 	setProjectStatus,
 	toggleMilestone,
-} from '$lib/server/projects'
+} from '#lib/server/projects.js'
 import type { Actions, PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals, params }) => {

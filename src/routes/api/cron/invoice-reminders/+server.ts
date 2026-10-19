@@ -1,14 +1,13 @@
-import { json } from '@sveltejs/kit'
-import { PUBLIC_APP_URL } from '$env/static/public'
-import { fmtDateLong, fmtMoney } from '$lib/fmt'
-import { requireCron } from '$lib/server/cron'
-import { escapeHtml, sendEmail } from '$lib/server/email'
+import { fmtDateLong, fmtMoney } from '#lib/fmt.js'
+import { requireCron } from '#lib/server/cron.js'
+import { escapeHtml, sendEmail } from '#lib/server/email.js'
 import {
 	getInvoicesNeedingReminder,
 	type InvoiceReminder,
 	markInvoicesReminded,
 	markOverdueInvoices,
-} from '$lib/server/invoices'
+} from '#lib/server/invoices.js'
+import { PUBLIC_APP_URL } from '$app/env/public'
 import type { RequestHandler } from './$types'
 
 function reminderHtml(reminder: InvoiceReminder): string {
@@ -47,5 +46,5 @@ export const GET: RequestHandler = async ({ request }) => {
 	}
 	// biome-ignore lint/suspicious/noConsole: cron diagnostics belong in server logs
 	console.log('[invoice-reminders]', summary)
-	return json(summary)
+	return Response.json(summary)
 }

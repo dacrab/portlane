@@ -6,8 +6,14 @@ import {
 	S3Client,
 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
-import { env } from '$env/dynamic/private'
-import type { StoredObject } from '$lib/server/storage-sweep'
+import type { StoredObject } from '#lib/server/storage-sweep.js'
+import {
+	AWS_ACCESS_KEY_ID,
+	AWS_ENDPOINT_URL_S3,
+	AWS_REGION,
+	AWS_SECRET_ACCESS_KEY,
+	S3_BUCKET,
+} from '$app/env/private'
 
 const DOWNLOAD_TTL_SECONDS = 5 * 60
 
@@ -17,14 +23,14 @@ let client: S3Client | null = null
 
 function useS3(): S3Client {
 	if (client) return client
-	const accessKeyId = env.AWS_ACCESS_KEY_ID
-	const secretAccessKey = env.AWS_SECRET_ACCESS_KEY
+	const accessKeyId = AWS_ACCESS_KEY_ID
+	const secretAccessKey = AWS_SECRET_ACCESS_KEY
 	if (!(accessKeyId && secretAccessKey)) {
 		throw new Error('S3 credentials are not configured')
 	}
 	client = new S3Client({
-		region: env.AWS_REGION ?? 'us-east-1',
-		endpoint: env.AWS_ENDPOINT_URL_S3,
+		region: AWS_REGION || 'us-east-1',
+		endpoint: AWS_ENDPOINT_URL_S3,
 		// Neon Object Storage is path-style only.
 		forcePathStyle: true,
 		credentials: { accessKeyId, secretAccessKey },
@@ -33,7 +39,7 @@ function useS3(): S3Client {
 }
 
 function bucket(): string {
-	const name = env.S3_BUCKET
+	const name = S3_BUCKET
 	if (!name) throw new Error('S3_BUCKET is not configured')
 	return name
 }

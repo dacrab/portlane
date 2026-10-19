@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
-import { useDb } from '$lib/server/db'
-import * as schema from '$lib/server/db/schema'
-import { deleteObjects } from '$lib/server/storage'
+import * as schema from '#lib/server/db/schema.js'
+import { useDb } from '#lib/server/db.js'
+import { deleteObjects } from '#lib/server/storage.js'
 
 export async function getUserProfile(userId: string) {
 	const db = useDb()
