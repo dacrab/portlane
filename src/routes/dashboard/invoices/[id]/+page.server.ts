@@ -1,10 +1,10 @@
 import { error } from '@sveltejs/kit'
 import { sql } from 'drizzle-orm'
-import { useDb } from '$lib/server/db'
+import { useDb } from '#lib/server/db.js'
 import {
 	handleCheckoutAction,
 	type InvoiceDetailRow,
-} from '$lib/server/invoices'
+} from '#lib/server/invoices.js'
 import type { Actions, PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals, params }) => {

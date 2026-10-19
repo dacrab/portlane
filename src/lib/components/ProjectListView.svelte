@@ -1,7 +1,7 @@
 <script lang="ts">
-import Avatar from '$lib/components/Avatar.svelte'
-import EmptyState from '$lib/components/EmptyState.svelte'
-import { fmtDate } from '$lib/fmt'
+import Avatar from '#lib/components/Avatar.svelte'
+import EmptyState from '#lib/components/EmptyState.svelte'
+import { fmtDate } from '#lib/fmt.js'
 import type { PageData } from '../../routes/portal/$types'
 
 let { data }: { data: PageData } = $props()

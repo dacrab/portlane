@@ -1,4 +1,4 @@
-import { DEFAULT_CURRENCY } from '$lib/constants'
+import { DEFAULT_CURRENCY } from '#lib/constants.js'
 
 interface InvoiceLineItemInput {
 	amount_cents: number

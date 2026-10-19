@@ -2,20 +2,20 @@
 import IconFolderOpenRegular from 'phosphor-icons-svelte/IconFolderOpenRegular.svelte'
 import IconPlusRegular from 'phosphor-icons-svelte/IconPlusRegular.svelte'
 import { toast } from 'svelte-sonner'
-import { enhance } from '$app/forms'
-import { page } from '$app/state'
-import AppDatePicker from '$lib/components/AppDatePicker.svelte'
-import AppSelect from '$lib/components/AppSelect.svelte'
-import EmptyState from '$lib/components/EmptyState.svelte'
-import SlideOver from '$lib/components/SlideOver.svelte'
+import AppDatePicker from '#lib/components/AppDatePicker.svelte'
+import AppSelect from '#lib/components/AppSelect.svelte'
+import EmptyState from '#lib/components/EmptyState.svelte'
+import SlideOver from '#lib/components/SlideOver.svelte'
 import {
 	fmtDate,
 	PROJECT_STATUS_ITEMS,
 	statusBadge,
 	statusLabel,
 	today,
-} from '$lib/fmt'
-import { asRecord } from '$lib/records'
+} from '#lib/fmt.js'
+import { asRecord } from '#lib/records.js'
+import { enhance } from '$app/forms'
+import { page } from '$app/state'
 
 import type { ActionData, PageData } from './$types'
 

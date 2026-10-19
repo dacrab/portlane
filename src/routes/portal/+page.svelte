@@ -1,7 +1,7 @@
 <script lang="ts">
-import Avatar from '$lib/components/Avatar.svelte'
-import ProjectDetailView from '$lib/components/ProjectDetailView.svelte'
-import ProjectListView from '$lib/components/ProjectListView.svelte'
+import Avatar from '#lib/components/Avatar.svelte'
+import ProjectDetailView from '#lib/components/ProjectDetailView.svelte'
+import ProjectListView from '#lib/components/ProjectListView.svelte'
 import type { PageData } from './$types'
 
 let { data }: { data: PageData } = $props()

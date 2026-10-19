@@ -1,13 +1,13 @@
 import { error, fail } from '@sveltejs/kit'
 import { and, eq, sql } from 'drizzle-orm'
-import { INVOICE_STATUS_ITEMS } from '$lib/fmt'
-import { useDb } from '$lib/server/db'
-import * as schema from '$lib/server/db/schema'
-import { DB_ERROR, num, str } from '$lib/server/form'
+import { INVOICE_STATUS_ITEMS } from '#lib/fmt.js'
+import * as schema from '#lib/server/db/schema.js'
+import { useDb } from '#lib/server/db.js'
+import { DB_ERROR, num, str } from '#lib/server/form.js'
 import {
 	handleCheckoutAction,
 	type InvoiceDetailRow,
-} from '$lib/server/invoices'
+} from '#lib/server/invoices.js'
 import type { Actions, PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals }) => {

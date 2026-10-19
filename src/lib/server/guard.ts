@@ -1,5 +1,5 @@
 import { fail } from '@sveltejs/kit'
-import { isProjectClient, isProjectOwner } from '$lib/server/project'
+import { isProjectClient, isProjectOwner } from '#lib/server/project.js'
 
 type GuardResult =
 	| { err: ReturnType<typeof fail>; userId?: never; projectId?: never }

@@ -1,18 +1,18 @@
 import { error, fail, redirect } from '@sveltejs/kit'
 import { del } from '@vercel/blob'
 import { and, desc, eq, sql } from 'drizzle-orm'
-import { PROJECT_STATUS_ITEMS } from '$lib/fmt'
-import { useDb } from '$lib/server/db'
-import * as schema from '$lib/server/db/schema'
-import { DB_ERROR, int, str } from '$lib/server/form'
-import { requireOwner } from '$lib/server/guard'
+import { PROJECT_STATUS_ITEMS } from '#lib/fmt.js'
+import * as schema from '#lib/server/db/schema.js'
+import { useDb } from '#lib/server/db.js'
+import { DB_ERROR, int, str } from '#lib/server/form.js'
+import { requireOwner } from '#lib/server/guard.js'
 import {
 	getProjectComments,
 	getProjectFiles,
 	getProjectMilestones,
 	handleUploadFileAction,
 	inviteClientByEmail,
-} from '$lib/server/project'
+} from '#lib/server/project.js'
 import type { Actions, PageServerLoad } from './$types'
 
 const validStatuses: string[] = PROJECT_STATUS_ITEMS.map((s) => s.value)

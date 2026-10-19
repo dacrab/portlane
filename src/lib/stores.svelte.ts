@@ -1,8 +1,9 @@
-import { browser } from '$app/environment'
+import { browser } from '$app/env'
 
 const initial: boolean = browser
 	? localStorage.getItem('sidebar_collapsed') === 'true'
 	: false
+
 let _collapsed = $state(initial)
 
 export const sidebarCollapsed = {

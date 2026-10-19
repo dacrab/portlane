@@ -1,10 +1,10 @@
 <script lang="ts">
 import { toast } from 'svelte-sonner'
+import { checkoutEnhance } from '#lib/client/enhance.js'
+import { LOCALE } from '#lib/constants.js'
+import { fmtMoney, statusBadge } from '#lib/fmt.js'
 import { enhance } from '$app/forms'
 import { page } from '$app/state'
-import { checkoutEnhance } from '$lib/client/enhance'
-import { LOCALE } from '$lib/constants'
-import { fmtMoney, statusBadge } from '$lib/fmt'
 import type { PageData } from './$types'
 
 let { data }: { data: PageData } = $props()

@@ -1,4 +1,4 @@
-import { asRecord } from '$lib/records'
+import { asRecord } from '#lib/records.js'
 
 export async function downloadFile(path: string, name: string) {
 	const res = await fetch(`/api/file-url?path=${encodeURIComponent(path)}`)

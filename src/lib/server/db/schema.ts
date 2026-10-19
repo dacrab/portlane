@@ -11,7 +11,7 @@ import {
 	text,
 	timestamp,
 } from 'drizzle-orm/pg-core'
-import { DEFAULT_CURRENCY } from '$lib/constants'
+import { DEFAULT_CURRENCY } from '#lib/constants.js'
 
 const genId = () => crypto.randomUUID()
 

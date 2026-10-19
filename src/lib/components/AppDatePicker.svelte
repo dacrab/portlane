@@ -4,7 +4,7 @@ import { DatePicker } from 'bits-ui'
 import IconCalendarRegular from 'phosphor-icons-svelte/IconCalendarRegular.svelte'
 import IconCaretLeftRegular from 'phosphor-icons-svelte/IconCaretLeftRegular.svelte'
 import IconCaretRightRegular from 'phosphor-icons-svelte/IconCaretRightRegular.svelte'
-import { LOCALE } from '$lib/constants'
+import { LOCALE } from '#lib/constants.js'
 
 let {
 	name,

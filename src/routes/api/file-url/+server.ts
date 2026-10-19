@@ -1,8 +1,8 @@
-import { error, json } from '@sveltejs/kit'
+import { error } from '@sveltejs/kit'
 import { issueSignedToken, presignUrl } from '@vercel/blob'
 import { and, eq, or } from 'drizzle-orm'
-import { useDb } from '$lib/server/db'
-import * as schema from '$lib/server/db/schema'
+import * as schema from '#lib/server/db/schema.js'
+import { useDb } from '#lib/server/db.js'
 import type { RequestHandler } from './$types'
 
 const LINK_TTL_MS = 5 * 60 * 1000
@@ -50,5 +50,5 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 		validUntil,
 	})
 
-	return json({ url: presignedUrl })
+	return Response.json({ url: presignedUrl })
 }
