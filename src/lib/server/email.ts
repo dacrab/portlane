@@ -12,6 +12,22 @@ function fromAddress(): string {
 	return EMAIL_FROM || DEFAULT_FROM
 }
 
+let warnedAboutTestSender = false
+
+// Resend's `onboarding@resend.dev` sender only delivers to the account owner, so
+// invites, password resets and reminders silently fail to reach real clients.
+// Warn once per process — this is exactly the misconfiguration that's easy to
+// ship and hard to notice.
+function warnIfTestSender(): void {
+	if (warnedAboutTestSender) return
+	warnedAboutTestSender = true
+	if (!fromAddress().includes('resend.dev')) return
+	// biome-ignore lint/suspicious/noConsole: misconfiguration must be visible in server logs
+	console.warn(
+		`[email] EMAIL_FROM is "${fromAddress()}" — Resend's test sender only delivers to the account owner. Verify a domain and set EMAIL_FROM before launch.`,
+	)
+}
+
 export interface Email {
 	to: string
 	subject: string
@@ -35,6 +51,7 @@ export async function sendEmail({
 		)
 		return false
 	}
+	warnIfTestSender()
 	const { Resend } = await import('resend')
 	const resend = new Resend(RESEND_API_KEY)
 	const { error } = await resend.emails.send({

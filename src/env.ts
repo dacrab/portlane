@@ -15,4 +15,10 @@ export const variables = defineEnvVars({
 	AWS_ENDPOINT_URL_S3: { schema: (input) => input ?? '' },
 	AWS_REGION: { schema: (input) => input ?? '' },
 	S3_BUCKET: { schema: (input) => input ?? '' },
+	SENTRY_DSN: { schema: (input) => input ?? '' },
+	PUBLIC_SENTRY_DSN: {
+		public: true,
+		static: true,
+		schema: (input) => input ?? '',
+	},
 })
