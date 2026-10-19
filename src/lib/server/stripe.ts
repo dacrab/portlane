@@ -5,9 +5,9 @@ import { buildInvoiceLineItems } from '$lib/stripe'
 export async function createCheckoutSession(
 	invoice: {
 		id: string
-		amount_cents: number
+		amountCents: number
 		currency: string
-		project_name?: string | null
+		projectName?: string | null
 	},
 	origin: string,
 ): Promise<{ url: string; sessionId: string }> {
@@ -18,11 +18,7 @@ export async function createCheckoutSession(
 
 	const session = await stripe.checkout.sessions.create({
 		mode: 'payment',
-		line_items: buildInvoiceLineItems({
-			amount_cents: invoice.amount_cents,
-			currency: invoice.currency,
-			project_name: invoice.project_name,
-		}),
+		line_items: buildInvoiceLineItems(invoice),
 		client_reference_id: invoice.id,
 		success_url: `${origin}/dashboard/invoices/${invoice.id}?payment=success`,
 		cancel_url: `${origin}/dashboard/invoices/${invoice.id}`,

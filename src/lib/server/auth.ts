@@ -18,7 +18,22 @@ function createAuth() {
 		database: drizzleAdapter(useDb(), {
 			provider: 'pg',
 			schema,
+			// The schema is exported with plural names (users, sessions, ...);
+			// without this the adapter looks for a singular `user` model and fails.
+			usePlural: true,
 		}),
+		user: {
+			additionalFields: {
+				// Surfaced on `session.user` so request handling doesn't need a second
+				// query. Not client-writable: the role is assigned server-side.
+				role: {
+					type: 'string',
+					required: false,
+					defaultValue: 'freelancer',
+					input: false,
+				},
+			},
+		},
 		emailAndPassword: {
 			enabled: true,
 			minPasswordLength: PASSWORD_MIN_LENGTH,

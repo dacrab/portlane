@@ -32,6 +32,10 @@ export const fmtDateTime = (iso: string): string =>
 		minute: '2-digit',
 	})
 
+/** File size in MB, or an em dash when unknown. */
+export const fmtSize = (bytes: number | null): string =>
+	bytes ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : '—'
+
 /** Local `YYYY-MM-DD` (not UTC), so it compares correctly against stored due dates. */
 export const today = (): string => {
 	const d = new Date()
@@ -82,3 +86,9 @@ export const INVOICE_STATUS_ITEMS = invoiceStatuses.map((s) => ({
 	value: s,
 	label: statusLabel[s] ?? s,
 }))
+
+export const isProjectStatus = (value: string): boolean =>
+	(projectStatuses as readonly string[]).includes(value)
+
+export const isInvoiceStatus = (value: string): boolean =>
+	(invoiceStatuses as readonly string[]).includes(value)

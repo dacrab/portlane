@@ -4,7 +4,9 @@ import { vitePreprocess } from '@sveltejs/vite-plugin-svelte'
 const config = {
 	preprocess: vitePreprocess(),
 	kit: {
-		adapter: adapter(),
+		// Co-locate functions with the Neon database + object storage, which both
+		// live in us-east-1 (iad1), to avoid cross-region round-trips.
+		adapter: adapter({ regions: ['iad1'] }),
 	},
 }
 

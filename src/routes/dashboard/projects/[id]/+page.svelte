@@ -15,20 +15,20 @@ import { untrack } from 'svelte'
 import { toast } from 'svelte-sonner'
 import { enhance } from '$app/forms'
 import { downloadFile } from '$lib/client/download'
-import { toastEnhance } from '$lib/client/enhance'
+import { submitForm, submitOnFilePick, toastEnhance } from '$lib/client/enhance'
 import ActionDeleteButton from '$lib/components/ActionDeleteButton.svelte'
 import AppSelect from '$lib/components/AppSelect.svelte'
 import Avatar from '$lib/components/Avatar.svelte'
 import ProgressBar from '$lib/components/ProgressBar.svelte'
 import SectionHeader from '$lib/components/SectionHeader.svelte'
-import { fmtDate, fmtDateLong, PROJECT_STATUS_ITEMS } from '$lib/fmt'
+import { fmtDate, fmtDateLong, fmtSize, PROJECT_STATUS_ITEMS } from '$lib/fmt'
 import {
 	milestoneDone,
 	milestoneProgress,
 	milestoneTotal,
 } from '$lib/milestones'
 import { asRecord } from '$lib/records'
-import { confirmDelete } from '$lib/ui/confirm'
+import { confirmDeleteFromEvent } from '$lib/ui/confirm'
 import type { PageData } from './$types'
 
 type TimeEntry = (typeof data.timeEntries)[number]
@@ -109,7 +109,7 @@ function exportTimeCSV() {
 					<AppSelect
 						bind:value={projectStatus}
 						items={PROJECT_STATUS_ITEMS}
-						onchange={() => { const el = document.getElementById('status-form'); if (el instanceof HTMLFormElement) el.requestSubmit(); }}
+						onchange={() => submitForm('status-form')}
 					/>
 				</form>
 			</div>
@@ -133,7 +133,7 @@ function exportTimeCSV() {
 			<form id="delete-project-form" method="POST" action="?/delete_project"
 				use:enhance={toastEnhance()}>
 				<button type="button" class="btn-icon" title="Delete project"
-					onclick={(e: MouseEvent) => { const t = e.currentTarget; const f = t instanceof Element ? t.closest('form') : null; if (f instanceof HTMLFormElement) confirmDelete('This will permanently delete the project and all its data.', f); }}>
+					onclick={(e: MouseEvent) => confirmDeleteFromEvent('This will permanently delete the project and all its data.', e)}>
 					<span class="text-faint"><IconTrashRegular class="h-4 w-4" /></span>
 				</button>
 			</form>
@@ -321,7 +321,7 @@ function exportTimeCSV() {
 								<div class="flex-1 min-w-0">
 									<p class="truncate text-sm font-medium text-body">{f.name}</p>
 									<p class="mt-0.5 text-xs text-faint">
-										{f.sizeBytes ? (f.sizeBytes / 1024 / 1024).toFixed(1) + ' MB' : '—'} ·
+										{fmtSize(f.sizeBytes)} ·
 										{fmtDate(f.createdAt ?? '')}
 									</p>
 								</div>
@@ -338,7 +338,7 @@ function exportTimeCSV() {
 					class="pt-3 divide-top">
 					<label class="flex cursor-pointer items-center gap-1.5 text-xs font-medium text-accent">
 						<IconPlusRegular class="h-3 w-3" /> Upload file
-						<input type="file" name="file" class="hidden" onchange={(e: Event) => { const t = e.target; if (t instanceof HTMLInputElement && t.form instanceof HTMLFormElement) t.form.requestSubmit(); }} />
+						<input type="file" name="file" class="hidden" onchange={submitOnFilePick} />
 					</label>
 				</form>
 			</div>

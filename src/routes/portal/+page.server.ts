@@ -1,49 +1,30 @@
 import { error, fail, redirect } from '@sveltejs/kit'
-import { and, desc, eq, getTableColumns, sql } from 'drizzle-orm'
-import { useDb } from '$lib/server/db'
-import * as schema from '$lib/server/db/schema'
 import { DB_ERROR, str } from '$lib/server/form'
 import { requireClientFromUrl } from '$lib/server/guard'
-import { handleCheckoutAction } from '$lib/server/invoices'
+import { checkoutAction, getClientProjectInvoices } from '$lib/server/invoices'
 import {
 	addComment,
+	approveProject,
 	getProjectComments,
 	getProjectFiles,
 	getProjectMilestones,
+	getProjectsForClient,
+	getProjectWithFreelancer,
 	handleUploadFileAction,
-} from '$lib/server/project'
+	isProjectClient,
+	requestRevision,
+} from '$lib/server/projects'
 import type { Actions, PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	if (!locals.user) redirect(303, '/login')
 	const userId = locals.user.userId
-	const db = useDb()
-
 	const projectId = url.searchParams.get('project')
 
 	if (!projectId) {
-		const projects = await db
-			.select({
-				id: schema.projects.id,
-				name: schema.projects.name,
-				status: schema.projects.status,
-				dueDate: schema.projects.dueDate,
-				freelancerName: schema.users.name,
-			})
-			.from(schema.projectClients)
-			.innerJoin(
-				schema.projects,
-				eq(schema.projects.id, schema.projectClients.projectId),
-			)
-			.innerJoin(
-				schema.users,
-				eq(schema.users.id, schema.projects.freelancerId),
-			)
-			.where(eq(schema.projectClients.clientId, userId))
-
 		return {
 			project: null,
-			projects,
+			projects: await getProjectsForClient(userId),
 			milestones: [],
 			files: [],
 			comments: [],
@@ -52,49 +33,16 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		}
 	}
 
-	const [membership] = await db
-		.select({ one: sql`1` })
-		.from(schema.projectClients)
-		.where(
-			and(
-				eq(schema.projectClients.projectId, projectId),
-				eq(schema.projectClients.clientId, userId),
-			),
-		)
-		.limit(1)
+	if (!(await isProjectClient(projectId, userId))) error(403, 'Forbidden')
 
-	if (!membership) error(403, 'Forbidden')
+	const [project, milestones, files, comments, invoices] = await Promise.all([
+		getProjectWithFreelancer(projectId),
+		getProjectMilestones(projectId),
+		getProjectFiles(projectId),
+		getProjectComments(projectId),
+		getClientProjectInvoices(projectId, userId),
+	])
 
-	const [projectRows, milestones, files, comments, invoices] =
-		await Promise.all([
-			db
-				.select({
-					...getTableColumns(schema.projects),
-					freelancerName: schema.users.name,
-				})
-				.from(schema.projects)
-				.innerJoin(
-					schema.users,
-					eq(schema.users.id, schema.projects.freelancerId),
-				)
-				.where(eq(schema.projects.id, projectId))
-				.limit(1),
-			getProjectMilestones(projectId),
-			getProjectFiles(projectId),
-			getProjectComments(projectId),
-			db
-				.select()
-				.from(schema.invoices)
-				.where(
-					and(
-						eq(schema.invoices.projectId, projectId),
-						eq(schema.invoices.clientId, userId),
-					),
-				)
-				.orderBy(desc(schema.invoices.createdAt)),
-		])
-
-	const project = projectRows[0]
 	if (!project) error(404, 'Project not found')
 
 	return {
@@ -112,8 +60,7 @@ export const actions: Actions = {
 	comment: async ({ locals, url, request }) => {
 		const guard = await requireClientFromUrl(locals, url)
 		if (guard.err) return guard.err
-		const form = await request.formData()
-		const body = str(form, 'body')
+		const body = str(await request.formData(), 'body')
 		if (!body) return fail(400, { error: 'Message body is required' })
 		try {
 			await addComment(guard.projectId, guard.userId, body)
@@ -125,21 +72,15 @@ export const actions: Actions = {
 	approve: async ({ locals, url, request }) => {
 		const guard = await requireClientFromUrl(locals, url)
 		if (guard.err) return guard.err
-		const note = str(await request.formData(), 'note') || null
-		const db = useDb()
-		await db.execute(
-			sql`SELECT approve_project(${guard.projectId}, ${guard.userId}, ${note})`,
-		)
+		const note = str(await request.formData(), 'note')
+		await approveProject(guard.projectId, guard.userId, note)
 	},
 
 	request_revision: async ({ locals, url, request }) => {
 		const guard = await requireClientFromUrl(locals, url)
 		if (guard.err) return guard.err
-		const note = str(await request.formData(), 'note') || null
-		const db = useDb()
-		await db.execute(
-			sql`SELECT request_revision(${guard.projectId}, ${guard.userId}, ${note})`,
-		)
+		const note = str(await request.formData(), 'note')
+		await requestRevision(guard.projectId, guard.userId, note)
 	},
 
 	upload_file: async ({ locals, url, request }) => {
@@ -152,8 +93,5 @@ export const actions: Actions = {
 		)
 	},
 
-	checkout: async ({ locals, request, url: reqUrl }) => {
-		const form = await request.formData()
-		return handleCheckoutAction(locals, form, reqUrl.origin)
-	},
+	checkout: checkoutAction,
 }

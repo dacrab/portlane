@@ -1,43 +1,28 @@
 import { error, fail, redirect } from '@sveltejs/kit'
-import { del } from '@vercel/blob'
 import { APIError } from 'better-auth/api'
-import { eq } from 'drizzle-orm'
 import { PASSWORD_MIN_LENGTH } from '$lib/constants'
 import { getAuth } from '$lib/server/auth'
-import { useDb } from '$lib/server/db'
-import * as schema from '$lib/server/db/schema'
 import { DB_ERROR, str } from '$lib/server/form'
+import {
+	deleteUserAccount,
+	getUserProfile,
+	updateUserName,
+} from '$lib/server/users'
 import type { Actions, PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) error(401)
 
-	const db = useDb()
-	const rows = await db
-		.select({
-			id: schema.users.id,
-			name: schema.users.name,
-			email: schema.users.email,
-		})
-		.from(schema.users)
-		.where(eq(schema.users.id, locals.user.userId))
-		.limit(1)
-
-	const profile = rows[0]
+	const profile = await getUserProfile(locals.user.userId)
 	return { profile, email: profile?.email ?? '' }
 }
 
 export const actions: Actions = {
 	update_profile: async ({ locals, request }) => {
 		if (!locals.user) error(401)
-		const form = await request.formData()
-		const name = str(form, 'name')
-		const db = useDb()
+		const name = str(await request.formData(), 'name')
 		try {
-			await db
-				.update(schema.users)
-				.set({ name })
-				.where(eq(schema.users.id, locals.user.userId))
+			await updateUserName(locals.user.userId, name)
 		} catch {
 			return fail(500, { profile_error: DB_ERROR })
 		}
@@ -78,39 +63,9 @@ export const actions: Actions = {
 
 	delete_account: async ({ locals, request }) => {
 		if (!locals.user) error(401)
-		const userId = locals.user.userId
-		const db = useDb()
-
 		try {
-			const uploads = await db
-				.select({ storagePath: schema.files.storagePath })
-				.from(schema.files)
-				.where(eq(schema.files.uploadedBy, userId))
-
 			await getAuth().api.signOut({ headers: request.headers })
-
-			// The neon-http driver has no interactive transactions; batch()
-			// runs every statement in one atomic non-interactive transaction.
-			await db.batch([
-				db.delete(schema.comments).where(eq(schema.comments.authorId, userId)),
-				db.delete(schema.files).where(eq(schema.files.uploadedBy, userId)),
-				db
-					.delete(schema.timeEntries)
-					.where(eq(schema.timeEntries.userId, userId)),
-				db
-					.delete(schema.invoices)
-					.where(eq(schema.invoices.freelancerId, userId)),
-				db.delete(schema.invoices).where(eq(schema.invoices.clientId, userId)),
-				db
-					.delete(schema.projects)
-					.where(eq(schema.projects.freelancerId, userId)),
-				db.delete(schema.users).where(eq(schema.users.id, userId)),
-			])
-
-			// Blob deletion is best-effort; a sweep job should collect any orphans.
-			if (uploads.length > 0) {
-				await Promise.allSettled(uploads.map((f) => del(f.storagePath)))
-			}
+			await deleteUserAccount(locals.user.userId)
 		} catch {
 			return fail(500, { profile_error: DB_ERROR })
 		}

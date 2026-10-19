@@ -2,6 +2,18 @@ import type { SubmitFunction } from '@sveltejs/kit'
 import { toast } from 'svelte-sonner'
 import { asRecord } from '$lib/records'
 
+/** Submits the form with the given element id — e.g. from an `AppSelect` change handler. */
+export function submitForm(id: string) {
+	const form = document.getElementById(id)
+	if (form instanceof HTMLFormElement) form.requestSubmit()
+}
+
+/** `onchange` handler for a hidden file input: submits its form once a file is picked. */
+export function submitOnFilePick(event: Event) {
+	const target = event.target
+	if (target instanceof HTMLInputElement) target.form?.requestSubmit()
+}
+
 export interface ToastEnhanceOptions {
 	successMsg?: string
 	errorMsg?: string

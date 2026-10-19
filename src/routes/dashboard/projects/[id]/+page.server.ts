@@ -1,73 +1,46 @@
 import { error, fail, redirect } from '@sveltejs/kit'
-import { del } from '@vercel/blob'
-import { and, desc, eq, sql } from 'drizzle-orm'
-import { PROJECT_STATUS_ITEMS } from '$lib/fmt'
-import { useDb } from '$lib/server/db'
-import * as schema from '$lib/server/db/schema'
+import { isProjectStatus } from '$lib/fmt'
 import { DB_ERROR, int, str } from '$lib/server/form'
 import { requireOwner } from '$lib/server/guard'
 import {
+	addComment,
+	addMilestone,
+	deleteProject,
+	deleteProjectFile,
+	getProjectClients,
 	getProjectComments,
 	getProjectFiles,
+	getProjectForOwner,
 	getProjectMilestones,
+	getProjectNote,
+	getProjectTimeEntries,
 	handleUploadFileAction,
 	inviteClientByEmail,
-} from '$lib/server/project'
+	logTime,
+	removeProjectClient,
+	saveProjectNote,
+	setProjectStatus,
+	toggleMilestone,
+} from '$lib/server/projects'
 import type { Actions, PageServerLoad } from './$types'
-
-const validStatuses: string[] = PROJECT_STATUS_ITEMS.map((s) => s.value)
 
 export const load: PageServerLoad = async ({ locals, params }) => {
 	if (!locals.user) error(401, 'Unauthorized')
-	const db = useDb()
 
-	const [project] = await db
-		.select()
-		.from(schema.projects)
-		.where(
-			and(
-				eq(schema.projects.id, params.id),
-				eq(schema.projects.freelancerId, locals.user.userId),
-			),
-		)
-		.limit(1)
-
+	const project = await getProjectForOwner(params.id, locals.user.userId)
 	if (!project) error(404, 'Project not found')
 
-	const [milestones, files, comments, clients, timeEntries, noteRows] =
+	const [milestones, files, comments, clients, timeEntries, note] =
 		await Promise.all([
 			getProjectMilestones(params.id),
 			getProjectFiles(params.id),
 			getProjectComments(params.id),
-			db
-				.select({ id: schema.users.id, name: schema.users.name })
-				.from(schema.projectClients)
-				.innerJoin(
-					schema.users,
-					eq(schema.users.id, schema.projectClients.clientId),
-				)
-				.where(eq(schema.projectClients.projectId, params.id)),
-			db
-				.select()
-				.from(schema.timeEntries)
-				.where(eq(schema.timeEntries.projectId, params.id))
-				.orderBy(desc(schema.timeEntries.loggedAt)),
-			db
-				.select()
-				.from(schema.projectNotes)
-				.where(eq(schema.projectNotes.projectId, params.id))
-				.limit(1),
+			getProjectClients(params.id),
+			getProjectTimeEntries(params.id),
+			getProjectNote(params.id),
 		])
 
-	return {
-		project,
-		milestones,
-		files,
-		comments,
-		clients,
-		timeEntries,
-		note: noteRows[0]?.body ?? '',
-	}
+	return { project, milestones, files, comments, clients, timeEntries, note }
 }
 
 export const actions: Actions = {
@@ -78,14 +51,8 @@ export const actions: Actions = {
 		const minutes = int(form, 'minutes')
 		const description = str(form, 'description') || null
 		if (!minutes || minutes <= 0) return fail(400, { error: 'Invalid minutes' })
-		const db = useDb()
 		try {
-			await db.insert(schema.timeEntries).values({
-				projectId: guard.projectId,
-				userId: guard.userId,
-				minutes,
-				description,
-			})
+			await logTime(guard.projectId, guard.userId, minutes, description)
 		} catch {
 			return fail(500, { error: DB_ERROR })
 		}
@@ -94,17 +61,9 @@ export const actions: Actions = {
 	save_note: async ({ locals, params, request }) => {
 		const guard = await requireOwner(locals, params.id)
 		if (guard.err) return guard.err
-		const form = await request.formData()
-		const body = str(form, 'body')
-		const db = useDb()
+		const body = str(await request.formData(), 'body')
 		try {
-			await db
-				.insert(schema.projectNotes)
-				.values({ projectId: guard.projectId, body })
-				.onConflictDoUpdate({
-					target: schema.projectNotes.projectId,
-					set: { body },
-				})
+			await saveProjectNote(guard.projectId, body)
 		} catch {
 			return fail(500, { error: DB_ERROR })
 		}
@@ -113,16 +72,10 @@ export const actions: Actions = {
 	comment: async ({ locals, params, request }) => {
 		const guard = await requireOwner(locals, params.id)
 		if (guard.err) return guard.err
-		const form = await request.formData()
-		const body = str(form, 'body')
+		const body = str(await request.formData(), 'body')
 		if (!body) return fail(400, { error: 'Comment body is required' })
-		const db = useDb()
 		try {
-			await db.insert(schema.comments).values({
-				projectId: guard.projectId,
-				authorId: guard.userId,
-				body,
-			})
+			await addComment(guard.projectId, guard.userId, body)
 		} catch {
 			return fail(500, { error: DB_ERROR })
 		}
@@ -132,29 +85,20 @@ export const actions: Actions = {
 		const guard = await requireOwner(locals, params.id)
 		if (guard.err) return guard.err
 		const form = await request.formData()
-		const id = str(form, 'id')
-		const completed = form.get('completed') === 'true'
-		const db = useDb()
-		await db
-			.update(schema.milestones)
-			.set({ completed: !completed })
-			.where(
-				and(
-					eq(schema.milestones.id, id),
-					eq(schema.milestones.projectId, guard.projectId),
-				),
-			)
+		await toggleMilestone(
+			guard.projectId,
+			str(form, 'id'),
+			form.get('completed') === 'true',
+		)
 	},
 
 	add_milestone: async ({ locals, params, request }) => {
 		const guard = await requireOwner(locals, params.id)
 		if (guard.err) return guard.err
-		const form = await request.formData()
-		const name = str(form, 'name')
+		const name = str(await request.formData(), 'name')
 		if (!name) return fail(400, { error: 'Name is required' })
-		const db = useDb()
 		try {
-			await db.execute(sql`SELECT add_milestone(${guard.projectId}, ${name})`)
+			await addMilestone(guard.projectId, name)
 		} catch {
 			return fail(500, { error: DB_ERROR })
 		}
@@ -173,45 +117,18 @@ export const actions: Actions = {
 	delete_file: async ({ locals, params, request }) => {
 		const guard = await requireOwner(locals, params.id)
 		if (guard.err) return guard.err
-		const form = await request.formData()
-		const id = str(form, 'id')
-		const db = useDb()
-
-		const [file] = await db
-			.select({ storagePath: schema.files.storagePath })
-			.from(schema.files)
-			.where(
-				and(
-					eq(schema.files.id, id),
-					eq(schema.files.projectId, guard.projectId),
-				),
-			)
-			.limit(1)
-
-		if (!file) return fail(404, { error: 'File not found' })
-
-		try {
-			await del(file.storagePath)
-		} catch {
-			// Blob deletion is best-effort; the row is removed regardless.
-		}
-
-		await db.delete(schema.files).where(eq(schema.files.id, id))
+		const id = str(await request.formData(), 'id')
+		if (!(await deleteProjectFile(guard.projectId, id)))
+			return fail(404, { error: 'File not found' })
 	},
 
 	update_status: async ({ locals, params, request }) => {
 		const guard = await requireOwner(locals, params.id)
 		if (guard.err) return guard.err
-		const form = await request.formData()
-		const status = str(form, 'status')
-		if (!validStatuses.includes(status))
-			return fail(400, { error: 'Invalid status' })
-		const db = useDb()
+		const status = str(await request.formData(), 'status')
+		if (!isProjectStatus(status)) return fail(400, { error: 'Invalid status' })
 		try {
-			await db
-				.update(schema.projects)
-				.set({ status })
-				.where(eq(schema.projects.id, guard.projectId))
+			await setProjectStatus(guard.projectId, status)
 		} catch {
 			return fail(500, { error: DB_ERROR })
 		}
@@ -220,11 +137,8 @@ export const actions: Actions = {
 	delete_project: async ({ locals, params }) => {
 		const guard = await requireOwner(locals, params.id)
 		if (guard.err) return guard.err
-		const db = useDb()
 		try {
-			await db
-				.delete(schema.projects)
-				.where(eq(schema.projects.id, guard.projectId))
+			await deleteProject(guard.projectId)
 		} catch {
 			return fail(500, { error: DB_ERROR })
 		}
@@ -234,18 +148,9 @@ export const actions: Actions = {
 	remove_client: async ({ locals, params, request }) => {
 		const guard = await requireOwner(locals, params.id)
 		if (guard.err) return guard.err
-		const form = await request.formData()
-		const client_id = str(form, 'client_id')
-		const db = useDb()
+		const clientId = str(await request.formData(), 'client_id')
 		try {
-			await db
-				.delete(schema.projectClients)
-				.where(
-					and(
-						eq(schema.projectClients.projectId, guard.projectId),
-						eq(schema.projectClients.clientId, client_id),
-					),
-				)
+			await removeProjectClient(guard.projectId, clientId)
 		} catch {
 			return fail(500, { error: DB_ERROR })
 		}
@@ -254,11 +159,9 @@ export const actions: Actions = {
 	invite_client: async ({ locals, params, request }) => {
 		const guard = await requireOwner(locals, params.id)
 		if (guard.err) return guard.err
-		const form = await request.formData()
-		const email = str(form, 'email').toLowerCase()
+		const email = str(await request.formData(), 'email').toLowerCase()
 		if (!(email && /^\S+@\S+\.\S+$/.test(email)))
 			return fail(400, { error: 'A valid email is required' })
-
 		try {
 			await inviteClientByEmail(email, guard.projectId)
 		} catch {

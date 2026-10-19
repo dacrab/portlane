@@ -10,15 +10,13 @@ import type { PageData } from './$types'
 let { data }: { data: PageData } = $props()
 
 const inv = $derived(data.invoice)
-const project = $derived({
-	name: inv.project_name,
-	description: inv.project_description,
-})
-const freelancerName = $derived(inv.freelancer_name)
-const clientName = $derived(inv.client_name)
-const amount = $derived(fmtMoney(inv.amount_cents))
-const isClient = $derived(inv.client_id === data.user.userId)
-const status = $derived(inv.status)
+const amount = $derived(fmtMoney(inv.amountCents))
+const isClient = $derived(inv.clientId === data.user.userId)
+const isPayable = $derived(
+	isClient &&
+		(inv.status === 'sent' || inv.status === 'overdue') &&
+		!inv.stripeSessionId,
+)
 
 const today = new Date().toLocaleDateString(LOCALE, {
 	year: 'numeric',
@@ -28,7 +26,7 @@ const today = new Date().toLocaleDateString(LOCALE, {
 </script>
 
 <svelte:head>
-	<title>Invoice · {project.name}</title>
+	<title>Invoice · {inv.projectName}</title>
 	<style>
 		@media print {
 			.no-print { display: none !important; }
@@ -41,7 +39,7 @@ const today = new Date().toLocaleDateString(LOCALE, {
 <div class="no-print mb-6 flex items-center gap-3">
 	<a href="/dashboard/invoices" class="text-sm text-faint">← Invoices</a>
 	<div class="ml-auto flex gap-2">
-		{#if isClient && (status === 'sent' || status === 'overdue') && !inv.stripe_session_id}
+		{#if isPayable}
 			<form method="POST" action="?/checkout" use:enhance={checkoutEnhance()}>
 				<input type="hidden" name="invoiceId" value={inv.id} />
 				<button type="submit" class="btn btn-primary text-xs">Pay Now</button>
@@ -66,11 +64,11 @@ const today = new Date().toLocaleDateString(LOCALE, {
 			<p class="mt-1 text-xs font-mono text-faint">{inv.id.slice(0, 8).toUpperCase()}</p>
 		</div>
 		<div class="text-right">
-			<span class="{statusBadge[status] ?? 'badge badge-neutral'} capitalize">{status}</span>
+			<span class="{statusBadge[inv.status] ?? 'badge badge-neutral'} capitalize">{inv.status}</span>
 			<p class="mt-3 text-xs text-faint">Issued {today}</p>
-			{#if inv.due_date}
+			{#if inv.dueDate}
 				<p class="text-xs text-faint">
-					Due {new Date(inv.due_date).toLocaleDateString(LOCALE, { year: 'numeric', month: 'long', day: 'numeric' })}
+					Due {new Date(inv.dueDate).toLocaleDateString(LOCALE, { year: 'numeric', month: 'long', day: 'numeric' })}
 				</p>
 			{/if}
 		</div>
@@ -80,11 +78,11 @@ const today = new Date().toLocaleDateString(LOCALE, {
 	<div class="mb-10 grid grid-cols-2 gap-8">
 		<div>
 			<p class="mb-1 text-xs font-semibold uppercase tracking-widest text-faint">From</p>
-			<p class="text-sm font-semibold text-heading">{freelancerName}</p>
+			<p class="text-sm font-semibold text-heading">{inv.freelancerName}</p>
 		</div>
 		<div>
 			<p class="mb-1 text-xs font-semibold uppercase tracking-widest text-faint">To</p>
-			<p class="text-sm font-semibold text-heading">{clientName}</p>
+			<p class="text-sm font-semibold text-heading">{inv.clientName}</p>
 		</div>
 	</div>
 
@@ -96,9 +94,9 @@ const today = new Date().toLocaleDateString(LOCALE, {
 		</div>
 		<div class="grid px-5 py-4" style="grid-template-columns:1fr auto">
 			<div>
-				<p class="text-sm font-medium text-heading">{project.name}</p>
-				{#if project.description}
-					<p class="mt-0.5 text-xs text-faint">{project.description}</p>
+				<p class="text-sm font-medium text-heading">{inv.projectName}</p>
+				{#if inv.projectDescription}
+					<p class="mt-0.5 text-xs text-faint">{inv.projectDescription}</p>
 				{/if}
 			</div>
 			<p class="text-sm font-semibold text-heading">{amount}</p>

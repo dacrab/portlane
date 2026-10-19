@@ -1,42 +1,179 @@
+import type { Action } from '@sveltejs/kit'
 import { fail } from '@sveltejs/kit'
-import { and, eq, or, sql } from 'drizzle-orm'
+import { and, desc, eq, getTableColumns, inArray, ne, or } from 'drizzle-orm'
+import { alias } from 'drizzle-orm/pg-core'
 import { useDb } from '$lib/server/db'
 import * as schema from '$lib/server/db/schema'
 import { str } from '$lib/server/form'
 import { createCheckoutSession } from '$lib/server/stripe'
 
-// The index signature is required by drizzle's `db.execute<TRow>` constraint;
-// the explicit fields below are what callers may rely on.
-export interface InvoiceDetailRow {
-	[key: string]: unknown
-	id: string
-	project_id: string
-	freelancer_id: string
-	client_id: string
-	amount_cents: number
-	currency: string
-	status: string
-	due_date: string | null
-	stripe_session_id: string | null
-	stripe_payment_intent_id: string | null
-	last_reminder_sent_at: string | null
-	created_at: string
+// ---------------------------------------------------------------------------
+// Reads
+// ---------------------------------------------------------------------------
+
+/** A freelancer's invoices, with the project and client names joined in. */
+export async function getFreelancerInvoices(freelancerId: string) {
+	const db = useDb()
+	return db
+		.select({
+			...getTableColumns(schema.invoices),
+			projectName: schema.projects.name,
+			clientName: schema.users.name,
+		})
+		.from(schema.invoices)
+		.innerJoin(
+			schema.projects,
+			eq(schema.projects.id, schema.invoices.projectId),
+		)
+		.innerJoin(schema.users, eq(schema.users.id, schema.invoices.clientId))
+		.where(eq(schema.invoices.freelancerId, freelancerId))
+		.orderBy(desc(schema.invoices.createdAt))
 }
 
-class InvoiceCheckoutError extends Error {
-	constructor(
-		readonly code: 'not_found' | 'not_payable' | 'duplicate_session',
-		message: string,
-	) {
-		super(message)
+/** Non-archived projects with their linked clients, for the invoice create form. */
+export async function getInvoiceProjects(freelancerId: string) {
+	const db = useDb()
+	const projects = await db
+		.select({ id: schema.projects.id, name: schema.projects.name })
+		.from(schema.projects)
+		.where(
+			and(
+				eq(schema.projects.freelancerId, freelancerId),
+				ne(schema.projects.status, 'archived'),
+			),
+		)
+
+	const projectIds = projects.map((p) => p.id)
+	const links = projectIds.length
+		? await db
+				.select({
+					projectId: schema.projectClients.projectId,
+					id: schema.projectClients.clientId,
+					name: schema.users.name,
+				})
+				.from(schema.projectClients)
+				.innerJoin(
+					schema.users,
+					eq(schema.users.id, schema.projectClients.clientId),
+				)
+				.where(inArray(schema.projectClients.projectId, projectIds))
+		: []
+
+	const clientsByProject = new Map<string, { id: string; name: string }[]>()
+	for (const link of links) {
+		const list = clientsByProject.get(link.projectId) ?? []
+		list.push({ id: link.id, name: link.name })
+		clientsByProject.set(link.projectId, list)
 	}
+
+	return projects.map((p) => ({
+		...p,
+		clients: clientsByProject.get(p.id) ?? [],
+	}))
 }
 
-async function createInvoiceCheckoutSession(
-	invoiceId: string,
-	userId: string,
-	origin: string,
+/** A single invoice with project and both parties' names, or null if unknown. */
+export async function getInvoiceById(invoiceId: string) {
+	const db = useDb()
+	const freelancer = alias(schema.users, 'freelancer')
+	const client = alias(schema.users, 'client')
+	const [invoice] = await db
+		.select({
+			...getTableColumns(schema.invoices),
+			projectName: schema.projects.name,
+			projectDescription: schema.projects.description,
+			freelancerName: freelancer.name,
+			clientName: client.name,
+		})
+		.from(schema.invoices)
+		.innerJoin(
+			schema.projects,
+			eq(schema.projects.id, schema.invoices.projectId),
+		)
+		.innerJoin(freelancer, eq(freelancer.id, schema.invoices.freelancerId))
+		.innerJoin(client, eq(client.id, schema.invoices.clientId))
+		.where(eq(schema.invoices.id, invoiceId))
+		.limit(1)
+	return invoice ?? null
+}
+
+/** Invoices on one project that belong to the given client, newest first. */
+export async function getClientProjectInvoices(
+	projectId: string,
+	clientId: string,
 ) {
+	const db = useDb()
+	return db
+		.select()
+		.from(schema.invoices)
+		.where(
+			and(
+				eq(schema.invoices.projectId, projectId),
+				eq(schema.invoices.clientId, clientId),
+			),
+		)
+		.orderBy(desc(schema.invoices.createdAt))
+}
+
+// ---------------------------------------------------------------------------
+// Writes
+// ---------------------------------------------------------------------------
+
+export async function createInvoice(input: {
+	projectId: string
+	clientId: string
+	freelancerId: string
+	amountCents: number
+	dueDate: string | null
+}) {
+	await useDb().insert(schema.invoices).values(input)
+}
+
+export async function setInvoiceStatus(
+	invoiceId: string,
+	freelancerId: string,
+	status: string,
+) {
+	await useDb()
+		.update(schema.invoices)
+		.set({ status })
+		.where(
+			and(
+				eq(schema.invoices.id, invoiceId),
+				eq(schema.invoices.freelancerId, freelancerId),
+			),
+		)
+}
+
+export async function deleteInvoice(invoiceId: string, freelancerId: string) {
+	await useDb()
+		.delete(schema.invoices)
+		.where(
+			and(
+				eq(schema.invoices.id, invoiceId),
+				eq(schema.invoices.freelancerId, freelancerId),
+			),
+		)
+}
+
+// ---------------------------------------------------------------------------
+// Checkout
+// ---------------------------------------------------------------------------
+
+type CheckoutResult =
+	| { url: string }
+	| ReturnType<typeof fail<{ error: string }>>
+
+/** Creates a single-use Stripe checkout session for an invoice the caller owns or receives. */
+async function handleCheckoutAction(
+	locals: App.Locals,
+	form: FormData,
+	origin: string,
+): Promise<CheckoutResult> {
+	if (!locals.user) return fail(401, { error: 'Unauthorized' })
+	const invoiceId = str(form, 'invoiceId')
+	if (!invoiceId) return fail(400, { error: 'Invoice ID required' })
+
 	const db = useDb()
 	const [invoice] = await db
 		.select({
@@ -45,35 +182,36 @@ async function createInvoiceCheckoutSession(
 			currency: schema.invoices.currency,
 			status: schema.invoices.status,
 			stripeSessionId: schema.invoices.stripeSessionId,
-			projectName: sql<string>`(SELECT name FROM project WHERE id = ${schema.invoices.projectId})`,
+			projectName: schema.projects.name,
 		})
 		.from(schema.invoices)
+		.innerJoin(
+			schema.projects,
+			eq(schema.projects.id, schema.invoices.projectId),
+		)
 		.where(
 			and(
 				eq(schema.invoices.id, invoiceId),
 				or(
-					eq(schema.invoices.freelancerId, userId),
-					eq(schema.invoices.clientId, userId),
+					eq(schema.invoices.freelancerId, locals.user.userId),
+					eq(schema.invoices.clientId, locals.user.userId),
 				),
 			),
 		)
 		.limit(1)
 
-	if (!invoice) throw new InvoiceCheckoutError('not_found', 'Invoice not found')
+	if (!invoice) return fail(404, { error: 'Invoice not found' })
 	if (invoice.stripeSessionId)
-		throw new InvoiceCheckoutError(
-			'duplicate_session',
-			'A payment session already exists',
-		)
+		return fail(400, { error: 'A payment session already exists' })
 	if (invoice.status !== 'sent' && invoice.status !== 'overdue')
-		throw new InvoiceCheckoutError('not_payable', 'Invoice is not payable')
+		return fail(400, { error: 'Invoice is not payable' })
 
 	const result = await createCheckoutSession(
 		{
 			id: invoice.id,
-			amount_cents: invoice.amountCents,
+			amountCents: invoice.amountCents,
 			currency: invoice.currency,
-			project_name: invoice.projectName,
+			projectName: invoice.projectName,
 		},
 		origin,
 	)
@@ -86,31 +224,6 @@ async function createInvoiceCheckoutSession(
 	return { url: result.url }
 }
 
-type CheckoutResult =
-	| { url: string }
-	| ReturnType<typeof fail<{ error: string }>>
-
-async function runInvoiceCheckout(
-	invoiceId: string,
-	userId: string,
-	origin: string,
-): Promise<CheckoutResult> {
-	try {
-		return await createInvoiceCheckoutSession(invoiceId, userId, origin)
-	} catch (e) {
-		if (e instanceof InvoiceCheckoutError)
-			return fail(e.code === 'not_found' ? 404 : 400, { error: e.message })
-		throw e
-	}
-}
-
-export async function handleCheckoutAction(
-	locals: App.Locals,
-	form: FormData,
-	origin: string,
-): Promise<CheckoutResult> {
-	if (!locals.user) return fail(401, { error: 'Unauthorized' })
-	const invoiceId = str(form, 'invoiceId')
-	if (!invoiceId) return fail(400, { error: 'Invoice ID required' })
-	return runInvoiceCheckout(invoiceId, locals.user.userId, origin)
-}
+/** Shared `checkout` form action for every route that renders a "Pay now" button. */
+export const checkoutAction: Action = async ({ locals, request, url }) =>
+	handleCheckoutAction(locals, await request.formData(), url.origin)

@@ -4,9 +4,9 @@ import { buildInvoiceLineItems } from './stripe'
 describe('buildInvoiceLineItems', () => {
 	it('creates a single line item from an invoice', () => {
 		const items = buildInvoiceLineItems({
-			amount_cents: 5000,
+			amountCents: 5000,
 			currency: 'usd',
-			project_name: 'Website redesign',
+			projectName: 'Website redesign',
 		})
 		expect(items).toHaveLength(1)
 		expect(items[0]?.price_data?.unit_amount).toBe(5000)
@@ -16,7 +16,7 @@ describe('buildInvoiceLineItems', () => {
 	})
 
 	it('defaults currency to usd and uses fallback name', () => {
-		const items = buildInvoiceLineItems({ amount_cents: 1000 })
+		const items = buildInvoiceLineItems({ amountCents: 1000 })
 		expect(items[0]?.price_data?.currency).toBe('usd')
 		expect(items[0]?.price_data?.product_data?.name).toBe('Invoice payment')
 	})
