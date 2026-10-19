@@ -1,9 +1,8 @@
-import { json } from '@sveltejs/kit'
-import { requireCron } from '$lib/server/cron'
-import { useDb } from '$lib/server/db'
-import * as schema from '$lib/server/db/schema'
-import { deleteObjects, listObjects } from '$lib/server/storage'
-import { findOrphanObjects } from '$lib/server/storage-sweep'
+import { requireCron } from '#lib/server/cron.js'
+import * as schema from '#lib/server/db/schema.js'
+import { useDb } from '#lib/server/db.js'
+import { deleteObjects, listObjects } from '#lib/server/storage.js'
+import { findOrphanObjects } from '#lib/server/storage-sweep.js'
 import type { RequestHandler } from './$types'
 
 const DELETE_BATCH_SIZE = 1000
@@ -33,5 +32,5 @@ export const GET: RequestHandler = async ({ request }) => {
 	const summary = { scanned: rows.length, orphans: orphans.length, deleted }
 	// biome-ignore lint/suspicious/noConsole: cron diagnostics belong in server logs
 	console.log('[storage-sweep]', summary)
-	return json(summary)
+	return Response.json(summary)
 }

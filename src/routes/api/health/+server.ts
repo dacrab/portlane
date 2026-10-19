@@ -1,6 +1,5 @@
-import { json } from '@sveltejs/kit'
 import { sql } from 'drizzle-orm'
-import { useDb } from '$lib/server/db'
+import { useDb } from '#lib/server/db.js'
 import type { RequestHandler } from './$types'
 
 // Liveness/readiness probe for uptime monitoring. Confirms the database is
@@ -8,8 +7,8 @@ import type { RequestHandler } from './$types'
 export const GET: RequestHandler = async () => {
 	try {
 		await useDb().execute(sql`select 1`)
-		return json({ ok: true })
+		return Response.json({ ok: true })
 	} catch {
-		return json({ ok: false }, { status: 503 })
+		return Response.json({ ok: false }, { status: 503 })
 	}
 }

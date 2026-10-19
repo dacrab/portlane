@@ -8,11 +8,9 @@ import IconFolderOpenRegular from 'phosphor-icons-svelte/IconFolderOpenRegular.s
 import IconPlusRegular from 'phosphor-icons-svelte/IconPlusRegular.svelte'
 import IconXRegular from 'phosphor-icons-svelte/IconXRegular.svelte'
 import { onMount } from 'svelte'
-import { browser } from '$app/environment'
-import { invalidateAll } from '$app/navigation'
-import Avatar from '$lib/components/Avatar.svelte'
-import EmptyState from '$lib/components/EmptyState.svelte'
-import { LOCALE } from '$lib/constants'
+import Avatar from '#lib/components/Avatar.svelte'
+import EmptyState from '#lib/components/EmptyState.svelte'
+import { LOCALE } from '#lib/constants.js'
 import {
 	fmtDate,
 	fmtDateTime,
@@ -20,7 +18,10 @@ import {
 	statusBadge,
 	statusLabel,
 	today,
-} from '$lib/fmt'
+} from '#lib/fmt.js'
+import { browser } from '$app/env'
+import { refreshAll } from '$app/navigation'
+
 import type { PageData } from './$types'
 
 let { data }: { data: PageData } = $props()
@@ -28,7 +29,7 @@ let { data }: { data: PageData } = $props()
 // Auto-dismiss: mark all as read when the dashboard is visited
 onMount(() => {
 	if (data.unreadCommentRows.length > 0) {
-		fetch('?/mark_read', { method: 'POST' }).then(() => invalidateAll())
+		fetch('?/mark_read', { method: 'POST' }).then(() => refreshAll())
 	}
 })
 
@@ -41,7 +42,6 @@ function dismissOnboarding() {
 }
 
 const showOnboarding = $derived(!(onboardingDismissed || data.onboardingDone))
-
 const isOverdue = (due: string | null) => due && due < today()
 
 const stats = $derived([
@@ -167,18 +167,18 @@ const onboardingSteps = $derived([
 
 	<!-- Stats -->
 	<div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
-	{#each stats as s}
-		{@const Icon = s.icon}
-		<div class="card flex flex-col gap-3">
+		{#each stats as s}
+			{@const Icon = s.icon}
+			<div class="card flex flex-col gap-3">
 			<div class="flex h-8 w-8 items-center justify-center rounded-lg" style="background:{s.color}15;color:{s.color}">
 				<Icon class="h-4 w-4" />
 			</div>
-			<div>
-				<p class="text-sm text-muted">{s.label}</p>
+				<div>
+					<p class="text-sm text-muted">{s.label}</p>
 				<p class="mt-0.5 text-2xl font-semibold tracking-tight text-heading">{s.value}</p>
+				</div>
 			</div>
-		</div>
-	{/each}
+		{/each}
 	</div>
 
 	<!-- Main content -->
@@ -206,7 +206,10 @@ const onboardingSteps = $derived([
 								<p class="mt-0.5 text-xs text-faint">No due date</p>
 							{/if}
 						</div>
-						<span class="{statusBadge[p.status] ?? 'badge badge-neutral'}">{statusLabel[p.status] ?? p.status}</span>
+
+						<span
+							class={statusBadge[p.status] ?? 'badge badge-neutral'}
+						>{statusLabel[p.status] ?? p.status}</span>
 					</a>
 				{/each}
 			{/if}

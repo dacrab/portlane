@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit'
-import { checkoutAction, getInvoiceById } from '$lib/server/invoices'
+import { checkoutAction, getInvoiceById } from '#lib/server/invoices.js'
 import type { Actions, PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals, params }) => {

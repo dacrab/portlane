@@ -1,8 +1,8 @@
-import { error, json } from '@sveltejs/kit'
+import { error } from '@sveltejs/kit'
 import { and, eq, or } from 'drizzle-orm'
-import { useDb } from '$lib/server/db'
-import * as schema from '$lib/server/db/schema'
-import { presignDownload } from '$lib/server/storage'
+import * as schema from '#lib/server/db/schema.js'
+import { useDb } from '#lib/server/db.js'
+import { presignDownload } from '#lib/server/storage.js'
 import type { RequestHandler } from './$types'
 
 export const GET: RequestHandler = async ({ url, locals }) => {
@@ -36,5 +36,5 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 
 	if (!allowed) error(403, 'Forbidden')
 
-	return json({ url: await presignDownload(key) })
+	return Response.json({ url: await presignDownload(key) })
 }

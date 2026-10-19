@@ -1,5 +1,14 @@
-import { env } from '$env/dynamic/private'
-import { PUBLIC_APP_URL } from '$env/static/public'
+import {
+	AWS_ACCESS_KEY_ID,
+	AWS_ENDPOINT_URL_S3,
+	AWS_SECRET_ACCESS_KEY,
+	BETTER_AUTH_SECRET,
+	DATABASE_URL,
+	S3_BUCKET,
+	STRIPE_SECRET_KEY,
+	STRIPE_WEBHOOK_SECRET,
+} from '$app/env/private'
+import { PUBLIC_APP_URL } from '$app/env/public'
 
 let checked = false
 
@@ -13,15 +22,15 @@ export function assertServerEnv(): void {
 	if (checked) return
 
 	const required = {
-		DATABASE_URL: env.DATABASE_URL,
-		BETTER_AUTH_SECRET: env.BETTER_AUTH_SECRET,
+		DATABASE_URL,
+		BETTER_AUTH_SECRET,
 		PUBLIC_APP_URL,
-		STRIPE_SECRET_KEY: env.STRIPE_SECRET_KEY,
-		STRIPE_WEBHOOK_SECRET: env.STRIPE_WEBHOOK_SECRET,
-		AWS_ACCESS_KEY_ID: env.AWS_ACCESS_KEY_ID,
-		AWS_SECRET_ACCESS_KEY: env.AWS_SECRET_ACCESS_KEY,
-		AWS_ENDPOINT_URL_S3: env.AWS_ENDPOINT_URL_S3,
-		S3_BUCKET: env.S3_BUCKET,
+		STRIPE_SECRET_KEY,
+		STRIPE_WEBHOOK_SECRET,
+		AWS_ACCESS_KEY_ID,
+		AWS_SECRET_ACCESS_KEY,
+		AWS_ENDPOINT_URL_S3,
+		S3_BUCKET,
 	}
 
 	const missing = Object.entries(required)

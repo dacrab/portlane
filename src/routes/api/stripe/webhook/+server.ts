@@ -1,9 +1,9 @@
-import { error, text } from '@sveltejs/kit'
+import { error } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
 import Stripe from 'stripe'
-import { env } from '$env/dynamic/private'
-import { useDb } from '$lib/server/db'
-import * as schema from '$lib/server/db/schema'
+import * as schema from '#lib/server/db/schema.js'
+import { useDb } from '#lib/server/db.js'
+import { STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET } from '$app/env/private'
 import type { RequestHandler } from './$types'
 
 interface PaidSession {
@@ -32,16 +32,19 @@ function extractPaidSession(event: Stripe.Event): PaidSession | null {
 }
 
 export const POST: RequestHandler = async ({ request }) => {
-	const secret = env.STRIPE_WEBHOOK_SECRET
-	const stripeKey = env.STRIPE_SECRET_KEY
+	const secret = STRIPE_WEBHOOK_SECRET
+	const stripeKey = STRIPE_SECRET_KEY
+
 	if (!(secret && stripeKey)) error(500, 'Stripe is not configured')
 
 	const stripe = new Stripe(stripeKey)
 	const sig = request.headers.get('stripe-signature')
+
 	if (!sig) error(400, 'Missing stripe-signature header')
 
 	const body = await request.text()
 	let event: Stripe.Event
+
 	try {
 		event = stripe.webhooks.constructEvent(body, sig, secret)
 	} catch {
@@ -49,7 +52,8 @@ export const POST: RequestHandler = async ({ request }) => {
 	}
 
 	const paid = extractPaidSession(event)
-	if (!paid) return text('ok')
+
+	if (!paid) return new Response('ok')
 
 	const db = useDb()
 	const [invoice] = await db
@@ -72,7 +76,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				invoiceCents: invoice?.amountCents ?? null,
 			},
 		)
-		return text('ok')
+		return new Response('ok')
 	}
 
 	await db
@@ -84,5 +88,5 @@ export const POST: RequestHandler = async ({ request }) => {
 		})
 		.where(eq(schema.invoices.id, paid.invoiceId))
 
-	return text('ok')
+	return new Response('ok')
 }

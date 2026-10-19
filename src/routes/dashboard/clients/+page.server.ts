@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit'
-import { getFreelancerClients } from '$lib/server/projects'
+import { getFreelancerClients } from '#lib/server/projects.js'
 import type { PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals }) => {

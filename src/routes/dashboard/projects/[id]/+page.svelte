@@ -13,22 +13,31 @@ import IconTrashRegular from 'phosphor-icons-svelte/IconTrashRegular.svelte'
 import IconUserPlusRegular from 'phosphor-icons-svelte/IconUserPlusRegular.svelte'
 import { untrack } from 'svelte'
 import { toast } from 'svelte-sonner'
-import { enhance } from '$app/forms'
-import { downloadFile } from '$lib/client/download'
-import { submitForm, submitOnFilePick, toastEnhance } from '$lib/client/enhance'
-import ActionDeleteButton from '$lib/components/ActionDeleteButton.svelte'
-import AppSelect from '$lib/components/AppSelect.svelte'
-import Avatar from '$lib/components/Avatar.svelte'
-import ProgressBar from '$lib/components/ProgressBar.svelte'
-import SectionHeader from '$lib/components/SectionHeader.svelte'
-import { fmtDate, fmtDateLong, fmtSize, PROJECT_STATUS_ITEMS } from '$lib/fmt'
+import { downloadFile } from '#lib/client/download.js'
+import {
+	submitForm,
+	submitOnFilePick,
+	toastEnhance,
+} from '#lib/client/enhance.js'
+import ActionDeleteButton from '#lib/components/ActionDeleteButton.svelte'
+import AppSelect from '#lib/components/AppSelect.svelte'
+import Avatar from '#lib/components/Avatar.svelte'
+import ProgressBar from '#lib/components/ProgressBar.svelte'
+import SectionHeader from '#lib/components/SectionHeader.svelte'
+import {
+	fmtDate,
+	fmtDateLong,
+	fmtSize,
+	PROJECT_STATUS_ITEMS,
+} from '#lib/fmt.js'
 import {
 	milestoneDone,
 	milestoneProgress,
 	milestoneTotal,
-} from '$lib/milestones'
-import { asRecord } from '$lib/records'
-import { confirmDeleteFromEvent } from '$lib/ui/confirm'
+} from '#lib/milestones.js'
+import { asRecord } from '#lib/records.js'
+import { confirmDeleteFromEvent } from '#lib/ui/confirm.js'
+import { enhance } from '$app/forms'
 import type { PageData } from './$types'
 
 type TimeEntry = (typeof data.timeEntries)[number]

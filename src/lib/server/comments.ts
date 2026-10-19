@@ -1,6 +1,6 @@
 import { and, desc, eq, gt, ne } from 'drizzle-orm'
-import { useDb } from '$lib/server/db'
-import * as schema from '$lib/server/db/schema'
+import * as schema from '#lib/server/db/schema.js'
+import { useDb } from '#lib/server/db.js'
 
 export interface ProjectComment {
 	id: string

@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit'
-import { getRecentComments, markCommentsRead } from '$lib/server/comments'
-import { getDashboardStats } from '$lib/server/dashboard'
-import { getDashboardProjects } from '$lib/server/projects'
+import { getRecentComments, markCommentsRead } from '#lib/server/comments.js'
+import { getDashboardStats } from '#lib/server/dashboard.js'
+import { getDashboardProjects } from '#lib/server/projects.js'
 import type { Actions, PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals }) => {

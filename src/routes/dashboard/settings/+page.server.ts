@@ -1,13 +1,13 @@
 import { error, fail, redirect } from '@sveltejs/kit'
 import { APIError } from 'better-auth/api'
-import { PASSWORD_MIN_LENGTH } from '$lib/constants'
-import { getAuth } from '$lib/server/auth'
-import { DB_ERROR, str } from '$lib/server/form'
+import { PASSWORD_MIN_LENGTH } from '#lib/constants.js'
+import { getAuth } from '#lib/server/auth.js'
+import { DB_ERROR, str } from '#lib/server/form.js'
 import {
 	deleteUserAccount,
 	getUserProfile,
 	updateUserName,
-} from '$lib/server/users'
+} from '#lib/server/users.js'
 import type { Actions, PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals }) => {

@@ -1,9 +1,9 @@
 <script lang="ts">
+import { authClient, authError } from '#lib/auth-client.js'
+import AuthCard from '#lib/components/AuthCard.svelte'
+import { PASSWORD_MIN_LENGTH } from '#lib/constants.js'
 import { goto } from '$app/navigation'
 import { page } from '$app/state'
-import { authClient, authError } from '$lib/auth-client'
-import AuthCard from '$lib/components/AuthCard.svelte'
-import { PASSWORD_MIN_LENGTH } from '$lib/constants'
 
 let password = $state('')
 let confirm = $state('')

@@ -1,8 +1,8 @@
 <script lang="ts">
 import { toast } from 'svelte-sonner'
+import Avatar from '#lib/components/Avatar.svelte'
+import { PASSWORD_MIN_LENGTH } from '#lib/constants.js'
 import { enhance } from '$app/forms'
-import Avatar from '$lib/components/Avatar.svelte'
-import { PASSWORD_MIN_LENGTH } from '$lib/constants'
 import type { ActionData, PageData } from './$types'
 
 let { data, form }: { data: PageData; form: ActionData } = $props()

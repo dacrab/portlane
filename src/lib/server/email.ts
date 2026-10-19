@@ -1,15 +1,15 @@
-import { env } from '$env/dynamic/private'
+import { EMAIL_FROM, RESEND_API_KEY } from '$app/env/private'
 
 const DEFAULT_FROM = 'Portlane <onboarding@resend.dev>'
 
 /** True when a real Resend key is configured (the test placeholder never sends). */
 export function emailEnabled(): boolean {
-	const key = env.RESEND_API_KEY
+	const key = RESEND_API_KEY
 	return !!key && !key.startsWith('re_test')
 }
 
 function fromAddress(): string {
-	return env.EMAIL_FROM ?? DEFAULT_FROM
+	return EMAIL_FROM || DEFAULT_FROM
 }
 
 export interface Email {
@@ -36,7 +36,7 @@ export async function sendEmail({
 		return false
 	}
 	const { Resend } = await import('resend')
-	const resend = new Resend(env.RESEND_API_KEY)
+	const resend = new Resend(RESEND_API_KEY)
 	const { error } = await resend.emails.send({
 		from: fromAddress(),
 		to,

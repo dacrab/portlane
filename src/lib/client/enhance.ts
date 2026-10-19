@@ -1,6 +1,6 @@
-import type { SubmitFunction } from '@sveltejs/kit'
 import { toast } from 'svelte-sonner'
-import { asRecord } from '$lib/records'
+import { asRecord } from '#lib/records.js'
+import type { SubmitFunction } from '$app/forms'
 
 /** Submits the form with the given element id — e.g. from an `AppSelect` change handler. */
 export function submitForm(id: string) {

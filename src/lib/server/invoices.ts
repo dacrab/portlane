@@ -13,10 +13,10 @@ import {
 	or,
 } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
-import { useDb } from '$lib/server/db'
-import * as schema from '$lib/server/db/schema'
-import { str } from '$lib/server/form'
-import { createCheckoutSession } from '$lib/server/stripe'
+import * as schema from '#lib/server/db/schema.js'
+import { useDb } from '#lib/server/db.js'
+import { str } from '#lib/server/form.js'
+import { createCheckoutSession } from '#lib/server/stripe.js'
 
 // ---------------------------------------------------------------------------
 // Reads

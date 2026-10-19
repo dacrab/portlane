@@ -1,7 +1,7 @@
 <script lang="ts">
 import IconTrashRegular from 'phosphor-icons-svelte/IconTrashRegular.svelte'
+import { confirmDeleteFromEvent } from '#lib/ui/confirm.js'
 import { enhance } from '$app/forms'
-import { confirmDeleteFromEvent } from '$lib/ui/confirm'
 
 let {
 	action,

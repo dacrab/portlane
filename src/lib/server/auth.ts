@@ -1,16 +1,16 @@
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { sveltekitCookies } from 'better-auth/svelte-kit'
+import { PASSWORD_MIN_LENGTH } from '#lib/constants.js'
+import * as schema from '#lib/server/db/schema.js'
+import { useDb } from '#lib/server/db.js'
+import { emailEnabled, escapeHtml, sendEmail } from '#lib/server/email.js'
+import { BETTER_AUTH_SECRET } from '$app/env/private'
+import { PUBLIC_APP_URL } from '$app/env/public'
 import { getRequestEvent } from '$app/server'
-import { env } from '$env/dynamic/private'
-import { PUBLIC_APP_URL } from '$env/static/public'
-import { PASSWORD_MIN_LENGTH } from '$lib/constants'
-import { useDb } from '$lib/server/db'
-import * as schema from '$lib/server/db/schema'
-import { emailEnabled, escapeHtml, sendEmail } from '$lib/server/email'
 
 function createAuth() {
-	const secret = env.BETTER_AUTH_SECRET
+	const secret = BETTER_AUTH_SECRET
 	if (!secret) throw new Error('BETTER_AUTH_SECRET is not configured')
 
 	return betterAuth({
