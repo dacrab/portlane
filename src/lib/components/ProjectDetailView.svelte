@@ -37,13 +37,10 @@ const total = $derived(milestoneTotal(data.milestones))
 const done = $derived(milestoneDone(data.milestones))
 </script>
 
-<!-- Project detail: two-column -->
 <div class="grid grid-cols-[1fr_22rem] gap-6 items-start max-md:grid-cols-1">
 
-	<!-- Left -->
 	<div class="flex flex-col space-y-5">
 
-		<!-- Hero -->
 		<div class="card">
 			<div class="flex items-start justify-between gap-4 mb-4">
 				<div>
@@ -58,7 +55,6 @@ const done = $derived(milestoneDone(data.milestones))
 			{/if}
 		</div>
 
-		<!-- Timeline -->
 		{#if data.milestones.length > 0}
 			<div class="card">
 				<SectionHeader title="Timeline" />
@@ -82,7 +78,6 @@ const done = $derived(milestoneDone(data.milestones))
 			</div>
 		{/if}
 
-		<!-- Invoices -->
 		{#if data.invoices.length > 0}
 			<div class="card">
 				<SectionHeader title="Invoices" />
@@ -112,7 +107,6 @@ const done = $derived(milestoneDone(data.milestones))
 			</div>
 		{/if}
 
-		<!-- Approval -->
 		<div class="card">
 			<SectionHeader title="Review &amp; Approval" />
 			<p class="mb-3 text-sm text-muted">Approve the work or request changes.</p>
@@ -140,10 +134,8 @@ const done = $derived(milestoneDone(data.milestones))
 		</div>
 	</div>
 
-	<!-- Right -->
 	<div class="flex flex-col space-y-5">
 
-		<!-- Files -->
 		<div class="card">
 			<SectionHeader title="Files" />
 			{#if data.files.length === 0}
@@ -178,7 +170,6 @@ const done = $derived(milestoneDone(data.milestones))
 			</form>
 		</div>
 
-		<!-- Comments -->
 		<div class="card">
 			<SectionHeader title="Messages" count={data.comments.length || undefined} />
 			{#if data.comments.length > 0}

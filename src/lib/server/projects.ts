@@ -8,10 +8,6 @@ import { useDb } from '#lib/server/db.js'
 import { DB_ERROR, formFile } from '#lib/server/form.js'
 import { deleteObjects, putObject } from '#lib/server/storage.js'
 
-// ---------------------------------------------------------------------------
-// Membership
-// ---------------------------------------------------------------------------
-
 export async function isProjectOwner(projectId: string, userId: string) {
 	const db = useDb()
 	const [row] = await db
@@ -42,11 +38,6 @@ export async function isProjectClient(projectId: string, userId: string) {
 	return !!row
 }
 
-// ---------------------------------------------------------------------------
-// Reads — freelancer
-// ---------------------------------------------------------------------------
-
-/** Lean project list for the dashboard: everything but archived projects. */
 export async function getDashboardProjects(freelancerId: string) {
 	const db = useDb()
 	return db
@@ -66,7 +57,6 @@ export async function getDashboardProjects(freelancerId: string) {
 		.orderBy(desc(schema.projects.createdAt))
 }
 
-/** Full project list with milestone/client progress, for the projects page. */
 export async function getProjectList(freelancerId: string) {
 	const db = useDb()
 	return db
@@ -105,7 +95,6 @@ export async function getProjectForOwner(
 	return project ?? null
 }
 
-/** Every client linked to the freelancer's projects, each with their project names. */
 export async function getFreelancerClients(freelancerId: string) {
 	const db = useDb()
 	const rows = await db
@@ -142,11 +131,6 @@ export async function getFreelancerClients(freelancerId: string) {
 	return [...clients.values()]
 }
 
-// ---------------------------------------------------------------------------
-// Reads — client portal
-// ---------------------------------------------------------------------------
-
-/** Projects a client is linked to, with the owning freelancer's name. */
 export async function getProjectsForClient(clientId: string) {
 	const db = useDb()
 	return db
@@ -166,10 +150,6 @@ export async function getProjectsForClient(clientId: string) {
 		.where(eq(schema.projectClients.clientId, clientId))
 }
 
-/**
- * A project plus the owning freelancer's name. Membership is not checked here;
- * callers gate access with `isProjectClient` first.
- */
 export async function getProjectWithFreelancer(projectId: string) {
 	const db = useDb()
 	const [project] = await db
@@ -183,10 +163,6 @@ export async function getProjectWithFreelancer(projectId: string) {
 		.limit(1)
 	return project ?? null
 }
-
-// ---------------------------------------------------------------------------
-// Reads — shared project detail
-// ---------------------------------------------------------------------------
 
 export async function getProjectMilestones(projectId: string) {
 	const db = useDb()
@@ -254,10 +230,6 @@ export async function getProjectClients(projectId: string) {
 		.where(eq(schema.projectClients.projectId, projectId))
 }
 
-// ---------------------------------------------------------------------------
-// Writes
-// ---------------------------------------------------------------------------
-
 export async function createProject(input: {
 	name: string
 	description: string | null
@@ -294,7 +266,6 @@ export async function addComment(
 	await db.insert(schema.comments).values({ projectId, authorId, body })
 }
 
-/** Appends a milestone after the last one on the project. */
 export async function addMilestone(projectId: string, name: string) {
 	const db = useDb()
 	const [row] = await db
@@ -357,7 +328,6 @@ export async function removeProjectClient(projectId: string, clientId: string) {
 		)
 }
 
-/** Client approves the work: records the decision and completes the project. */
 export async function approveProject(
 	projectId: string,
 	authorId: string,
@@ -377,7 +347,6 @@ export async function approveProject(
 	])
 }
 
-/** Client requests changes: records the request and returns the project to review. */
 export async function requestRevision(
 	projectId: string,
 	authorId: string,
@@ -397,12 +366,6 @@ export async function requestRevision(
 	])
 }
 
-// ---------------------------------------------------------------------------
-// Files (object storage)
-// ---------------------------------------------------------------------------
-
-// Broad on purpose: freelancers hand over all kinds of deliverables (images,
-// PDFs, archives, plain-text exports).
 const ALLOWED_MIME_PREFIXES = [
 	'image/',
 	'application/pdf',
@@ -411,10 +374,6 @@ const ALLOWED_MIME_PREFIXES = [
 	'text/',
 ]
 
-// The prefixes above are broad, so anything a browser *executes* when served has
-// to be named explicitly. The object keeps the content type we pass to the
-// store, so this is the last line of defence against storing an active-content
-// payload. Only types that would otherwise pass the prefix filter need listing.
 const BLOCKED_MIME_TYPES = new Set([
 	'image/svg+xml',
 	'text/html',
@@ -442,9 +401,6 @@ async function uploadProjectFile(
 			'File exceeds maximum size of 100 MB',
 		)
 
-	// An empty content type must be rejected, not waved through: it is
-	// client-controlled, so treating "unknown" as "allowed" hands the
-	// validation decision to the uploader.
 	if (!file.type)
 		throw new FileUploadError(
 			'unsupported_type',
@@ -461,9 +417,6 @@ async function uploadProjectFile(
 	const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
 	const key = `${projectId}/${crypto.randomUUID()}-${safeName}`
 
-	// Store the content type we just validated rather than letting the store
-	// infer it, so a file named `x.html` uploaded as `text/plain` is not later
-	// served as HTML.
 	const storagePath = await putObject(
 		key,
 		Buffer.from(await file.arrayBuffer()),
@@ -480,11 +433,6 @@ async function uploadProjectFile(
 	})
 }
 
-/**
- * Shared `upload_file` handler for the owner and client project views. The
- * caller supplies the guard's ids; this validates the file and maps upload
- * failures onto HTTP status codes.
- */
 export async function handleUploadFileAction(
 	projectId: string,
 	userId: string,
@@ -503,7 +451,6 @@ export async function handleUploadFileAction(
 	}
 }
 
-/** Removes a file row and its stored object. Returns false when it isn't on the project. */
 export async function deleteProjectFile(projectId: string, fileId: string) {
 	const db = useDb()
 	const [file] = await db
@@ -516,20 +463,13 @@ export async function deleteProjectFile(projectId: string, fileId: string) {
 
 	if (!file) return false
 
-	// Object deletion is best-effort; the row is removed regardless.
 	try {
 		await deleteObjects([file.storagePath])
-	} catch {
-		// Ignore — the sweep cron will collect the orphan.
-	}
+	} catch {}
 
 	await db.delete(schema.files).where(eq(schema.files.id, fileId))
 	return true
 }
-
-// ---------------------------------------------------------------------------
-// Clients
-// ---------------------------------------------------------------------------
 
 function nameFromEmail(email: string): string {
 	const local = email.split('@')[0] ?? ''
@@ -570,14 +510,11 @@ export async function inviteClientByEmail(email: string, projectId: string) {
 		.values({ projectId, clientId })
 		.onConflictDoNothing()
 
-	// An invited client has no password until they set one; email the link that
-	// lets them activate the account. Skipped for anyone who can already sign in.
 	if (await needsActivation(clientId)) {
 		await sendPasswordSetupEmail(email)
 	}
 }
 
-/** True when the user has no password credential yet (i.e. never activated). */
 async function needsActivation(userId: string): Promise<boolean> {
 	const [credential] = await useDb()
 		.select({ id: schema.accounts.id })

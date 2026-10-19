@@ -32,7 +32,6 @@ const features = [
 
 <div class="min-h-screen" style="background:var(--color-bg);color:var(--color-text)">
 
-	<!-- Nav -->
 	<header class="sticky top-0 z-40" style="background:color-mix(in srgb, var(--color-bg-elevated) 85%, transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--color-border)">
 		<div class="mx-auto flex h-14 max-w-[68rem] items-center gap-8 px-8">
 			<a href="/" class="mr-auto flex items-center gap-2 text-[0.9375rem] font-bold -tracking-[0.02em] no-underline" style="color:var(--color-text-heading)">
@@ -48,7 +47,6 @@ const features = [
 		</div>
 	</header>
 
-	<!-- Hero -->
 	<section class="border-b px-8 py-20 md:py-24" style="border-color:var(--color-border)">
 		<div class="mx-auto grid max-w-[68rem] items-center gap-16 md:grid-cols-2">
 			<div>
@@ -62,7 +60,6 @@ const features = [
 				</div>
 			</div>
 
-			<!-- UI preview -->
 			<div class="flex justify-end max-md:justify-start">
 				<div class="w-full max-w-[22rem] overflow-hidden rounded-xl shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_8px_24px_rgba(0,0,0,0.08)]" style="background:var(--color-bg-elevated);border:1px solid var(--color-border)">
 					<div class="flex items-center gap-3 border-b px-4 py-3" style="background:var(--color-bg-subtle);border-color:var(--color-border)">
@@ -94,7 +91,6 @@ const features = [
 		</div>
 	</section>
 
-	<!-- How it works -->
 	<section id="how" class="px-8 py-20" style="background:var(--color-bg-elevated)">
 		<div class="mx-auto max-w-[68rem]">
 			<p class="m-0 mb-3 text-[0.75rem] font-semibold uppercase tracking-[0.07em]" style="color:var(--color-text-heading)">How it works</p>
@@ -119,7 +115,6 @@ const features = [
 		</div>
 	</section>
 
-	<!-- Feature highlight -->
 	<section class="px-8 py-20">
 		<div class="mx-auto grid max-w-[68rem] items-center gap-20 md:grid-cols-2">
 			<div>
@@ -149,7 +144,6 @@ const features = [
 		</div>
 	</section>
 
-	<!-- Features -->
 	<section id="features" class="px-8 py-20" style="background:var(--color-bg-elevated)">
 		<div class="mx-auto max-w-[68rem]">
 			<p class="m-0 mb-3 text-[0.75rem] font-semibold uppercase tracking-[0.07em]" style="color:var(--color-text-heading)">Features</p>
@@ -165,7 +159,6 @@ const features = [
 		</div>
 	</section>
 
-	<!-- CTA -->
 	<section class="border-t px-8 py-24" style="border-color:var(--color-border)">
 		<div class="mx-auto flex max-w-[68rem] flex-col items-center gap-4 text-center">
 			<h2 class="m-0 text-[clamp(1.75rem,3.5vw,2.5rem)] font-extrabold -tracking-[0.035em]" style="color:var(--color-text-heading)">Ready to impress your clients?</h2>

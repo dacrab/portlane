@@ -11,7 +11,6 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 	const key = url.searchParams.get('path')
 	if (!key) error(400, 'Missing path')
 
-	// Object keys are namespaced by project: "<projectId>/<uuid>-<name>".
 	const projectId = key.split('/')[0]
 	if (!projectId) error(400, 'Invalid path')
 

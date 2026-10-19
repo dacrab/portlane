@@ -32,11 +32,9 @@ export const fmtDateTime = (iso: string): string =>
 		minute: '2-digit',
 	})
 
-/** File size in MB, or an em dash when unknown. */
 export const fmtSize = (bytes: number | null): string =>
 	bytes ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : '—'
 
-/** Local `YYYY-MM-DD` (not UTC), so it compares correctly against stored due dates. */
 export const today = (): string => {
 	const d = new Date()
 	const pad = (n: number) => String(n).padStart(2, '0')

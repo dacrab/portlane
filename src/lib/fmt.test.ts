@@ -56,7 +56,6 @@ describe('date formatting', () => {
 describe('today', () => {
 	it('returns the local calendar date, not the UTC one', () => {
 		const now = new Date()
-		// Late-evening local times sit on the next UTC day in western zones.
 		now.setHours(23, 30, 0, 0)
 		vi.setSystemTime(now)
 		const pad = (n: number) => String(n).padStart(2, '0')

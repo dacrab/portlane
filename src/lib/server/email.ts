@@ -2,7 +2,6 @@ import { EMAIL_FROM, RESEND_API_KEY } from '$app/env/private'
 
 const DEFAULT_FROM = 'Portlane <onboarding@resend.dev>'
 
-/** True when a real Resend key is configured (the test placeholder never sends). */
 export function emailEnabled(): boolean {
 	const key = RESEND_API_KEY
 	return !!key && !key.startsWith('re_test')
@@ -14,10 +13,6 @@ function fromAddress(): string {
 
 let warnedAboutTestSender = false
 
-// Resend's `onboarding@resend.dev` sender only delivers to the account owner, so
-// invites, password resets and reminders silently fail to reach real clients.
-// Warn once per process — this is exactly the misconfiguration that's easy to
-// ship and hard to notice.
 function warnIfTestSender(): void {
 	if (warnedAboutTestSender) return
 	warnedAboutTestSender = true
@@ -34,11 +29,6 @@ export interface Email {
 	html: string
 }
 
-/**
- * Sends a transactional email through Resend. Returns `true` on success; when
- * email isn't configured (or sending fails) it logs and returns `false` instead
- * of throwing, so callers can treat notifications as best-effort.
- */
 export async function sendEmail({
 	to,
 	subject,
@@ -68,7 +58,6 @@ export async function sendEmail({
 	return true
 }
 
-/** Minimal HTML escaping for values interpolated into email bodies. */
 export function escapeHtml(value: string): string {
 	return value
 		.replaceAll('&', '&amp;')

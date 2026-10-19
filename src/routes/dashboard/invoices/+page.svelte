@@ -54,7 +54,6 @@ const stats = $derived({
 		<button onclick={() => showForm = !showForm} class="btn btn-primary">New invoice</button>
 	</div>
 
-	<!-- Summary stats -->
 	{#if data.invoices.length > 0}
 		<div class="grid grid-cols-3 gap-4">
 			<div class="card py-4">
@@ -72,7 +71,6 @@ const stats = $derived({
 		</div>
 	{/if}
 
-	<!-- Create form -->
 	{#if showForm}
 		<div class="card">
 			<SectionHeader title="Create invoice" />
@@ -126,7 +124,6 @@ const stats = $derived({
 		</div>
 	{/if}
 
-	<!-- Invoice table -->
 	<div class="overflow-hidden rounded-xl card p-0">
 		{#if data.invoices.length === 0}
 			<EmptyState icon={IconFileTextRegular} title="No invoices yet" description="Create your first invoice to start tracking payments." action={{ label: 'Create invoice', onClick: () => showForm = true }} />

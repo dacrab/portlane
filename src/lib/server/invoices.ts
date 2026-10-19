@@ -18,11 +18,6 @@ import { useDb } from '#lib/server/db.js'
 import { str } from '#lib/server/form.js'
 import { createCheckoutSession } from '#lib/server/stripe.js'
 
-// ---------------------------------------------------------------------------
-// Reads
-// ---------------------------------------------------------------------------
-
-/** A freelancer's invoices, with the project and client names joined in. */
 export async function getFreelancerInvoices(freelancerId: string) {
 	const db = useDb()
 	return db
@@ -41,7 +36,6 @@ export async function getFreelancerInvoices(freelancerId: string) {
 		.orderBy(desc(schema.invoices.createdAt))
 }
 
-/** Non-archived projects with their linked clients, for the invoice create form. */
 export async function getInvoiceProjects(freelancerId: string) {
 	const db = useDb()
 	const projects = await db
@@ -83,7 +77,6 @@ export async function getInvoiceProjects(freelancerId: string) {
 	}))
 }
 
-/** A single invoice with project and both parties' names, or null if unknown. */
 export async function getInvoiceById(invoiceId: string) {
 	const db = useDb()
 	const freelancer = alias(schema.users, 'freelancer')
@@ -108,7 +101,6 @@ export async function getInvoiceById(invoiceId: string) {
 	return invoice ?? null
 }
 
-/** Invoices on one project that belong to the given client, newest first. */
 export async function getClientProjectInvoices(
 	projectId: string,
 	clientId: string,
@@ -125,10 +117,6 @@ export async function getClientProjectInvoices(
 		)
 		.orderBy(desc(schema.invoices.createdAt))
 }
-
-// ---------------------------------------------------------------------------
-// Writes
-// ---------------------------------------------------------------------------
 
 export async function createInvoice(input: {
 	projectId: string
@@ -167,15 +155,10 @@ export async function deleteInvoice(invoiceId: string, freelancerId: string) {
 		)
 }
 
-// ---------------------------------------------------------------------------
-// Checkout
-// ---------------------------------------------------------------------------
-
 type CheckoutResult =
 	| { url: string }
 	| ReturnType<typeof fail<{ error: string }>>
 
-/** Creates a single-use Stripe checkout session for an invoice the caller owns or receives. */
 async function handleCheckoutAction(
 	locals: App.Locals,
 	form: FormData,
@@ -235,15 +218,9 @@ async function handleCheckoutAction(
 	return { url: result.url }
 }
 
-/** Shared `checkout` form action for every route that renders a "Pay now" button. */
 export const checkoutAction: Action = async ({ locals, request, url }) =>
 	handleCheckoutAction(locals, await request.formData(), url.origin)
 
-// ---------------------------------------------------------------------------
-// Reminders
-// ---------------------------------------------------------------------------
-
-/** How long to wait before reminding about the same invoice again. */
 const REMINDER_INTERVAL_DAYS = 7
 
 export interface InvoiceReminder {
@@ -257,7 +234,6 @@ export interface InvoiceReminder {
 	freelancerName: string
 }
 
-/** Flips unpaid invoices past their due date to `overdue`. Returns the count. */
 export async function markOverdueInvoices(today: string): Promise<number> {
 	const updated = await useDb()
 		.update(schema.invoices)
@@ -273,7 +249,6 @@ export async function markOverdueInvoices(today: string): Promise<number> {
 	return updated.length
 }
 
-/** Unpaid, past-due invoices that haven't been reminded within the interval. */
 export async function getInvoicesNeedingReminder(
 	now: Date,
 ): Promise<InvoiceReminder[]> {
@@ -314,7 +289,6 @@ export async function getInvoicesNeedingReminder(
 		)
 }
 
-/** Stamps the reminder time so the same invoice isn't emailed again too soon. */
 export async function markInvoicesReminded(
 	invoiceIds: string[],
 	at: Date,

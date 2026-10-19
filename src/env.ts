@@ -1,6 +1,5 @@
 import { defineEnvVars } from '@sveltejs/kit/env'
 
-// These keep the previous `$env/dynamic/*` behaviour: missing values fall back to an empty string.
 export const variables = defineEnvVars({
 	STRIPE_WEBHOOK_SECRET: { schema: (input) => input ?? '' },
 	STRIPE_SECRET_KEY: { schema: (input) => input ?? '' },

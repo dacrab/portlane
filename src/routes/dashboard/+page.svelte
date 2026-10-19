@@ -26,7 +26,6 @@ import type { PageData } from './$types'
 
 let { data }: { data: PageData } = $props()
 
-// Auto-dismiss: mark all as read when the dashboard is visited
 onMount(() => {
 	if (data.unreadCommentRows.length > 0) {
 		fetch('?/mark_read', { method: 'POST' }).then(() => refreshAll())
@@ -96,7 +95,6 @@ const onboardingSteps = $derived([
 </script>
 
 <div class="space-y-8">
-	<!-- Header -->
 	<div class="flex items-start justify-between gap-4">
 		<div>
 			<p class="mb-1 text-xs font-semibold uppercase tracking-widest text-muted">Overview</p>
@@ -110,7 +108,6 @@ const onboardingSteps = $derived([
 		</a>
 	</div>
 
-	<!-- Unread client comments (auto-dismissed on mount) -->
 	{#if data.unreadCommentRows.length > 0}
 		<div class="rounded-xl overflow-hidden card p-0">
 			<div class="flex items-center gap-2 px-5 py-3.5 divide-bottom">
@@ -138,7 +135,6 @@ const onboardingSteps = $derived([
 		</div>
 	{/if}
 
-	<!-- Onboarding checklist -->
 	{#if showOnboarding}
 		<div class="rounded-xl p-5" style="border:1px solid var(--color-accent-200);background:var(--color-accent-50)">
 			<div class="flex items-start justify-between gap-4">
@@ -165,7 +161,6 @@ const onboardingSteps = $derived([
 		</div>
 	{/if}
 
-	<!-- Stats -->
 	<div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
 		{#each stats as s}
 			{@const Icon = s.icon}
@@ -181,9 +176,7 @@ const onboardingSteps = $derived([
 		{/each}
 	</div>
 
-	<!-- Main content -->
 	<div class="grid gap-5 lg:grid-cols-[1fr_22rem]">
-		<!-- Projects list -->
 		<div class="overflow-hidden rounded-xl card p-0">
 			<div class="flex items-center justify-between px-5 py-3.5 divide-bottom">
 				<span class="section-label">Active projects</span>
@@ -215,7 +208,6 @@ const onboardingSteps = $derived([
 			{/if}
 		</div>
 
-		<!-- Activity feed -->
 		<div class="overflow-hidden rounded-xl card p-0">
 			<div class="px-5 py-3.5 divide-bottom">
 				<span class="section-label">Recent activity</span>

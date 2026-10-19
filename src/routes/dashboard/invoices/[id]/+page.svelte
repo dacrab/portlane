@@ -35,7 +35,6 @@ const today = new Date().toLocaleDateString(LOCALE, {
 	</style>
 </svelte:head>
 
-<!-- Toolbar (hidden on print) -->
 <div class="no-print mb-6 flex items-center gap-3">
 	<a href="/dashboard/invoices" class="text-sm text-faint">← Invoices</a>
 	<div class="ml-auto flex gap-2">
@@ -51,9 +50,7 @@ const today = new Date().toLocaleDateString(LOCALE, {
 	</div>
 </div>
 
-<!-- Invoice document -->
 <div class="mx-auto max-w-2xl rounded-xl p-10" style="background:var(--color-bg-elevated);border:1px solid var(--color-border)">
-	<!-- Header -->
 	<div class="mb-10 flex items-start justify-between gap-6">
 		<div>
 			<div class="flex items-center gap-2 mb-4">
@@ -74,7 +71,6 @@ const today = new Date().toLocaleDateString(LOCALE, {
 		</div>
 	</div>
 
-	<!-- From / To -->
 	<div class="mb-10 grid grid-cols-2 gap-8">
 		<div>
 			<p class="mb-1 text-xs font-semibold uppercase tracking-widest text-faint">From</p>
@@ -86,7 +82,6 @@ const today = new Date().toLocaleDateString(LOCALE, {
 		</div>
 	</div>
 
-	<!-- Line item -->
 	<div class="mb-10 overflow-hidden rounded-lg" style="border:1px solid var(--color-border)">
 		<div class="grid px-5 py-3 text-xs font-semibold uppercase tracking-widest"
 			style="grid-template-columns:1fr auto;color:var(--color-text-faint);border-bottom:1px solid var(--color-border)">
@@ -103,7 +98,6 @@ const today = new Date().toLocaleDateString(LOCALE, {
 		</div>
 	</div>
 
-	<!-- Total -->
 	<div class="flex justify-end">
 		<div class="w-48">
 			<div class="flex justify-between py-2 text-sm" style="border-top:2px solid var(--color-border)">
@@ -113,7 +107,6 @@ const today = new Date().toLocaleDateString(LOCALE, {
 		</div>
 	</div>
 
-	<!-- Footer -->
 	<p class="mt-10 text-center text-xs text-faint">
 		Thank you for your business.
 	</p>

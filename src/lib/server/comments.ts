@@ -29,7 +29,6 @@ function baseQuery() {
 		.innerJoin(schema.users, eq(schema.users.id, schema.comments.authorId))
 }
 
-/** Client comments on the freelancer's projects posted since they last read them. */
 export async function getUnreadComments(
 	freelancerId: string,
 ): Promise<ProjectComment[]> {
@@ -51,7 +50,6 @@ export async function getUnreadComments(
 		.orderBy(desc(schema.comments.createdAt))
 }
 
-/** Most recent comments on the freelancer's projects, newest first. */
 export function getRecentComments(
 	freelancerId: string,
 	limit = 5,
@@ -62,7 +60,6 @@ export function getRecentComments(
 		.limit(limit)
 }
 
-/** Records that the freelancer has now seen every client comment. */
 export async function markCommentsRead(freelancerId: string) {
 	await useDb()
 		.update(schema.users)

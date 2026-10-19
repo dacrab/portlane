@@ -8,8 +8,6 @@ import { building, dev } from '$app/env'
 import { SENTRY_DSN } from '$app/env/private'
 import { PUBLIC_APP_URL } from '$app/env/public'
 
-// Error monitoring is opt-in: with no DSN the SDK stays disabled, so local dev
-// and CI behave exactly as before.
 Sentry.init({
 	dsn: SENTRY_DSN || undefined,
 	enabled: Boolean(SENTRY_DSN),
@@ -31,15 +29,11 @@ const appHandle: Handle = async ({ event, resolve }) => {
 			email: session.user.email,
 			role: session.user.role === 'client' ? 'client' : 'freelancer',
 		}
-		// Attach the user to any error/trace raised while handling this request.
 		Sentry.setUser({ id: session.user.id, email: session.user.email })
 	}
 
 	const response = await svelteKitHandler({ event, resolve, auth, building })
 
-	// Baseline hardening. A Content-Security-Policy is deliberately omitted:
-	// SvelteKit's inline hydration script needs nonce plumbing, and a wrong CSP
-	// breaks the app outright.
 	response.headers.set('X-Content-Type-Options', 'nosniff')
 	response.headers.set('X-Frame-Options', 'DENY')
 	response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
@@ -57,12 +51,8 @@ const appHandle: Handle = async ({ event, resolve }) => {
 	return response
 }
 
-// `sentryHandle` wraps the app so requests are traced and thrown errors captured.
 export const handle = sequence(Sentry.sentryHandle(), appHandle)
 
-// Unexpected errors are logged server-side, reported to Sentry by the wrapper,
-// and never leaked to the client. App errors (from `error(...)`) and framework
-// 4xx keep their own message and status — we only override the 5xx cases.
 const appHandleError: HandleServerError = ({ kind, error }) => {
 	if (kind === 'unknown') {
 		// biome-ignore lint/suspicious/noConsole: server errors must reach the logs

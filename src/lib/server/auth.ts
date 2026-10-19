@@ -19,14 +19,10 @@ function createAuth() {
 		database: drizzleAdapter(useDb(), {
 			provider: 'pg',
 			schema,
-			// The schema is exported with plural names (users, sessions, ...);
-			// without this the adapter looks for a singular `user` model and fails.
 			usePlural: true,
 		}),
 		user: {
 			additionalFields: {
-				// Surfaced on `session.user` so request handling doesn't need a second
-				// query. Not client-writable: the role is assigned server-side.
 				role: {
 					type: 'string',
 					required: false,
@@ -38,8 +34,6 @@ function createAuth() {
 		emailAndPassword: {
 			enabled: true,
 			minPasswordLength: PASSWORD_MIN_LENGTH,
-			// Serves both "forgot password" and first-time client invites: either way
-			// the recipient lands on the same set-password screen.
 			sendResetPassword: async ({ user, url }) => {
 				if (!emailEnabled()) {
 					// biome-ignore lint/suspicious/noConsole: local dev logs the link instead of sending email
@@ -57,8 +51,6 @@ function createAuth() {
 	})
 }
 
-// Built on first use rather than at import: the postbuild analysis step (and any
-// other tooling) imports this module without runtime secrets configured.
 let auth: ReturnType<typeof createAuth> | null = null
 
 export function getAuth(): ReturnType<typeof createAuth> {
@@ -66,11 +58,6 @@ export function getAuth(): ReturnType<typeof createAuth> {
 	return auth
 }
 
-/**
- * Emails a user a link to set (or reset) their password — used to activate a
- * freshly invited client, who exists without credentials until they do this.
- * Best-effort: returns false when email isn't configured or sending fails.
- */
 export async function sendPasswordSetupEmail(email: string): Promise<boolean> {
 	if (!emailEnabled()) {
 		// biome-ignore lint/suspicious/noConsole: local dev cannot send, surface the skip
