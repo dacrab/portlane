@@ -1,6 +1,6 @@
 <script lang="ts">
-import MobileNav from '$lib/components/MobileNav.svelte'
-import Sidebar from '$lib/components/Sidebar.svelte'
+import MobileNav from '#lib/components/MobileNav.svelte'
+import Sidebar from '#lib/components/Sidebar.svelte'
 
 let { children, data } = $props()
 </script>

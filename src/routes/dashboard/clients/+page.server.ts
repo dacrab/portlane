@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit'
 import { sql } from 'drizzle-orm'
-import { useDb } from '$lib/server/db'
+import { useDb } from '#lib/server/db.js'
 import type { PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals }) => {

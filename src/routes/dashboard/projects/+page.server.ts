@@ -1,10 +1,10 @@
 import { error, fail, redirect } from '@sveltejs/kit'
 import { desc, eq, sql } from 'drizzle-orm'
-import { PROJECT_STATUS_ITEMS } from '$lib/fmt'
-import { useDb } from '$lib/server/db'
-import * as schema from '$lib/server/db/schema'
-import { DB_ERROR, str } from '$lib/server/form'
-import { inviteClientByEmail } from '$lib/server/project'
+import { PROJECT_STATUS_ITEMS } from '#lib/fmt.js'
+import * as schema from '#lib/server/db/schema.js'
+import { useDb } from '#lib/server/db.js'
+import { DB_ERROR, str } from '#lib/server/form.js'
+import { inviteClientByEmail } from '#lib/server/project.js'
 import type { Actions, PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals }) => {

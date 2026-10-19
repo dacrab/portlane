@@ -23,7 +23,10 @@ let {
 } = $props()
 
 let open = $state(false)
-beforeNavigate(() => {
+
+beforeNavigate(({ shallow, type }) => {
+	if (shallow && type === 'goto') return
+
 	open = false
 })
 </script>
@@ -31,14 +34,14 @@ beforeNavigate(() => {
 <Select.Root
 	type="single"
 	name={name}
-	{required}
-	{items}
+	required={required}
+	items={items}
 	bind:value
 	bind:open
 	onValueChange={onchange}
 >
 	<Select.Trigger class="app-select-trigger">
-		<Select.Value {placeholder} />
+		<Select.Value placeholder={placeholder} />
 		<span class="text-faint ml-auto shrink-0"><IconCaretUpDownRegular class="h-3.5 w-3.5" /></span>
 	</Select.Trigger>
 	<Select.Portal>

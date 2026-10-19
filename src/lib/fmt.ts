@@ -1,4 +1,4 @@
-import { LOCALE } from '$lib/constants'
+import { LOCALE } from '#lib/constants.js'
 
 function formatDateSafe(
 	iso: string,

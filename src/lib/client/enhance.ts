@@ -1,6 +1,6 @@
-import type { SubmitFunction } from '@sveltejs/kit'
 import { toast } from 'svelte-sonner'
-import { asRecord } from '$lib/records'
+import { asRecord } from '#lib/records.js'
+import type { SubmitFunction } from '$app/forms'
 
 export interface ToastEnhanceOptions {
 	successMsg?: string

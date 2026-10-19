@@ -1,6 +1,6 @@
 <script lang="ts">
-import { authClient } from '$lib/auth-client'
-import AuthCard from '$lib/components/AuthCard.svelte'
+import { authClient } from '#lib/auth-client.js'
+import AuthCard from '#lib/components/AuthCard.svelte'
 
 let email = $state('')
 let sent = $state(false)

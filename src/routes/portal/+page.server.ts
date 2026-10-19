@@ -1,17 +1,17 @@
 import { error, fail, redirect } from '@sveltejs/kit'
 import { and, desc, eq, getTableColumns, sql } from 'drizzle-orm'
-import { useDb } from '$lib/server/db'
-import * as schema from '$lib/server/db/schema'
-import { DB_ERROR, str } from '$lib/server/form'
-import { requireClientFromUrl } from '$lib/server/guard'
-import { handleCheckoutAction } from '$lib/server/invoices'
+import * as schema from '#lib/server/db/schema.js'
+import { useDb } from '#lib/server/db.js'
+import { DB_ERROR, str } from '#lib/server/form.js'
+import { requireClientFromUrl } from '#lib/server/guard.js'
+import { handleCheckoutAction } from '#lib/server/invoices.js'
 import {
 	addComment,
 	getProjectComments,
 	getProjectFiles,
 	getProjectMilestones,
 	handleUploadFileAction,
-} from '$lib/server/project'
+} from '#lib/server/project.js'
 import type { Actions, PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals, url }) => {

@@ -1,11 +1,11 @@
 import { fail } from '@sveltejs/kit'
 import { put } from '@vercel/blob'
 import { and, eq, sql } from 'drizzle-orm'
-import { MAX_FILE_SIZE } from '$lib/constants'
-import { useDb } from '$lib/server/db'
-import type { UserRole } from '$lib/server/db/schema'
-import * as schema from '$lib/server/db/schema'
-import { DB_ERROR, formFile } from '$lib/server/form'
+import { MAX_FILE_SIZE } from '#lib/constants.js'
+import type { UserRole } from '#lib/server/db/schema.js'
+import * as schema from '#lib/server/db/schema.js'
+import { useDb } from '#lib/server/db.js'
+import { DB_ERROR, formFile } from '#lib/server/form.js'
 
 export async function isProjectOwner(projectId: string, userId: string) {
 	const db = useDb()

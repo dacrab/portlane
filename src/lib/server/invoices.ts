@@ -1,9 +1,9 @@
 import { fail } from '@sveltejs/kit'
 import { and, eq, or, sql } from 'drizzle-orm'
-import { useDb } from '$lib/server/db'
-import * as schema from '$lib/server/db/schema'
-import { str } from '$lib/server/form'
-import { createCheckoutSession } from '$lib/server/stripe'
+import * as schema from '#lib/server/db/schema.js'
+import { useDb } from '#lib/server/db.js'
+import { str } from '#lib/server/form.js'
+import { createCheckoutSession } from '#lib/server/stripe.js'
 
 // The index signature is required by drizzle's `db.execute<TRow>` constraint;
 // the explicit fields below are what callers may rely on.

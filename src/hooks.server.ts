@@ -1,10 +1,10 @@
-import type { Handle } from '@sveltejs/kit'
+import type { Handle } from '@sveltejs/kit/hooks'
 import { svelteKitHandler } from 'better-auth/svelte-kit'
 import { eq } from 'drizzle-orm'
-import { building } from '$app/environment'
-import { getAuth } from '$lib/server/auth'
-import { useDb } from '$lib/server/db'
-import { users } from '$lib/server/db/schema'
+import { getAuth } from '#lib/server/auth.js'
+import { users } from '#lib/server/db/schema.js'
+import { useDb } from '#lib/server/db.js'
+import { building } from '$app/env'
 
 export const handle: Handle = async ({ event, resolve }) => {
 	const auth = getAuth()
@@ -19,8 +19,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 			.from(users)
 			.where(eq(users.id, session.user.id))
 			.limit(1)
-
 		const row = rows[0]
+
 		if (row) {
 			event.locals.user = {
 				userId: row.id,

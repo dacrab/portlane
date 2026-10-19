@@ -1,15 +1,20 @@
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { sveltekitCookies } from 'better-auth/svelte-kit'
+import { PASSWORD_MIN_LENGTH } from '#lib/constants.js'
+import * as schema from '#lib/server/db/schema.js'
+import { useDb } from '#lib/server/db.js'
+import {
+	BETTER_AUTH_SECRET,
+	EMAIL_FROM,
+	RESEND_API_KEY,
+} from '$app/env/private'
+import { PUBLIC_APP_URL } from '$app/env/public'
 import { getRequestEvent } from '$app/server'
-import { env } from '$env/dynamic/private'
-import { PUBLIC_APP_URL } from '$env/static/public'
-import { PASSWORD_MIN_LENGTH } from '$lib/constants'
-import { useDb } from '$lib/server/db'
-import * as schema from '$lib/server/db/schema'
 
 function createAuth() {
-	const secret = env.BETTER_AUTH_SECRET
+	const secret = BETTER_AUTH_SECRET
+
 	if (!secret) throw new Error('BETTER_AUTH_SECRET is not configured')
 
 	return betterAuth({
@@ -23,7 +28,7 @@ function createAuth() {
 			enabled: true,
 			minPasswordLength: PASSWORD_MIN_LENGTH,
 			sendResetPassword: async ({ user, url }) => {
-				const apiKey = env.RESEND_API_KEY
+				const apiKey = RESEND_API_KEY
 				if (!apiKey || apiKey.startsWith('re_test')) {
 					// biome-ignore lint/suspicious/noConsole: local dev logs the reset link instead of sending email
 					console.info(`[reset-password] ${url}`)
@@ -32,7 +37,7 @@ function createAuth() {
 				const { Resend } = await import('resend')
 				const resend = new Resend(apiKey)
 				const { error } = await resend.emails.send({
-					from: env.EMAIL_FROM ?? 'Portlane <onboarding@resend.dev>',
+					from: EMAIL_FROM ?? 'Portlane <onboarding@resend.dev>',
 					to: user.email,
 					subject: 'Reset your Portlane password',
 					html: `<p>Hi ${user.name},</p><p>Click the link below to reset your Portlane password:</p><p><a href="${url}">Reset your password</a></p><p>If you didn't request this, you can ignore this email.</p>`,
