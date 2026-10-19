@@ -7,8 +7,8 @@ A client portal for freelancers and studios. Replace messy email threads and sha
 **For you**
 - Manage projects with milestones, due dates, and status tracking
 - Track time, upload files, and write internal notes
-- Create and send invoices, track payment status
-- Invite clients by email — a client account is created and linked to the project (no emails are sent; share the portal link or their sign-in email)
+- Create and send invoices, track payment status, and send automatic overdue reminders
+- Invite clients by email — they receive a secure link to set a password and open their private portal
 
 **For your clients**
 - A private portal per project with the timeline, files, and invoices
@@ -55,7 +55,8 @@ bun dev
 - **Auth** — Better Auth with email & password (`hooks.server.ts` is the single handler; sessions are enriched with the user's role on every request).
 - **Files** — uploads go to Neon Object Storage (S3-compatible, private bucket). Downloads go through `GET /api/file-url?path=…`, which authorizes the caller against the project (owner or linked client) and returns a presigned URL valid for 5 minutes.
 - **Payments** — invoice checkout sessions are single-use, so clients can't double-pay via parallel tabs; the Stripe webhook flips status to `paid` after verifying the amount matches.
-- **Client invites & approvals** — inviting links an existing user by email or creates one; approve/revision actions always re-check project membership server-side.
+- **Reminders** — a daily cron moves past-due invoices to `overdue` and emails the client at most once a week (`lastReminderSentAt`).
+- **Client invites & approvals** — inviting links an existing user or creates one, then emails a set-password link; approve/revision actions always re-check project membership server-side.
 - **Account deletion** — deletes content authored/uploaded by the user and invoices where they were the client, then removes the user (their own projects cascade). Stored files are deleted best-effort; a weekly cleanup job removes anything left behind.
 
 ## Deployment
@@ -73,11 +74,14 @@ The app runs on Vercel against a Neon project (Postgres + Object Storage).
 3. **Stripe webhook** — add an endpoint at
    `https://<your-domain>/api/stripe/webhook` for `checkout.session.completed`,
    and put its signing secret in `STRIPE_WEBHOOK_SECRET`.
-4. **Cron** — `vercel.json` schedules `/api/cron/storage-sweep` weekly. Vercel
-   sends `Authorization: Bearer $CRON_SECRET`, so `CRON_SECRET` must also be set
-   in the Vercel project (Doppler alone is not enough).
+4. **Cron** — `vercel.json` schedules `/api/cron/storage-sweep` (weekly) and
+   `/api/cron/invoice-reminders` (daily). Vercel sends
+   `Authorization: Bearer $CRON_SECRET`, so `CRON_SECRET` must also be set in the
+   Vercel project (Doppler alone is not enough).
 5. **Email** — verify your sending domain in Resend and set `EMAIL_FROM`.
-   Without `RESEND_API_KEY`, password-reset links are logged instead of sent.
+   Password resets, client invites, and payment reminders all send through
+   Resend. Without `RESEND_API_KEY` the links are logged instead of sent, and
+   Resend's `onboarding@resend.dev` sender can only reach the account owner.
 
 ### Pre-launch checklist
 
@@ -87,7 +91,7 @@ The app runs on Vercel against a Neon project (Postgres + Object Storage).
 - [ ] `bun run db:migrate` applied to the production branch
 - [ ] Stripe webhook registered and `STRIPE_WEBHOOK_SECRET` set
 - [ ] `CRON_SECRET` set in the Vercel project
-- [ ] Resend sending domain verified (`EMAIL_FROM`)
+- [ ] Resend sending domain verified (`EMAIL_FROM`, not `onboarding@resend.dev`)
 - [ ] `/api/health` responds `{"ok":true}` after deploy
 
 ## Tech stack
