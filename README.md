@@ -1,23 +1,25 @@
 # Portlane
 
-A client portal for freelancers and studios — projects, time tracking, and invoices in one place.
+Portlane is a calm home for freelance client work: projects, hours, and invoices in one place.
 
 **Live demo:** https://portlane.vercel.app
 
-Portlane gives you one clean workspace for client work. Keep projects and milestones up to date, log your hours, and send invoices that clients can pay online. Clients sign in to a private portal to follow progress, download files, and leave comments.
+Freelancers and small studios use it to keep clients up to date without a pile of spreadsheets and email threads. Clients get their own login, where they can follow progress, grab files, comment, and approve work.
 
-## Features
+## On your side
 
-- Projects with milestones, due dates, and status at a glance
-- A private client portal for files, comments, and approvals
-- Time tracking with a quick export
-- Invoices with online card checkout through Stripe
-- Automatic reminders for overdue invoices
-- A dashboard that sums up revenue, invoices, and clients
+- Projects with milestones, due dates, and a clear status
+- Time entries that add up per project and export in a click
+- Invoices with Stripe checkout and polite overdue reminders
+- A client list, plus a dashboard with revenue and invoice totals
 
-## Run it locally
+## On their side
 
-You'll need [Bun](https://bun.sh), a Postgres database (the project uses [Neon](https://neon.tech)), and an S3-compatible bucket for files.
+The `/portal` view is separate from your dashboard. Clients sign in to see their projects, download deliverables, leave comments, and approve finished work. They can also pay an invoice right there.
+
+## Getting set up
+
+Bun, a Postgres database, and an S3-compatible bucket are required. Postgres and storage are set up for [Neon](https://neon.tech), and Stripe handles payments.
 
 ```bash
 bun install
@@ -26,20 +28,9 @@ bun run db:migrate
 bunx vite dev
 ```
 
-Fill in `.env` with your database URL, auth secret, storage keys, and Stripe keys. Email and Sentry keys are optional.
+Fill in `.env` before the migration: database URL, auth secret, storage keys, and Stripe keys. Resend and Sentry are optional.
 
-The usual scripts run through Doppler; if you don't use it, `bunx vite dev` and `bunx vite build` work directly.
-
-## Good to know
-
-- Uploaded files go to object storage; the database only keeps their details.
-- Stripe stays in test mode until you add live keys.
-- Reminder emails need a Resend key, but invoices still work without one.
-- Clients get their own login at `/portal` — separate from your dashboard.
-
-## Built with
-
-SvelteKit, Tailwind CSS, Better Auth, Drizzle, and Neon. Hosted on Vercel.
+The default `dev` and `build` scripts expect Doppler. Without it, use `bunx vite dev` and `bunx vite build`.
 
 ## License
 
