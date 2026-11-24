@@ -499,6 +499,7 @@ export async function inviteClientByEmail(email: string, projectId: string) {
 				email,
 				name: nameFromEmail(email),
 				role: 'client',
+				emailVerified: true,
 			})
 			.returning({ id: schema.users.id })
 		if (!user) throw new Error('Failed to create user')

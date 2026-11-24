@@ -33,6 +33,15 @@ jobs:
         run: doppler run -- bun run check
       - name: Lint
         run: doppler run -- bun run lint
+      - name: Unused code
+        run: doppler run -- bun run knip
+      - name: Migrations in sync
+        run: |
+          bun run db:generate
+          if [ -n "$(git status --porcelain migrations/)" ]; then
+            git status --short migrations/
+            exit 1
+          fi
       - name: Test
         run: doppler run -- bun run test
       - name: Build

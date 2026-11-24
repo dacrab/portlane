@@ -9,6 +9,20 @@ import { BETTER_AUTH_SECRET } from '$app/env/private'
 import { PUBLIC_APP_URL } from '$app/env/public'
 import { getRequestEvent } from '$app/server'
 
+async function sendAuthEmail(input: {
+	to: string
+	subject: string
+	html: string
+	url: string
+}): Promise<void> {
+	if (!emailEnabled()) {
+		// biome-ignore lint/suspicious/noConsole: local dev prints the link instead of sending email
+		console.info(`[auth-link] ${input.url}`)
+		return
+	}
+	await sendEmail({ to: input.to, subject: input.subject, html: input.html })
+}
+
 function createAuth() {
 	const secret = BETTER_AUTH_SECRET
 	if (!secret) throw new Error('BETTER_AUTH_SECRET is not configured')
@@ -34,17 +48,39 @@ function createAuth() {
 		emailAndPassword: {
 			enabled: true,
 			minPasswordLength: PASSWORD_MIN_LENGTH,
+			requireEmailVerification: true,
+			revokeSessionsOnPasswordReset: true,
 			sendResetPassword: async ({ user, url }) => {
-				if (!emailEnabled()) {
-					// biome-ignore lint/suspicious/noConsole: local dev logs the link instead of sending email
-					console.info(`[password-link] ${url}`)
-					return
-				}
-				await sendEmail({
+				await sendAuthEmail({
 					to: user.email,
 					subject: 'Set your Portlane password',
 					html: `<p>Hi ${escapeHtml(user.name)},</p><p>Use the link below to set (or reset) the password for your Portlane account:</p><p><a href="${escapeHtml(url)}">Set my password</a></p><p>If you didn't expect this, you can safely ignore this email.</p>`,
+					url,
 				})
+			},
+		},
+		emailVerification: {
+			sendOnSignUp: true,
+			autoSignInAfterVerification: true,
+			sendVerificationEmail: async ({ user, url }) => {
+				await sendAuthEmail({
+					to: user.email,
+					subject: 'Verify your Portlane email',
+					html: `<p>Hi ${escapeHtml(user.name)},</p><p>Confirm your email to finish setting up your Portlane account:</p><p><a href="${escapeHtml(url)}">Verify my email</a></p><p>If you didn't create this account, you can safely ignore this email.</p>`,
+					url,
+				})
+			},
+		},
+		rateLimit: {
+			enabled: true,
+			storage: 'database',
+			window: 60,
+			max: 100,
+			customRules: {
+				'/sign-in/email': { window: 60, max: 10 },
+				'/sign-up/email': { window: 60, max: 5 },
+				'/request-password-reset': { window: 60, max: 5 },
+				'/send-verification-email': { window: 60, max: 5 },
 			},
 		},
 		plugins: [sveltekitCookies(getRequestEvent)],

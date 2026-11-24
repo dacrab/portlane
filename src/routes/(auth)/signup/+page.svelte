@@ -1,13 +1,13 @@
 <script lang="ts">
 import { authClient, authError } from '#lib/auth-client.js'
 import AuthCard from '#lib/components/AuthCard.svelte'
-import { goto } from '$app/navigation'
 
 let name = $state('')
 let email = $state('')
 let password = $state('')
 let error = $state('')
 let loading = $state(false)
+let sent = $state(false)
 
 async function submit(e: Event) {
 	e.preventDefault()
@@ -17,17 +17,25 @@ async function submit(e: Event) {
 		name,
 		email,
 		password,
+		callbackURL: '/dashboard',
 	})
 	loading = false
 	if (err) {
 		error = authError(err, 'Sign up failed')
 		return
 	}
-	goto('/dashboard')
+	sent = true
 }
 </script>
 
 <AuthCard>
+	{#if sent}
+		<div class="text-center space-y-2">
+			<h1 class="text-lg font-semibold">Check your email</h1>
+			<p class="text-sm text-muted">We sent a verification link to {email}. Open it to finish creating your account.</p>
+			<a href="/login" class="text-accent text-sm hover:underline">Back to sign in</a>
+		</div>
+	{:else}
 	<form onsubmit={submit} class="space-y-4">
 		<h1 class="text-lg font-semibold text-center">Create an account</h1>
 		{#if error}
@@ -52,4 +60,5 @@ async function submit(e: Event) {
 			Already have an account? <a href="/login" class="text-accent hover:underline">Sign in</a>
 		</p>
 	</form>
+	{/if}
 </AuthCard>

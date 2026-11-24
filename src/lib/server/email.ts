@@ -3,8 +3,7 @@ import { EMAIL_FROM, RESEND_API_KEY } from '$app/env/private'
 const DEFAULT_FROM = 'Portlane <onboarding@resend.dev>'
 
 export function emailEnabled(): boolean {
-	const key = RESEND_API_KEY
-	return !!key && !key.startsWith('re_test')
+	return Boolean(RESEND_API_KEY)
 }
 
 function fromAddress(): string {

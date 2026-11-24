@@ -1,9 +1,6 @@
 import { createAuthClient } from 'better-auth/svelte'
-import { PUBLIC_APP_URL } from '$app/env/public'
 
-export const authClient = createAuthClient({
-	baseURL: PUBLIC_APP_URL,
-})
+export const authClient = createAuthClient()
 
 export function authError(
 	error: { message?: string; statusText: string },
