@@ -172,6 +172,7 @@ async function handleCheckoutAction(
 	const [invoice] = await db
 		.select({
 			id: schema.invoices.id,
+			projectId: schema.invoices.projectId,
 			amountCents: schema.invoices.amountCents,
 			currency: schema.invoices.currency,
 			status: schema.invoices.status,
@@ -200,6 +201,7 @@ async function handleCheckoutAction(
 	if (invoice.status !== 'sent' && invoice.status !== 'overdue')
 		return fail(400, { error: 'Invoice is not payable' })
 
+	const portalUrl = `${origin}/portal?project=${invoice.projectId}`
 	const result = await createCheckoutSession(
 		{
 			id: invoice.id,
@@ -207,7 +209,12 @@ async function handleCheckoutAction(
 			currency: invoice.currency,
 			projectName: invoice.projectName,
 		},
-		origin,
+		locals.user.role === 'client'
+			? { successUrl: `${portalUrl}&payment=success`, cancelUrl: portalUrl }
+			: {
+					successUrl: `${origin}/dashboard/invoices/${invoice.id}?payment=success`,
+					cancelUrl: `${origin}/dashboard/invoices/${invoice.id}`,
+				},
 	)
 
 	await db

@@ -1,15 +1,26 @@
-import { LOCALE } from '#lib/constants.js'
+import { DEFAULT_CURRENCY, LOCALE } from '#lib/constants.js'
+
+const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/
+
+function parseDate(iso: string): Date {
+	if (!DATE_ONLY.test(iso)) return new Date(iso)
+	const [year, month, day] = iso.split('-')
+	return new Date(Number(year), Number(month) - 1, Number(day))
+}
 
 function formatDateSafe(
 	iso: string,
 	options: Intl.DateTimeFormatOptions,
 ): string {
-	const d = new Date(iso)
+	const d = parseDate(iso)
 	if (Number.isNaN(d.getTime())) return '-'
 	return d.toLocaleDateString(LOCALE, options)
 }
 
-export const fmtMoney = (cents: number, currency = 'USD'): string => {
+export const fmtMoney = (
+	cents: number,
+	currency = DEFAULT_CURRENCY,
+): string => {
 	const amount = cents / 100
 	return amount.toLocaleString(LOCALE, {
 		style: 'currency',
@@ -20,6 +31,9 @@ export const fmtMoney = (cents: number, currency = 'USD'): string => {
 
 export const fmtDate = (iso: string): string =>
 	formatDateSafe(iso, { month: 'short', day: 'numeric' })
+
+export const fmtDateYear = (iso: string): string =>
+	formatDateSafe(iso, { year: 'numeric', month: 'short', day: 'numeric' })
 
 export const fmtDateLong = (iso: string): string =>
 	formatDateSafe(iso, { year: 'numeric', month: 'long', day: 'numeric' })
@@ -32,8 +46,18 @@ export const fmtDateTime = (iso: string): string =>
 		minute: '2-digit',
 	})
 
-export const fmtSize = (bytes: number | null): string =>
-	bytes ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : '—'
+const SIZE_UNITS = ['B', 'KB', 'MB', 'GB'] as const
+
+export const fmtSize = (bytes: number | null): string => {
+	if (!bytes) return '—'
+	let value = bytes
+	let unit = 0
+	while (value >= 1024 && unit < SIZE_UNITS.length - 1) {
+		value /= 1024
+		unit++
+	}
+	return `${value.toFixed(unit === 0 ? 0 : 1)} ${SIZE_UNITS[unit]}`
+}
 
 export const today = (): string => {
 	const d = new Date()

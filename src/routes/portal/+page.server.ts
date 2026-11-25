@@ -32,7 +32,6 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			files: [],
 			comments: [],
 			invoices: [],
-			user: locals.user,
 		}
 	}
 
@@ -55,7 +54,6 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		files,
 		comments,
 		invoices,
-		user: locals.user,
 	}
 }
 

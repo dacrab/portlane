@@ -1,7 +1,11 @@
 import { eq } from 'drizzle-orm'
+import type { UserRole } from '#lib/server/db/schema.js'
 import * as schema from '#lib/server/db/schema.js'
 import { useDb } from '#lib/server/db.js'
 import { deleteObjects } from '#lib/server/storage.js'
+
+export const getHomeRoute = (role: UserRole | undefined) =>
+	role === 'client' ? '/portal' : '/dashboard'
 
 export async function getUserProfile(userId: string) {
 	const db = useDb()

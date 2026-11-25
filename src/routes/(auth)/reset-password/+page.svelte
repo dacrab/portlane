@@ -10,11 +10,7 @@ let confirm = $state('')
 let error = $state('')
 let loading = $state(false)
 
-const token = $derived(
-	page.url.searchParams.get('token') &&
-		page.url.searchParams.get('token') !== '',
-)
-
+const token = $derived(page.url.searchParams.get('token') ?? '')
 const invalidToken = $derived(
 	page.url.searchParams.get('error') === 'INVALID_TOKEN',
 )
@@ -29,7 +25,7 @@ async function submit(e: Event) {
 	loading = true
 	const { error: err } = await authClient.resetPassword({
 		newPassword: password,
-		token: page.url.searchParams.get('token') ?? undefined,
+		token,
 	})
 	loading = false
 	if (err) {

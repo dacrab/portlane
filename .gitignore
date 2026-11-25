@@ -23,4 +23,3 @@ vite.config.ts.timestamp-*
 
 # Sentry CLI local session
 .sentryclirc
-.env*

@@ -21,6 +21,7 @@ export const actions: Actions = {
 	update_profile: async ({ locals, request }) => {
 		if (!locals.user) error(401)
 		const name = str(await request.formData(), 'name')
+		if (!name) return fail(400, { profile_error: 'Name is required' })
 		try {
 			await updateUserName(locals.user.userId, name)
 		} catch {

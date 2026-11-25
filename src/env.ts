@@ -1,23 +1,21 @@
 import { defineEnvVars } from '@sveltejs/kit/env'
 
+const optional = { schema: (input?: string) => input ?? '' }
+
 export const variables = defineEnvVars({
-	STRIPE_WEBHOOK_SECRET: { schema: (input) => input ?? '' },
-	STRIPE_SECRET_KEY: { schema: (input) => input ?? '' },
-	CRON_SECRET: { schema: (input) => input ?? '' },
+	STRIPE_WEBHOOK_SECRET: optional,
+	STRIPE_SECRET_KEY: optional,
+	CRON_SECRET: optional,
 	PUBLIC_APP_URL: { public: true, static: true },
-	BETTER_AUTH_SECRET: { schema: (input) => input ?? '' },
-	RESEND_API_KEY: { schema: (input) => input ?? '' },
-	EMAIL_FROM: { schema: (input) => input ?? '' },
-	DATABASE_URL: { schema: (input) => input ?? '' },
-	AWS_ACCESS_KEY_ID: { schema: (input) => input ?? '' },
-	AWS_SECRET_ACCESS_KEY: { schema: (input) => input ?? '' },
-	AWS_ENDPOINT_URL_S3: { schema: (input) => input ?? '' },
-	AWS_REGION: { schema: (input) => input ?? '' },
-	S3_BUCKET: { schema: (input) => input ?? '' },
-	SENTRY_DSN: { schema: (input) => input ?? '' },
-	PUBLIC_SENTRY_DSN: {
-		public: true,
-		static: true,
-		schema: (input) => input ?? '',
-	},
+	BETTER_AUTH_SECRET: optional,
+	RESEND_API_KEY: optional,
+	EMAIL_FROM: optional,
+	DATABASE_URL: optional,
+	AWS_ACCESS_KEY_ID: optional,
+	AWS_SECRET_ACCESS_KEY: optional,
+	AWS_ENDPOINT_URL_S3: optional,
+	AWS_REGION: optional,
+	S3_BUCKET: optional,
+	SENTRY_DSN: optional,
+	PUBLIC_SENTRY_DSN: { ...optional, public: true, static: true },
 })

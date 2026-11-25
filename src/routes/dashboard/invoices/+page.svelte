@@ -145,7 +145,7 @@ const stats = $derived({
 					<p class="hidden sm:block text-sm text-faint shrink-0">
 						{inv.dueDate ? fmtDate(inv.dueDate) : '—'}
 					</p>
-					<p class="text-sm font-semibold text-heading shrink-0">{fmtMoney(inv.amountCents)}</p>
+					<p class="text-sm font-semibold text-heading shrink-0">{fmtMoney(inv.amountCents, inv.currency)}</p>
 					<div class="w-28 shrink-0">
 						<form id="inv-status-{inv.id}" method="POST" action="?/update_status"
 							use:enhance={toastEnhance({ successMsg: 'Status updated' })}>

@@ -16,6 +16,7 @@ import {
 } from '$app/env/private'
 
 const DOWNLOAD_TTL_SECONDS = 5 * 60
+const DELETE_BATCH_SIZE = 1000
 
 let client: S3Client | null = null
 
@@ -27,7 +28,7 @@ function useS3(): S3Client {
 		throw new Error('S3 credentials are not configured')
 	}
 	client = new S3Client({
-		region: AWS_REGION || 'us-east-1',
+		region: AWS_REGION,
 		endpoint: AWS_ENDPOINT_URL_S3,
 		forcePathStyle: true,
 		credentials: { accessKeyId, secretAccessKey },
@@ -58,13 +59,16 @@ export async function putObject(
 }
 
 export async function deleteObjects(keys: string[]): Promise<void> {
-	if (keys.length === 0) return
-	await useS3().send(
-		new DeleteObjectsCommand({
-			Bucket: bucket(),
-			Delete: { Objects: keys.map((Key) => ({ Key })) },
-		}),
-	)
+	for (let i = 0; i < keys.length; i += DELETE_BATCH_SIZE) {
+		await useS3().send(
+			new DeleteObjectsCommand({
+				Bucket: bucket(),
+				Delete: {
+					Objects: keys.slice(i, i + DELETE_BATCH_SIZE).map((Key) => ({ Key })),
+				},
+			}),
+		)
+	}
 }
 
 export async function presignDownload(key: string): Promise<string> {

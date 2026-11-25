@@ -292,6 +292,8 @@ function exportTimeCSV() {
 							if (result.type === 'failure') {
 								const error = asRecord(result.data)?.error
 								toast.error(typeof error === 'string' ? error : 'Invitation failed')
+							} else if (result.type === 'error') {
+								toast.error('Something went wrong')
 							} else {
 								toast.success('Client added to project', { description: 'They can sign in to the portal with this email.' });
 							}

@@ -1,28 +1,15 @@
 <script lang="ts">
 import { toast } from 'svelte-sonner'
-import { checkoutEnhance } from '#lib/client/enhance.js'
-import { LOCALE } from '#lib/constants.js'
-import { fmtMoney, statusBadge } from '#lib/fmt.js'
-import { enhance } from '$app/forms'
+import { fmtDateLong, fmtMoney, statusBadge, statusLabel } from '#lib/fmt.js'
 import { page } from '$app/state'
 import type { PageData } from './$types'
 
 let { data }: { data: PageData } = $props()
 
 const inv = $derived(data.invoice)
-const amount = $derived(fmtMoney(inv.amountCents))
-const isClient = $derived(inv.clientId === data.user.userId)
-const isPayable = $derived(
-	isClient &&
-		(inv.status === 'sent' || inv.status === 'overdue') &&
-		!inv.stripeSessionId,
-)
+const amount = $derived(fmtMoney(inv.amountCents, inv.currency))
 
-const today = new Date().toLocaleDateString(LOCALE, {
-	year: 'numeric',
-	month: 'long',
-	day: 'numeric',
-})
+const today = fmtDateLong(new Date().toISOString())
 </script>
 
 <svelte:head>
@@ -38,12 +25,6 @@ const today = new Date().toLocaleDateString(LOCALE, {
 <div class="no-print mb-6 flex items-center gap-3">
 	<a href="/dashboard/invoices" class="text-sm text-faint">← Invoices</a>
 	<div class="ml-auto flex gap-2">
-		{#if isPayable}
-			<form method="POST" action="?/checkout" use:enhance={checkoutEnhance()}>
-				<input type="hidden" name="invoiceId" value={inv.id} />
-				<button type="submit" class="btn btn-primary text-xs">Pay Now</button>
-			</form>
-		{/if}
 		<button onclick={() => navigator.clipboard.writeText(page.url.href).then(() => toast.success('Link copied!'))}
 			class="btn btn-ghost text-xs">Copy link</button>
 		<button onclick={() => window.print()} class="btn btn-primary text-xs">Print / Save PDF</button>
@@ -61,12 +42,10 @@ const today = new Date().toLocaleDateString(LOCALE, {
 			<p class="mt-1 text-xs font-mono text-faint">{inv.id.slice(0, 8).toUpperCase()}</p>
 		</div>
 		<div class="text-right">
-			<span class="{statusBadge[inv.status] ?? 'badge badge-neutral'} capitalize">{inv.status}</span>
+			<span class="{statusBadge[inv.status] ?? 'badge badge-neutral'}">{statusLabel[inv.status] ?? inv.status}</span>
 			<p class="mt-3 text-xs text-faint">Issued {today}</p>
 			{#if inv.dueDate}
-				<p class="text-xs text-faint">
-					Due {new Date(inv.dueDate).toLocaleDateString(LOCALE, { year: 'numeric', month: 'long', day: 'numeric' })}
-				</p>
+				<p class="text-xs text-faint">Due {fmtDateLong(inv.dueDate)}</p>
 			{/if}
 		</div>
 	</div>

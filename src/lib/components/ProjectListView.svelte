@@ -1,7 +1,7 @@
 <script lang="ts">
 import Avatar from '#lib/components/Avatar.svelte'
 import EmptyState from '#lib/components/EmptyState.svelte'
-import { fmtDate } from '#lib/fmt.js'
+import { fmtDate, statusBadge, statusLabel } from '#lib/fmt.js'
 import type { PageData } from '../../routes/portal/$types'
 
 let { data }: { data: PageData } = $props()
@@ -26,7 +26,7 @@ let { data }: { data: PageData } = $props()
 							{#if p.dueDate}{#if p.freelancerName} · {/if}Due {fmtDate(p.dueDate)}{/if}
 						</p>
 					</div>
-					<span class="badge badge-neutral shrink-0">{p.status.replace('_', ' ')}</span>
+					<span class="{statusBadge[p.status] ?? 'badge badge-neutral'} shrink-0">{statusLabel[p.status] ?? p.status}</span>
 				</a>
 			{/each}
 		</div>

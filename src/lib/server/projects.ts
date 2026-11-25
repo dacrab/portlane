@@ -2,7 +2,6 @@ import { fail } from '@sveltejs/kit'
 import { and, desc, eq, getTableColumns, max, ne, sql } from 'drizzle-orm'
 import { MAX_FILE_SIZE } from '#lib/constants.js'
 import { sendPasswordSetupEmail } from '#lib/server/auth.js'
-import type { UserRole } from '#lib/server/db/schema.js'
 import * as schema from '#lib/server/db/schema.js'
 import { useDb } from '#lib/server/db.js'
 import { DB_ERROR, formFile } from '#lib/server/form.js'
@@ -313,7 +312,7 @@ export async function saveProjectNote(projectId: string, body: string) {
 		.values({ projectId, body })
 		.onConflictDoUpdate({
 			target: schema.projectNotes.projectId,
-			set: { body },
+			set: { body, updatedAt: new Date().toISOString() },
 		})
 }
 
@@ -529,6 +528,3 @@ async function needsActivation(userId: string): Promise<boolean> {
 		.limit(1)
 	return !credential
 }
-
-export const getHomeRoute = (role: UserRole | undefined) =>
-	role === 'client' ? '/portal' : '/dashboard'

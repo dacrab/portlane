@@ -1,5 +1,7 @@
 <script lang="ts">
 import IconTrashRegular from 'phosphor-icons-svelte/IconTrashRegular.svelte'
+import { toast } from 'svelte-sonner'
+import { asRecord } from '#lib/records.js'
 import { confirmDeleteFromEvent } from '#lib/ui/confirm.js'
 import { enhance } from '$app/forms'
 
@@ -18,7 +20,19 @@ let {
 } = $props()
 </script>
 
-<form method="POST" action={action} use:enhance={() => async ({ update }) => { await update(); ondelete?.(); }}>
+<form method="POST" action={action} use:enhance={() => async ({ result, update }) => {
+	await update()
+	if (result.type === 'success') {
+		ondelete?.()
+		return
+	}
+	if (result.type === 'failure') {
+		const error = asRecord(result.data)?.error
+		toast.error(typeof error === 'string' ? error : 'Delete failed')
+	} else if (result.type === 'error') {
+		toast.error('Something went wrong')
+	}
+}}>
 	<input {name} value={id} type="hidden" />
 	<button type="button" class="btn-icon shrink-0" title="Delete"
 		onclick={(e: MouseEvent) => confirmDeleteFromEvent(message, e)}>

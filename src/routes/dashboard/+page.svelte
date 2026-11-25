@@ -41,7 +41,7 @@ function dismissOnboarding() {
 }
 
 const showOnboarding = $derived(!(onboardingDismissed || data.onboardingDone))
-const isOverdue = (due: string | null) => due && due < today()
+const isOverdue = (due: string | null) => !!due && due < today()
 
 const stats = $derived([
 	{
@@ -165,12 +165,12 @@ const onboardingSteps = $derived([
 		{#each stats as s}
 			{@const Icon = s.icon}
 			<div class="card flex flex-col gap-3">
-			<div class="flex h-8 w-8 items-center justify-center rounded-lg" style="background:{s.color}15;color:{s.color}">
-				<Icon class="h-4 w-4" />
-			</div>
+				<div class="flex h-8 w-8 items-center justify-center rounded-lg" style="background:{s.color}15;color:{s.color}">
+					<Icon class="h-4 w-4" />
+				</div>
 				<div>
 					<p class="text-sm text-muted">{s.label}</p>
-				<p class="mt-0.5 text-2xl font-semibold tracking-tight text-heading">{s.value}</p>
+					<p class="mt-0.5 text-2xl font-semibold tracking-tight text-heading">{s.value}</p>
 				</div>
 			</div>
 		{/each}
@@ -183,26 +183,24 @@ const onboardingSteps = $derived([
 				<a href="/dashboard/projects" class="text-xs font-medium text-accent hover:underline">View all →</a>
 			</div>
 			{#if data.projects.length === 0}
-			<EmptyState icon={IconFolderOpenRegular} title="No projects yet" description="Create your first project to get started." compact action={{ label: 'Create project', href: '/dashboard/projects' }} />
+				<EmptyState icon={IconFolderOpenRegular} title="No projects yet" description="Create your first project to get started." compact action={{ label: 'Create project', href: '/dashboard/projects' }} />
 			{:else}
 				{#each data.projects as p}
+					{@const overdue = isOverdue(p.dueDate)}
 					<a href="/dashboard/projects/{p.id}" class="row-link divide-bottom">
 						<Avatar name={p.name} size={8} />
 						<div class="flex-1 min-w-0">
 							<p class="text-sm font-medium truncate text-body">{p.name}</p>
 							{#if p.dueDate}
-								<p class="mt-0.5 text-xs" class:text-danger={isOverdue(p.dueDate)} class:text-faint={!isOverdue(p.dueDate)}>
-									{isOverdue(p.dueDate) ? '⚠ Overdue · ' : 'Due '}
+								<p class="mt-0.5 text-xs" class:text-danger={overdue} class:text-faint={!overdue}>
+									{overdue ? '⚠ Overdue · ' : 'Due '}
 									{fmtDate(p.dueDate)}
 								</p>
 							{:else}
 								<p class="mt-0.5 text-xs text-faint">No due date</p>
 							{/if}
 						</div>
-
-						<span
-							class={statusBadge[p.status] ?? 'badge badge-neutral'}
-						>{statusLabel[p.status] ?? p.status}</span>
+						<span class={statusBadge[p.status] ?? 'badge badge-neutral'}>{statusLabel[p.status] ?? p.status}</span>
 					</a>
 				{/each}
 			{/if}

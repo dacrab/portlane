@@ -17,7 +17,14 @@ import {
 import Avatar from '#lib/components/Avatar.svelte'
 import ProgressBar from '#lib/components/ProgressBar.svelte'
 import SectionHeader from '#lib/components/SectionHeader.svelte'
-import { fmtDate, fmtMoney, fmtSize, statusBadge, today } from '#lib/fmt.js'
+import {
+	fmtDate,
+	fmtMoney,
+	fmtSize,
+	statusBadge,
+	statusLabel,
+	today,
+} from '#lib/fmt.js'
 import { milestoneDone, milestoneTotal } from '#lib/milestones.js'
 import { enhance } from '$app/forms'
 import type { PageData } from '../../routes/portal/$types'
@@ -48,7 +55,7 @@ const done = $derived(milestoneDone(data.milestones))
 					<h1 class="text-xl font-bold tracking-tight text-heading">{data.project.name}</h1>
 					<p class="mt-0.5 text-sm text-faint">Managed by {data.project.freelancerName}</p>
 				</div>
-				<span class="badge badge-accent shrink-0 mt-1">{data.project.status.replace('_', ' ')}</span>
+				<span class="{statusBadge[data.project.status] ?? 'badge badge-neutral'} shrink-0 mt-1">{statusLabel[data.project.status] ?? data.project.status}</span>
 			</div>
 			{#if total > 0}
 				<ProgressBar current={done} {total} />
@@ -82,25 +89,23 @@ const done = $derived(milestoneDone(data.milestones))
 			<div class="card">
 				<SectionHeader title="Invoices" />
 				<div class="space-y-2">
-				{#each data.invoices as inv}
-					<div class="relative flex items-center justify-between rounded-lg px-3 py-3" style="border:1px solid var(--color-border-subtle)">
-						{#if (inv.status === 'sent' || inv.status === 'overdue') && !inv.stripeSessionId}
-							<form method="POST" action="?/checkout" use:enhance={checkoutEnhance()}
-								class="absolute inset-0 z-10 cursor-pointer" style="background:transparent">
-								<input type="hidden" name="invoiceId" value={inv.id} />
-								<button type="submit" aria-label="Pay invoice {fmtMoney(inv.amountCents)}" class="h-full w-full cursor-pointer" style="background:transparent"></button>
-							</form>
-						{/if}
+					{#each data.invoices as inv}
+						{@const overdue = !!inv.dueDate && inv.dueDate < today() && inv.status !== 'paid'}
+						<div class="relative flex items-center justify-between rounded-lg px-3 py-3" style="border:1px solid var(--color-border-subtle)">
+							{#if (inv.status === 'sent' || inv.status === 'overdue') && !inv.stripeSessionId}
+								<form method="POST" action="?/checkout" use:enhance={checkoutEnhance()}
+									class="absolute inset-0 z-10 cursor-pointer" style="background:transparent">
+									<input type="hidden" name="invoiceId" value={inv.id} />
+									<button type="submit" aria-label="Pay invoice {fmtMoney(inv.amountCents, inv.currency)}" class="h-full w-full cursor-pointer" style="background:transparent"></button>
+								</form>
+							{/if}
 							<div>
-								<p class="text-sm font-semibold text-heading">{fmtMoney(inv.amountCents)}</p>
-								<p class="text-xs mt-0.5" class:text-danger={inv.dueDate && inv.dueDate < today() && inv.status !== 'paid'} class:text-faint={!(inv.dueDate && inv.dueDate < today() && inv.status !== 'paid')}>
+								<p class="text-sm font-semibold text-heading">{fmtMoney(inv.amountCents, inv.currency)}</p>
+								<p class="text-xs mt-0.5" class:text-danger={overdue} class:text-faint={!overdue}>
 									{inv.dueDate ? `Due ${fmtDate(inv.dueDate)}` : fmtDate(inv.createdAt)}
 								</p>
 							</div>
-							<span class="{statusBadge[inv.status] ?? 'badge badge-neutral'}">{inv.status}</span>
-							{#if inv.status === 'paid'}
-								<span class="text-xs font-medium text-success ml-2">Paid</span>
-							{/if}
+							<span class="{statusBadge[inv.status] ?? 'badge badge-neutral'}">{statusLabel[inv.status] ?? inv.status}</span>
 						</div>
 					{/each}
 				</div>

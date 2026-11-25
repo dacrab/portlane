@@ -30,11 +30,11 @@ bunx vite dev
 
 Fill in `.env` before the migration: database URL, auth secret, storage keys, and Stripe keys. In development, Resend and Sentry are optional and auth links are printed to the console instead of sent.
 
-The default `dev` and `build` scripts expect Doppler. Without it, use `bunx vite dev` and `bunx vite build`.
+The default `dev` script runs through Doppler. Without it, export the variables from `.env` and use `bunx vite dev`. Builds read `PUBLIC_APP_URL` at build time, so use `doppler run -- bun run build` or export it first.
 
 ## Production
 
-- Apply migrations with `bun run db:migrate`. `db:push` is for local prototyping only.
+- Apply migrations with `bun run db:migrate`. Never use `drizzle-kit push` against a real database.
 - Set `PUBLIC_APP_URL` at build time; SvelteKit inlines it. It must be the canonical `https://` origin.
 - `BETTER_AUTH_SECRET` must be at least 32 characters. Generate one with `openssl rand -base64 32`.
 - Email is required in production: set `RESEND_API_KEY` and an `EMAIL_FROM` on a verified domain. Startup fails otherwise, because sign-up and client invites depend on verification and password-setup emails.

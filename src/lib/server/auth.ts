@@ -95,11 +95,6 @@ export function getAuth(): ReturnType<typeof createAuth> {
 }
 
 export async function sendPasswordSetupEmail(email: string): Promise<boolean> {
-	if (!emailEnabled()) {
-		// biome-ignore lint/suspicious/noConsole: local dev cannot send, surface the skip
-		console.info(`[password-link] skipped for ${email} (Resend not configured)`)
-		return false
-	}
 	try {
 		await getAuth().api.requestPasswordReset({
 			body: { email, redirectTo: `${PUBLIC_APP_URL}/reset-password` },

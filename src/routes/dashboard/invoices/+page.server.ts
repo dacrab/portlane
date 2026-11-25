@@ -2,7 +2,6 @@ import { error, fail } from '@sveltejs/kit'
 import { isInvoiceStatus } from '#lib/fmt.js'
 import { DB_ERROR, num, str } from '#lib/server/form.js'
 import {
-	checkoutAction,
 	createInvoice,
 	deleteInvoice,
 	getFreelancerInvoices,
@@ -56,8 +55,6 @@ export const actions: Actions = {
 			return fail(500, { error: DB_ERROR })
 		}
 	},
-
-	checkout: checkoutAction,
 
 	update_status: async ({ locals, request }) => {
 		if (!locals.user) error(401)

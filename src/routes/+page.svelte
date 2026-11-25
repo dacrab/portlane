@@ -84,7 +84,7 @@ const features = [
 						<div class="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.05em]" style="color:var(--color-text-faint)">Invoice #003</div>
 						<div class="flex items-center justify-between py-1 text-sm" style="color:var(--color-text)"><span style="color:var(--color-text-muted)">Design phase — 20h</span><span>$3,200</span></div>
 						<div class="mt-1 flex items-center justify-between border-t pt-2 text-sm font-semibold" style="border-color:var(--color-border-subtle)"><span>Total due</span><span class="text-base" style="color:var(--color-text-heading)">$3,200</span></div>
-						<button class="mt-[0.875rem] w-full cursor-pointer rounded-[0.375rem] border-none px-2 py-2 text-sm font-medium transition-colors duration-150" style="background:var(--color-ink);color:var(--color-bg-elevated)">Pay now</button>
+						<div class="mt-[0.875rem] w-full rounded-[0.375rem] px-2 py-2 text-center text-sm font-medium" style="background:var(--color-ink);color:var(--color-bg-elevated)">Pay now</div>
 					</div>
 				</div>
 			</div>
@@ -175,7 +175,7 @@ const features = [
 				<img src="/favicon.svg" alt="" class="h-[1.375rem] w-[1.375rem]" />
 				Portlane
 			</a>
-			<p class="m-0 text-xs" style="color:var(--color-text-faint)">© 2026 Portlane</p>
+			<p class="m-0 text-xs" style="color:var(--color-text-faint)">© {new Date().getFullYear()} Portlane</p>
 			<div class="flex gap-5">
 				<a href="/login" class="text-xs no-underline" style="color:var(--color-text-faint)">Log in</a>
 				<a href="/signup" class="text-xs no-underline" style="color:var(--color-text-faint)">Sign up</a>

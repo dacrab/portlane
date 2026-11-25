@@ -49,7 +49,7 @@ function confirmDeleteAccount() {
 			<form method="POST" action="?/update_profile" use:enhance class="space-y-4">
 				<div>
 					<label for="name" class="mb-1.5 block text-xs font-medium text-muted">Full name</label>
-					<input id="name" name="name" type="text" value={data.profile?.name ?? ''} class="input" />
+					<input id="name" name="name" type="text" required value={data.profile?.name ?? ''} class="input" />
 				</div>
 				<div>
 					<label for="email_display" class="mb-1.5 block text-xs font-medium text-muted">Email</label>

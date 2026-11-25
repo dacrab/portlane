@@ -5,6 +5,7 @@ import {
 	AWS_REGION,
 	AWS_SECRET_ACCESS_KEY,
 	BETTER_AUTH_SECRET,
+	CRON_SECRET,
 	DATABASE_URL,
 	EMAIL_FROM,
 	RESEND_API_KEY,
@@ -36,6 +37,7 @@ export function assertServerEnv(): void {
 		AWS_ENDPOINT_URL_S3,
 		AWS_REGION,
 		S3_BUCKET,
+		CRON_SECRET,
 	}
 
 	if (!dev) {

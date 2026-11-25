@@ -33,6 +33,11 @@ describe('fmtSize', () => {
 		expect(fmtSize(5 * 1024 * 1024)).toBe('5.0 MB')
 	})
 
+	it('formats smaller sizes with the right unit', () => {
+		expect(fmtSize(512)).toBe('512 B')
+		expect(fmtSize(1536)).toBe('1.5 KB')
+	})
+
 	it('returns an em dash when the size is unknown', () => {
 		expect(fmtSize(null)).toBe('—')
 		expect(fmtSize(0)).toBe('—')

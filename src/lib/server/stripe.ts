@@ -9,7 +9,7 @@ export async function createCheckoutSession(
 		currency: string
 		projectName?: string | null
 	},
-	origin: string,
+	urls: { successUrl: string; cancelUrl: string },
 ): Promise<{ url: string; sessionId: string }> {
 	const key = STRIPE_SECRET_KEY
 
@@ -21,8 +21,8 @@ export async function createCheckoutSession(
 		mode: 'payment',
 		line_items: buildInvoiceLineItems(invoice),
 		client_reference_id: invoice.id,
-		success_url: `${origin}/dashboard/invoices/${invoice.id}?payment=success`,
-		cancel_url: `${origin}/dashboard/invoices/${invoice.id}`,
+		success_url: urls.successUrl,
+		cancel_url: urls.cancelUrl,
 	})
 
 	if (!session.url) throw new Error('Stripe returned a session without a URL')

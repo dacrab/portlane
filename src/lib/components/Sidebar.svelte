@@ -7,6 +7,7 @@ import { onMount } from 'svelte'
 import { authClient } from '#lib/auth-client.js'
 import { navItems } from '#lib/nav.js'
 import { sidebarCollapsed } from '#lib/stores.svelte.js'
+import { goto } from '$app/navigation'
 import { page } from '$app/state'
 
 let {
@@ -37,6 +38,11 @@ function toggleDark() {
 		document.documentElement.classList.remove('dark')
 		localStorage.setItem('theme', 'light')
 	}
+}
+
+async function signOut() {
+	await authClient.signOut()
+	goto('/')
 }
 
 const navLinks = navItems.slice(0, 4)
@@ -111,13 +117,13 @@ const bottomLinks = navItems.slice(4)
 						{user?.email?.charAt(0) ?? '?'}
 					</div>
 					<p class="flex-1 truncate text-[11px]" style="color:rgba(255,255,255,0.3)">{user?.email ?? ''}</p>
-					<button onclick={() => authClient.signOut()} class="shrink-0 p-1 rounded hover:bg-white/10" title="Sign out">
+					<button onclick={signOut} class="shrink-0 p-1 rounded hover:bg-white/10" title="Sign out">
 						<span style="color:rgba(255,255,255,0.3)"><IconSignOutRegular class="h-3.5 w-3.5" /></span>
 					</button>
 				</div>
 			{:else}
 				<div class="flex justify-center">
-					<button onclick={() => authClient.signOut()} class="flex h-7 w-7 items-center justify-center rounded-full hover:bg-white/10" title="Sign out">
+					<button onclick={signOut} class="flex h-7 w-7 items-center justify-center rounded-full hover:bg-white/10" title="Sign out">
 						<span class="text-[10px] font-semibold uppercase" style="color:rgba(255,255,255,0.6)">{user?.email?.charAt(0) ?? '?'}</span>
 					</button>
 				</div>

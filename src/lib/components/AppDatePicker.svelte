@@ -5,6 +5,7 @@ import IconCalendarRegular from 'phosphor-icons-svelte/IconCalendarRegular.svelt
 import IconCaretLeftRegular from 'phosphor-icons-svelte/IconCaretLeftRegular.svelte'
 import IconCaretRightRegular from 'phosphor-icons-svelte/IconCaretRightRegular.svelte'
 import { LOCALE } from '#lib/constants.js'
+import { fmtDateYear } from '#lib/fmt.js'
 
 let {
 	name,
@@ -26,9 +27,7 @@ let calValue = $state<DateValue | undefined>(
 <DatePicker.Root bind:value={calValue} onValueChange={(v) => { value = v ? v.toString() : ''; }} locale={LOCALE}>
 	<DatePicker.Trigger class="app-select-trigger">
 		<span class="flex-1 text-left" style="color:{calValue ? 'var(--color-text)' : 'var(--color-zinc-300)'}">
-			{calValue
-				? new Date(value + 'T00:00:00').toLocaleDateString(LOCALE, { month: 'short', day: 'numeric', year: 'numeric' })
-				: placeholder}
+			{calValue ? fmtDateYear(value) : placeholder}
 		</span>
 		<span class="text-faint ml-auto shrink-0"><IconCalendarRegular class="h-3.5 w-3.5" /></span>
 	</DatePicker.Trigger>

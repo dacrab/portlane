@@ -38,9 +38,18 @@ export const actions: Actions = {
 				status,
 				freelancerId: locals.user.userId,
 			})
-			if (client_email) await inviteClientByEmail(client_email, projectId)
 		} catch {
-			return fail(400, { error: DB_ERROR })
+			return fail(500, { error: DB_ERROR })
+		}
+
+		if (client_email) {
+			try {
+				await inviteClientByEmail(client_email, projectId)
+			} catch (err) {
+				// The project exists; the invite can be retried from its page.
+				// biome-ignore lint/suspicious/noConsole: invite failures belong in server logs
+				console.error('[invite] failed', err)
+			}
 		}
 
 		redirect(303, `/dashboard/projects/${projectId}`)
