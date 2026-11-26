@@ -1,15 +1,9 @@
-type LocalUser = {
-	userId: string
-	email: string
-	role: 'freelancer' | 'client'
-}
+import type { SessionUser } from '#lib/domain/types.js'
 
 declare global {
 	namespace App {
 		interface Locals {
-			user: LocalUser | null
+			user: SessionUser | null
 		}
 	}
 }
-
-export {}

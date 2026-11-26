@@ -1,92 +1,111 @@
 <script lang="ts">
 import { toast } from 'svelte-sonner'
-import { fmtDateLong, fmtMoney, statusBadge, statusLabel } from '#lib/fmt.js'
+import { formatDateLong, formatMoney } from '#lib/domain/format.js'
+import {
+	INVOICE_STATUS_LABEL,
+	INVOICE_STATUS_TONE,
+} from '#lib/domain/status.js'
+import Badge from '#lib/ui/Badge.svelte'
+import Button from '#lib/ui/Button.svelte'
 import { page } from '$app/state'
 import type { PageData } from './$types'
 
 let { data }: { data: PageData } = $props()
 
-const inv = $derived(data.invoice)
-const amount = $derived(fmtMoney(inv.amountCents, inv.currency))
-
-const today = fmtDateLong(new Date().toISOString())
+const invoice = $derived(data.invoice)
+const amount = $derived(formatMoney(invoice.amountCents, invoice.currency))
+const issued = $derived(formatDateLong(invoice.createdAt))
 </script>
 
 <svelte:head>
-	<title>Invoice · {inv.projectName}</title>
+	<title>Invoice · {invoice.projectName}</title>
 	<style>
 		@media print {
-			.no-print { display: none !important; }
-			body { background: white !important; }
+			.no-print {
+				display: none !important;
+			}
+			body {
+				background: white !important;
+			}
 		}
 	</style>
 </svelte:head>
 
-<div class="no-print mb-6 flex items-center gap-3">
-	<a href="/dashboard/invoices" class="text-sm text-faint">← Invoices</a>
-	<div class="ml-auto flex gap-2">
-		<button onclick={() => navigator.clipboard.writeText(page.url.href).then(() => toast.success('Link copied!'))}
-			class="btn btn-ghost text-xs">Copy link</button>
-		<button onclick={() => window.print()} class="btn btn-primary text-xs">Print / Save PDF</button>
-	</div>
-</div>
-
-<div class="mx-auto max-w-2xl rounded-xl p-10" style="background:var(--color-bg-elevated);border:1px solid var(--color-border)">
-	<div class="mb-10 flex items-start justify-between gap-6">
-		<div>
-			<div class="flex items-center gap-2 mb-4">
-				<img src="/favicon.svg" alt="Portlane" class="h-6 w-6" />
-				<span class="text-sm font-semibold text-heading">Portlane</span>
-			</div>
-			<p class="text-3xl font-bold tracking-tight text-heading">Invoice</p>
-			<p class="mt-1 text-xs font-mono text-faint">{inv.id.slice(0, 8).toUpperCase()}</p>
-		</div>
-		<div class="text-right">
-			<span class="{statusBadge[inv.status] ?? 'badge badge-neutral'}">{statusLabel[inv.status] ?? inv.status}</span>
-			<p class="mt-3 text-xs text-faint">Issued {today}</p>
-			{#if inv.dueDate}
-				<p class="text-xs text-faint">Due {fmtDateLong(inv.dueDate)}</p>
-			{/if}
+<div class="space-y-6">
+	<div class="no-print flex items-center justify-between gap-4">
+		<a href="/dashboard/invoices" class="text-xs text-muted transition-colors hover:text-ink">
+			← Invoices
+		</a>
+		<div class="flex gap-2">
+			<Button
+				variant="ghost"
+				size="sm"
+				onclick={() =>
+					navigator.clipboard.writeText(page.url.href).then(() => toast.success('Link copied'))}
+			>
+				Copy link
+			</Button>
+			<Button size="sm" onclick={() => window.print()}>Print / Save PDF</Button>
 		</div>
 	</div>
 
-	<div class="mb-10 grid grid-cols-2 gap-8">
-		<div>
-			<p class="mb-1 text-xs font-semibold uppercase tracking-widest text-faint">From</p>
-			<p class="text-sm font-semibold text-heading">{inv.freelancerName}</p>
-		</div>
-		<div>
-			<p class="mb-1 text-xs font-semibold uppercase tracking-widest text-faint">To</p>
-			<p class="text-sm font-semibold text-heading">{inv.clientName}</p>
-		</div>
-	</div>
-
-	<div class="mb-10 overflow-hidden rounded-lg" style="border:1px solid var(--color-border)">
-		<div class="grid px-5 py-3 text-xs font-semibold uppercase tracking-widest"
-			style="grid-template-columns:1fr auto;color:var(--color-text-faint);border-bottom:1px solid var(--color-border)">
-			<span>Description</span><span>Amount</span>
-		</div>
-		<div class="grid px-5 py-4" style="grid-template-columns:1fr auto">
+	<article class="mx-auto max-w-2xl border border-line bg-surface p-8 sm:p-10">
+		<header class="flex items-start justify-between gap-6 border-b border-line pb-8">
 			<div>
-				<p class="text-sm font-medium text-heading">{inv.projectName}</p>
-				{#if inv.projectDescription}
-					<p class="mt-0.5 text-xs text-faint">{inv.projectDescription}</p>
+				<p class="display text-[28px] leading-none">Invoice</p>
+				<p class="mt-2 font-mono text-[11px] text-muted">
+					{invoice.id.slice(0, 8).toUpperCase()}
+				</p>
+			</div>
+			<div class="text-right">
+				<Badge tone={INVOICE_STATUS_TONE[invoice.status]}>
+					{INVOICE_STATUS_LABEL[invoice.status]}
+				</Badge>
+				<p class="mt-3 text-[11px] text-muted">Issued {issued}</p>
+				{#if invoice.dueDate}
+					<p class="text-[11px] text-muted">Due {formatDateLong(invoice.dueDate)}</p>
 				{/if}
 			</div>
-			<p class="text-sm font-semibold text-heading">{amount}</p>
-		</div>
-	</div>
+		</header>
 
-	<div class="flex justify-end">
-		<div class="w-48">
-			<div class="flex justify-between py-2 text-sm" style="border-top:2px solid var(--color-border)">
-				<span class="font-semibold text-heading">Total</span>
-				<span class="font-bold text-base text-heading">{amount}</span>
+		<div class="grid grid-cols-2 gap-8 border-b border-line py-8">
+			<div>
+				<p class="text-[11px] text-muted">From</p>
+				<p class="mt-1 text-[13px] font-medium text-ink">{invoice.freelancerName}</p>
+			</div>
+			<div>
+				<p class="text-[11px] text-muted">To</p>
+				<p class="mt-1 text-[13px] font-medium text-ink">{invoice.clientName}</p>
 			</div>
 		</div>
-	</div>
 
-	<p class="mt-10 text-center text-xs text-faint">
-		Thank you for your business.
-	</p>
+		<div class="py-8">
+			<div class="flex items-start justify-between gap-6 border-b border-line pb-4 text-[11px] font-medium text-muted">
+				<span>Description</span>
+				<span>Amount</span>
+			</div>
+			<div class="flex items-start justify-between gap-6 pt-4">
+				<div>
+					<p class="text-[13px] font-medium text-ink">{invoice.projectName}</p>
+					{#if invoice.projectDescription}
+						<p class="mt-1 max-w-sm text-[11px] leading-relaxed text-muted">
+							{invoice.projectDescription}
+						</p>
+					{/if}
+				</div>
+				<p class="tabular text-[13px] font-medium text-ink">{amount}</p>
+			</div>
+		</div>
+
+		<div class="flex justify-end border-t border-line pt-4">
+			<div class="w-48">
+				<div class="flex items-baseline justify-between">
+					<span class="text-[13px] font-medium text-ink">Total</span>
+					<span class="display tabular text-[22px]">{amount}</span>
+				</div>
+			</div>
+		</div>
+
+		<p class="mt-10 text-center text-[11px] text-muted">Thank you for your business.</p>
+	</article>
 </div>

@@ -1,73 +1,69 @@
-import { error, fail } from '@sveltejs/kit'
-import { isInvoiceStatus } from '#lib/fmt.js'
-import { DB_ERROR, num, str } from '#lib/server/form.js'
+import { fail } from '@sveltejs/kit'
+import { isInvoiceStatus } from '#lib/domain/status.js'
+import { authed, DB_ERROR } from '#lib/server/action.js'
+import { num, str } from '#lib/server/form.js'
+import { requireUser } from '#lib/server/guard.js'
 import {
 	createInvoice,
 	deleteInvoice,
+	setInvoiceStatus,
+} from '#lib/server/invoice-actions.js'
+import {
 	getFreelancerInvoices,
 	getInvoiceProjects,
-	setInvoiceStatus,
 } from '#lib/server/invoices.js'
 import { isProjectClient, isProjectOwner } from '#lib/server/projects.js'
 import type { Actions, PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals }) => {
-	if (!locals.user) error(401)
-	const userId = locals.user.userId
+	const user = requireUser(locals)
 
 	const [invoices, projects] = await Promise.all([
-		getFreelancerInvoices(userId),
-		getInvoiceProjects(userId),
+		getFreelancerInvoices(user.userId),
+		getInvoiceProjects(user.userId),
 	])
 
 	return { invoices, projects }
 }
 
 export const actions: Actions = {
-	create: async ({ locals, request }) => {
-		if (!locals.user) error(401)
-		const form = await request.formData()
-		const project_id = str(form, 'project_id')
-		const client_id = str(form, 'client_id')
-		const amount = num(form, 'amount', NaN)
-		const due_date = str(form, 'due_date') || null
+	create: authed(async ({ user, form }) => {
+		const projectId = str(form, 'project_id')
+		const clientId = str(form, 'client_id')
+		const amount = num(form, 'amount', Number.NaN)
+		const dueDate = str(form, 'due_date') || null
 
-		if (!(project_id && client_id) || Number.isNaN(amount))
+		if (!(projectId && clientId) || Number.isNaN(amount))
 			return fail(400, { error: 'Missing fields' })
-		if (!(amount > 0)) return fail(400, { error: 'Amount must be positive' })
-		if (due_date && !/^\d{4}-\d{2}-\d{2}$/.test(due_date))
+		if (amount <= 0) return fail(400, { error: 'Amount must be positive' })
+		if (dueDate && !/^\d{4}-\d{2}-\d{2}$/.test(dueDate))
 			return fail(400, { error: 'Invalid due date' })
 
-		if (!(await isProjectOwner(project_id, locals.user.userId)))
+		if (!(await isProjectOwner(projectId, user.userId)))
 			return fail(400, { error: 'Project not found in your workspace' })
-		if (!(await isProjectClient(project_id, client_id)))
+		if (!(await isProjectClient(projectId, clientId)))
 			return fail(400, { error: 'Client is not linked to this project' })
 
 		try {
 			await createInvoice({
-				projectId: project_id,
-				clientId: client_id,
-				freelancerId: locals.user.userId,
+				projectId,
+				clientId,
+				freelancerId: user.userId,
 				amountCents: Math.round(amount * 100),
-				dueDate: due_date,
+				dueDate,
 			})
 		} catch {
 			return fail(500, { error: DB_ERROR })
 		}
-	},
+	}),
 
-	update_status: async ({ locals, request }) => {
-		if (!locals.user) error(401)
-		const form = await request.formData()
-		const id = str(form, 'id')
+	update_status: authed(async ({ user, form }) => {
 		const status = str(form, 'status')
 		if (!isInvoiceStatus(status)) return fail(400, { error: 'Invalid status' })
-		await setInvoiceStatus(id, locals.user.userId, status)
-	},
+		await setInvoiceStatus(str(form, 'id'), user.userId, status)
+	}),
 
-	delete: async ({ locals, request }) => {
-		if (!locals.user) error(401)
-		const id = str(await request.formData(), 'id')
-		await deleteInvoice(id, locals.user.userId)
-	},
+	delete: authed(async ({ user, form }) => {
+		await deleteInvoice(str(form, 'id'), user.userId)
+	}),
 }

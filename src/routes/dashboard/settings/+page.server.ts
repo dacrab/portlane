@@ -1,8 +1,10 @@
-import { error, fail, redirect } from '@sveltejs/kit'
+import { fail, redirect } from '@sveltejs/kit'
 import { APIError } from 'better-auth/api'
 import { PASSWORD_MIN_LENGTH } from '#lib/constants.js'
+import { authed, DB_ERROR } from '#lib/server/action.js'
 import { getAuth } from '#lib/server/auth.js'
-import { DB_ERROR, str } from '#lib/server/form.js'
+import { str } from '#lib/server/form.js'
+import { requireUser } from '#lib/server/guard.js'
 import {
 	deleteUserAccount,
 	getUserProfile,
@@ -11,28 +13,24 @@ import {
 import type { Actions, PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals }) => {
-	if (!locals.user) error(401)
-
-	const profile = await getUserProfile(locals.user.userId)
+	const user = requireUser(locals)
+	const profile = await getUserProfile(user.userId)
 	return { profile, email: profile?.email ?? '' }
 }
 
 export const actions: Actions = {
-	update_profile: async ({ locals, request }) => {
-		if (!locals.user) error(401)
-		const name = str(await request.formData(), 'name')
+	update_profile: authed(async ({ user, form }) => {
+		const name = str(form, 'name')
 		if (!name) return fail(400, { profile_error: 'Name is required' })
 		try {
-			await updateUserName(locals.user.userId, name)
+			await updateUserName(user.userId, name)
 		} catch {
 			return fail(500, { profile_error: DB_ERROR })
 		}
 		return { profile_saved: true }
-	},
+	}),
 
-	change_password: async ({ locals, request }) => {
-		if (!locals.user) error(401)
-		const form = await request.formData()
+	change_password: authed(async ({ event, form }) => {
 		const currentPassword = str(form, 'current_password')
 		const password = str(form, 'password')
 		const confirm = str(form, 'confirm')
@@ -49,7 +47,7 @@ export const actions: Actions = {
 		try {
 			await getAuth().api.changePassword({
 				body: { currentPassword, newPassword: password },
-				headers: request.headers,
+				headers: event.request.headers,
 			})
 		} catch (e) {
 			if (e instanceof APIError) {
@@ -60,16 +58,15 @@ export const actions: Actions = {
 			throw e
 		}
 		return { password_saved: true }
-	},
+	}),
 
-	delete_account: async ({ locals, request }) => {
-		if (!locals.user) error(401)
+	delete_account: authed(async ({ event, user }) => {
 		try {
-			await getAuth().api.signOut({ headers: request.headers })
-			await deleteUserAccount(locals.user.userId)
+			await getAuth().api.signOut({ headers: event.request.headers })
+			await deleteUserAccount(user.userId)
 		} catch {
 			return fail(500, { profile_error: DB_ERROR })
 		}
 		redirect(303, '/')
-	},
+	}),
 }

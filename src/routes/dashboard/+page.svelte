@@ -1,27 +1,30 @@
 <script lang="ts">
-import IconBellRegular from 'phosphor-icons-svelte/IconBellRegular.svelte'
-import IconCheckCircleRegular from 'phosphor-icons-svelte/IconCheckCircleRegular.svelte'
-import IconCheckRegular from 'phosphor-icons-svelte/IconCheckRegular.svelte'
-import IconClockRegular from 'phosphor-icons-svelte/IconClockRegular.svelte'
-import IconCurrencyDollarRegular from 'phosphor-icons-svelte/IconCurrencyDollarRegular.svelte'
+import IconArrowRightRegular from 'phosphor-icons-svelte/IconArrowRightRegular.svelte'
+import IconCheckBold from 'phosphor-icons-svelte/IconCheckBold.svelte'
 import IconFolderOpenRegular from 'phosphor-icons-svelte/IconFolderOpenRegular.svelte'
 import IconPlusRegular from 'phosphor-icons-svelte/IconPlusRegular.svelte'
 import IconXRegular from 'phosphor-icons-svelte/IconXRegular.svelte'
 import { onMount } from 'svelte'
-import Avatar from '#lib/components/Avatar.svelte'
-import EmptyState from '#lib/components/EmptyState.svelte'
 import { LOCALE } from '#lib/constants.js'
 import {
-	fmtDate,
-	fmtDateTime,
-	fmtMoney,
-	statusBadge,
-	statusLabel,
-	today,
-} from '#lib/fmt.js'
+	formatDate,
+	formatDateTime,
+	formatMoney,
+	todayISO,
+} from '#lib/domain/format.js'
+import {
+	PROJECT_STATUS_LABEL,
+	PROJECT_STATUS_TONE,
+} from '#lib/domain/status.js'
+import Avatar from '#lib/ui/Avatar.svelte'
+import Badge from '#lib/ui/Badge.svelte'
+import Button from '#lib/ui/Button.svelte'
+import EmptyState from '#lib/ui/EmptyState.svelte'
+import PageHeader from '#lib/ui/PageHeader.svelte'
+import Section from '#lib/ui/Section.svelte'
+import Stat from '#lib/ui/Stat.svelte'
 import { browser } from '$app/env'
 import { refreshAll } from '$app/navigation'
-
 import type { PageData } from './$types'
 
 let { data }: { data: PageData } = $props()
@@ -35,205 +38,198 @@ onMount(() => {
 let onboardingDismissed = $state(
 	browser && localStorage.getItem('onboarding_dismissed') === '1',
 )
+
 function dismissOnboarding() {
 	localStorage.setItem('onboarding_dismissed', '1')
 	onboardingDismissed = true
 }
 
 const showOnboarding = $derived(!(onboardingDismissed || data.onboardingDone))
-const isOverdue = (due: string | null) => !!due && due < today()
 
-const stats = $derived([
+const steps = $derived([
 	{
-		label: 'Active projects',
-		value: data.active,
-		icon: IconFolderOpenRegular,
-		color: 'var(--color-accent-600)',
-	},
-	{
-		label: 'Pending review',
-		value: data.pending,
-		icon: IconClockRegular,
-		color: '#b45309',
-	},
-	{
-		label: 'Completed',
-		value: data.completed,
-		icon: IconCheckCircleRegular,
-		color: '#15803d',
-	},
-	{
-		label: 'Revenue (all-time)',
-		value: fmtMoney(data.revenue),
-		icon: IconCurrencyDollarRegular,
-		color: '#1d4ed8',
-	},
-])
-
-const onboardingSteps = $derived([
-	{
-		label: 'Set your name in Settings',
+		label: 'Set your name',
 		done: data.onboarding.hasProfile,
 		href: '/dashboard/settings',
 	},
 	{
-		label: 'Create your first project',
+		label: 'Create a project',
 		done: data.onboarding.hasProject,
 		href: '/dashboard/projects?new=1',
 	},
 	{
-		label: 'Invite a client to a project',
+		label: 'Invite a client',
 		done: data.onboarding.hasClient,
 		href: '/dashboard/projects',
 	},
 	{
-		label: 'Send your first invoice',
+		label: 'Send an invoice',
 		done: data.onboarding.hasInvoice,
 		href: '/dashboard/invoices',
 	},
 ])
+
+const today = $derived(
+	new Date().toLocaleDateString(LOCALE, {
+		weekday: 'long',
+		month: 'long',
+		day: 'numeric',
+	}),
+)
 </script>
 
 <div class="space-y-8">
-	<div class="flex items-start justify-between gap-4">
-		<div>
-			<p class="mb-1 text-xs font-semibold uppercase tracking-widest text-muted">Overview</p>
-			<h1 class="page-title">Welcome back</h1>
-			<p class="mt-0.5 text-sm text-muted">
-				{new Date().toLocaleDateString(LOCALE, { weekday: 'long', month: 'long', day: 'numeric' })}
-			</p>
-		</div>
-		<a href="/dashboard/projects?new=1" class="btn btn-primary shrink-0">
-			<IconPlusRegular class="h-4 w-4" /><span class="hidden sm:inline"> New project</span>
-		</a>
-	</div>
+	<PageHeader
+		title="Welcome back"
+		description={today}
+	>
+		{#snippet actions()}
+			<Button href="/dashboard/projects?new=1" size="sm">
+				<IconPlusRegular class="h-4 w-4" />
+				New project
+			</Button>
+		{/snippet}
+	</PageHeader>
 
 	{#if data.unreadCommentRows.length > 0}
-		<div class="rounded-xl overflow-hidden card p-0">
-			<div class="flex items-center gap-2 px-5 py-3.5 divide-bottom">
-				<span class="text-accent"><IconBellRegular class="h-4 w-4" /></span>
-				<span class="text-sm font-semibold text-heading">New client messages</span>
-				<span class="flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-semibold bg-accent-pill">{data.unreadCommentRows.length}</span>
-			</div>
-			<div>
-				{#each data.unreadCommentRows as c}
-					<a href="/dashboard/projects/{c.projectId}"
-						class="flex items-start gap-3 px-5 py-4 transition-colors hover-bg no-underline divide-bottom">
-						<Avatar name={c.authorName} size={7} />
-						<div class="flex-1 min-w-0">
-							<p class="text-xs text-faint">
-								<span class="font-medium text-body">{c.authorName}</span>
-								{' '}commented on{' '}
-								<span class="font-medium text-body">{c.projectName}</span>
-							</p>
-							<p class="mt-0.5 text-sm truncate text-body">{c.body}</p>
-							<p class="mt-0.5 text-xs text-faint">{fmtDateTime(c.createdAt)}</p>
-						</div>
-					</a>
+		<Section
+			title="New from clients"
+			meta={String(data.unreadCommentRows.length)}
+			flush
+		>
+			<ul class="divide-y divide-line">
+				{#each data.unreadCommentRows as comment (comment.id)}
+					<li>
+						<a
+							href="/dashboard/projects/{comment.projectId}"
+							class="flex items-start gap-3 px-6 py-4 transition-colors hover:bg-raised"
+						>
+							<Avatar name={comment.authorName} size={7} />
+							<div class="min-w-0 flex-1">
+								<p class="text-xs text-muted">
+									<span class="font-medium text-ink">{comment.authorName}</span>
+									on <span class="font-medium text-ink">{comment.projectName}</span>
+								</p>
+								<p class="mt-1 truncate text-[13px] text-body">{comment.body}</p>
+								<p class="mt-1 text-[11px] text-faint">{formatDateTime(comment.createdAt)}</p>
+							</div>
+						</a>
+					</li>
 				{/each}
-			</div>
-		</div>
+			</ul>
+		</Section>
 	{/if}
 
 	{#if showOnboarding}
-		<div class="rounded-xl p-5" style="border:1px solid var(--color-accent-200);background:var(--color-accent-50)">
+		<div class="rounded-lg border border-accent/25 bg-accent-soft px-6 py-5">
 			<div class="flex items-start justify-between gap-4">
 				<div>
-					<p class="text-sm font-semibold text-accent">Get started with Portlane</p>
-					<p class="mt-0.5 text-xs text-muted">Complete these steps to set up your workspace.</p>
+					<p class="text-[13px] font-medium text-ink">Finish setting up</p>
+					<p class="mt-1 text-xs text-body">Four small steps and the workspace is ready for clients.</p>
 				</div>
-				<button onclick={dismissOnboarding} class="btn-icon shrink-0 -mt-0.5 -mr-1" title="Dismiss">
-					<IconXRegular class="h-3.5 w-3.5" />
+				<button
+					type="button"
+					onclick={dismissOnboarding}
+					class="shrink-0 rounded-md p-1 text-muted transition-colors hover:bg-accent/10 hover:text-ink"
+					aria-label="Dismiss checklist"
+				>
+					<IconXRegular class="h-4 w-4" />
 				</button>
 			</div>
-			<div class="mt-4 grid gap-2 sm:grid-cols-2">
-				{#each onboardingSteps as step}
-					<a href={step.href} class="flex items-center gap-2.5 rounded-lg px-3 py-2.5 transition-colors hover:opacity-80 no-underline"
-						style="background:{step.done ? 'rgba(124,58,237,0.08)' : 'var(--color-bg-elevated)'}">
-						<span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full"
-							style="background:{step.done ? 'var(--color-accent-600)' : 'var(--color-border)'};color:#fff">
-							{#if step.done}<IconCheckRegular class="h-3 w-3" />{/if}
-						</span>
-						<span class="text-xs" style="color:{step.done ? 'var(--color-text-faint)' : 'var(--color-text)'};text-decoration:{step.done ? 'line-through' : 'none'}">{step.label}</span>
-					</a>
+			<ul class="mt-4 grid gap-2 sm:grid-cols-2">
+				{#each steps as step (step.label)}
+					<li>
+						<a
+							href={step.href}
+							class="flex items-center gap-2.5 rounded-md bg-surface/70 px-3 py-2.5 transition-colors hover:bg-surface"
+						>
+							<span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full {step.done ? 'bg-accent text-page' : 'border border-line-strong text-transparent'}">
+								<IconCheckBold class="h-3 w-3" />
+							</span>
+							<span class="text-xs {step.done ? 'text-faint line-through' : 'text-body'}">
+								{step.label}
+							</span>
+						</a>
+					</li>
 				{/each}
-			</div>
+			</ul>
 		</div>
 	{/if}
 
 	<div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
-		{#each stats as s}
-			{@const Icon = s.icon}
-			<div class="card flex flex-col gap-3">
-				<div class="flex h-8 w-8 items-center justify-center rounded-lg" style="background:{s.color}15;color:{s.color}">
-					<Icon class="h-4 w-4" />
-				</div>
-				<div>
-					<p class="text-sm text-muted">{s.label}</p>
-					<p class="mt-0.5 text-2xl font-semibold tracking-tight text-heading">{s.value}</p>
-				</div>
-			</div>
-		{/each}
+		<Stat label="Active projects" value={data.active} />
+		<Stat label="In review" value={data.pending} tone={data.pending > 0 ? 'warning' : 'default'} />
+		<Stat label="Completed" value={data.completed} />
+		<Stat label="Revenue" value={formatMoney(data.revenue)} tone="accent" />
 	</div>
 
-	<div class="grid gap-5 lg:grid-cols-[1fr_22rem]">
-		<div class="overflow-hidden rounded-xl card p-0">
-			<div class="flex items-center justify-between px-5 py-3.5 divide-bottom">
-				<span class="section-label">Active projects</span>
-				<a href="/dashboard/projects" class="text-xs font-medium text-accent hover:underline">View all →</a>
-			</div>
+	<div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+		<Section title="Active projects" flush>
 			{#if data.projects.length === 0}
-				<EmptyState icon={IconFolderOpenRegular} title="No projects yet" description="Create your first project to get started." compact action={{ label: 'Create project', href: '/dashboard/projects' }} />
+				<EmptyState
+					icon={IconFolderOpenRegular}
+					title="No projects yet"
+					description="Create your first project and invite a client."
+					action={{ label: 'Create project', href: '/dashboard/projects?new=1' }}
+				/>
 			{:else}
-				{#each data.projects as p}
-					{@const overdue = isOverdue(p.dueDate)}
-					<a href="/dashboard/projects/{p.id}" class="row-link divide-bottom">
-						<Avatar name={p.name} size={8} />
-						<div class="flex-1 min-w-0">
-							<p class="text-sm font-medium truncate text-body">{p.name}</p>
-							{#if p.dueDate}
-								<p class="mt-0.5 text-xs" class:text-danger={overdue} class:text-faint={!overdue}>
-									{overdue ? '⚠ Overdue · ' : 'Due '}
-									{fmtDate(p.dueDate)}
-								</p>
-							{:else}
-								<p class="mt-0.5 text-xs text-faint">No due date</p>
-							{/if}
-						</div>
-						<span class={statusBadge[p.status] ?? 'badge badge-neutral'}>{statusLabel[p.status] ?? p.status}</span>
-					</a>
-				{/each}
-			{/if}
-		</div>
-
-		<div class="overflow-hidden rounded-xl card p-0">
-			<div class="px-5 py-3.5 divide-bottom">
-				<span class="section-label">Recent activity</span>
-			</div>
-			{#if data.activity.length === 0}
-				<div class="flex flex-col items-center justify-center px-6 py-16 text-center">
-					<p class="text-sm text-faint">No activity yet.</p>
-					<p class="mt-1 text-xs text-faint">Comments from clients will appear here.</p>
-				</div>
-			{:else}
-				<div class="divide-y" style="border-color:var(--color-border-subtle)">
-					{#each data.activity as a}
-						<div class="px-5 py-4">
-							<div class="flex items-start gap-2.5">
-								<Avatar name={a.authorName} size={6} />
-								<div class="flex-1 min-w-0">
-									<p class="text-xs text-faint">
-										<span class="font-medium text-body">{a.authorName}</span>
-										on <span class="text-body">{a.projectName}</span>
+				<ul class="divide-y divide-line">
+					{#each data.projects as project (project.id)}
+						{@const overdue = project.dueDate !== null && project.dueDate < todayISO() && project.status !== 'completed'}
+						<li>
+							<a
+								href="/dashboard/projects/{project.id}"
+								class="flex items-center gap-3 px-6 py-3.5 transition-colors hover:bg-raised"
+							>
+								<Avatar name={project.name} size={8} />
+								<div class="min-w-0 flex-1">
+									<p class="truncate text-[13px] font-medium text-ink">{project.name}</p>
+									<p class="mt-0.5 text-[11px] {overdue ? 'text-danger' : 'text-muted'}">
+										{project.dueDate ? `Due ${formatDate(project.dueDate)}` : 'No due date'}
 									</p>
-									<p class="mt-0.5 text-sm truncate text-body">{a.body}</p>
-									<p class="mt-0.5 text-xs text-faint">{fmtDateTime(a.createdAt)}</p>
 								</div>
-							</div>
-						</div>
+								<Badge tone={PROJECT_STATUS_TONE[project.status]}>
+									{PROJECT_STATUS_LABEL[project.status]}
+								</Badge>
+								<IconArrowRightRegular class="h-3.5 w-3.5 shrink-0 text-faint" />
+							</a>
+						</li>
 					{/each}
+				</ul>
+				<div class="border-t border-line px-6 py-2.5">
+					<a
+						href="/dashboard/projects"
+						class="inline-flex items-center gap-1 text-xs font-medium text-accent transition-colors hover:text-accent-hover"
+					>
+						View all projects
+						<IconArrowRightRegular class="h-3 w-3" />
+					</a>
 				</div>
 			{/if}
-		</div>
+		</Section>
+
+		<Section title="Recent activity" flush>
+			{#if data.activity.length === 0}
+				<p class="px-6 py-5 text-[13px] text-muted">
+					Comments from clients will show up here.
+				</p>
+			{:else}
+				<ul class="divide-y divide-line">
+					{#each data.activity as item (item.id)}
+						<li class="flex items-start gap-2.5 px-6 py-4">
+							<Avatar name={item.authorName} size={6} />
+							<div class="min-w-0 flex-1">
+								<p class="text-[11px] text-muted">
+									<span class="font-medium text-ink">{item.authorName}</span>
+									on {item.projectName}
+								</p>
+								<p class="mt-1 truncate text-[13px] text-body">{item.body}</p>
+								<p class="mt-1 text-[11px] text-faint">{formatDateTime(item.createdAt)}</p>
+							</div>
+						</li>
+					{/each}
+				</ul>
+			{/if}
+		</Section>
 	</div>
 </div>

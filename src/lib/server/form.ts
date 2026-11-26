@@ -1,5 +1,3 @@
-export const DB_ERROR = 'An unexpected error occurred. Please try again.'
-
 function formVal(f: FormData, k: string): string | null {
 	const v = f.get(k)
 	return typeof v === 'string' ? v.trim() : null

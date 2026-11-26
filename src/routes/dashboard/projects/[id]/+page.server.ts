@@ -1,19 +1,13 @@
 import { error, fail, redirect } from '@sveltejs/kit'
-import { isProjectStatus } from '#lib/fmt.js'
-import { DB_ERROR, int, str } from '#lib/server/form.js'
-import { requireOwner } from '#lib/server/guard.js'
+import { isProjectStatus } from '#lib/domain/status.js'
+import { DB_ERROR, ownerAction } from '#lib/server/action.js'
+import { int, str } from '#lib/server/form.js'
+import { requireUser } from '#lib/server/guard.js'
 import {
 	addComment,
 	addMilestone,
 	deleteProject,
 	deleteProjectFile,
-	getProjectClients,
-	getProjectComments,
-	getProjectFiles,
-	getProjectForOwner,
-	getProjectMilestones,
-	getProjectNote,
-	getProjectTimeEntries,
 	handleUploadFileAction,
 	inviteClientByEmail,
 	logTime,
@@ -21,13 +15,22 @@ import {
 	saveProjectNote,
 	setProjectStatus,
 	toggleMilestone,
+} from '#lib/server/project-actions.js'
+import {
+	getProjectClients,
+	getProjectComments,
+	getProjectFiles,
+	getProjectForOwner,
+	getProjectMilestones,
+	getProjectNote,
+	getProjectTimeEntries,
 } from '#lib/server/projects.js'
 import type { Actions, PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals, params }) => {
-	if (!locals.user) error(401, 'Unauthorized')
+	const user = requireUser(locals)
 
-	const project = await getProjectForOwner(params.id, locals.user.userId)
+	const project = await getProjectForOwner(params.id, user.userId)
 	if (!project) error(404, 'Project not found')
 
 	const [milestones, files, comments, clients, timeEntries, note] =
@@ -44,128 +47,101 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 }
 
 export const actions: Actions = {
-	log_time: async ({ locals, params, request }) => {
-		const guard = await requireOwner(locals, params.id)
-		if (guard.err) return guard.err
-		const form = await request.formData()
+	log_time: ownerAction(async ({ projectId, user, form }) => {
 		const minutes = int(form, 'minutes')
-		const description = str(form, 'description') || null
-		if (!minutes || minutes <= 0) return fail(400, { error: 'Invalid minutes' })
+		if (minutes <= 0) return fail(400, { error: 'Invalid minutes' })
 		try {
-			await logTime(guard.projectId, guard.userId, minutes, description)
+			await logTime(
+				projectId,
+				user.userId,
+				minutes,
+				str(form, 'description') || null,
+			)
 		} catch {
 			return fail(500, { error: DB_ERROR })
 		}
-	},
+	}),
 
-	save_note: async ({ locals, params, request }) => {
-		const guard = await requireOwner(locals, params.id)
-		if (guard.err) return guard.err
-		const body = str(await request.formData(), 'body')
+	save_note: ownerAction(async ({ projectId, form }) => {
 		try {
-			await saveProjectNote(guard.projectId, body)
+			await saveProjectNote(projectId, str(form, 'body'))
 		} catch {
 			return fail(500, { error: DB_ERROR })
 		}
-	},
+	}),
 
-	comment: async ({ locals, params, request }) => {
-		const guard = await requireOwner(locals, params.id)
-		if (guard.err) return guard.err
-		const body = str(await request.formData(), 'body')
+	comment: ownerAction(async ({ projectId, user, form }) => {
+		const body = str(form, 'body')
 		if (!body) return fail(400, { error: 'Comment body is required' })
 		try {
-			await addComment(guard.projectId, guard.userId, body)
+			await addComment(projectId, user.userId, body)
 		} catch {
 			return fail(500, { error: DB_ERROR })
 		}
-	},
+	}),
 
-	toggle_milestone: async ({ locals, params, request }) => {
-		const guard = await requireOwner(locals, params.id)
-		if (guard.err) return guard.err
-		const form = await request.formData()
+	toggle_milestone: ownerAction(async ({ projectId, form }) => {
 		await toggleMilestone(
-			guard.projectId,
+			projectId,
 			str(form, 'id'),
 			form.get('completed') === 'true',
 		)
-	},
+	}),
 
-	add_milestone: async ({ locals, params, request }) => {
-		const guard = await requireOwner(locals, params.id)
-		if (guard.err) return guard.err
-		const name = str(await request.formData(), 'name')
+	add_milestone: ownerAction(async ({ projectId, form }) => {
+		const name = str(form, 'name')
 		if (!name) return fail(400, { error: 'Name is required' })
 		try {
-			await addMilestone(guard.projectId, name)
+			await addMilestone(projectId, name)
 		} catch {
 			return fail(500, { error: DB_ERROR })
 		}
-	},
+	}),
 
-	upload_file: async ({ locals, params, request }) => {
-		const guard = await requireOwner(locals, params.id)
-		if (guard.err) return guard.err
-		return handleUploadFileAction(
-			guard.projectId,
-			guard.userId,
-			await request.formData(),
-		)
-	},
+	upload_file: ownerAction(({ projectId, user, form }) =>
+		handleUploadFileAction(projectId, user.userId, form),
+	),
 
-	delete_file: async ({ locals, params, request }) => {
-		const guard = await requireOwner(locals, params.id)
-		if (guard.err) return guard.err
-		const id = str(await request.formData(), 'id')
-		if (!(await deleteProjectFile(guard.projectId, id)))
+	delete_file: ownerAction(async ({ projectId, form }) => {
+		if (!(await deleteProjectFile(projectId, str(form, 'id'))))
 			return fail(404, { error: 'File not found' })
-	},
+	}),
 
-	update_status: async ({ locals, params, request }) => {
-		const guard = await requireOwner(locals, params.id)
-		if (guard.err) return guard.err
-		const status = str(await request.formData(), 'status')
+	update_status: ownerAction(async ({ projectId, form }) => {
+		const status = str(form, 'status')
 		if (!isProjectStatus(status)) return fail(400, { error: 'Invalid status' })
 		try {
-			await setProjectStatus(guard.projectId, status)
+			await setProjectStatus(projectId, status)
 		} catch {
 			return fail(500, { error: DB_ERROR })
 		}
-	},
+	}),
 
-	delete_project: async ({ locals, params }) => {
-		const guard = await requireOwner(locals, params.id)
-		if (guard.err) return guard.err
+	delete_project: ownerAction(async ({ projectId }) => {
 		try {
-			await deleteProject(guard.projectId)
+			await deleteProject(projectId)
 		} catch {
 			return fail(500, { error: DB_ERROR })
 		}
 		redirect(303, '/dashboard/projects')
-	},
+	}),
 
-	remove_client: async ({ locals, params, request }) => {
-		const guard = await requireOwner(locals, params.id)
-		if (guard.err) return guard.err
-		const clientId = str(await request.formData(), 'client_id')
+	remove_client: ownerAction(async ({ projectId, form }) => {
 		try {
-			await removeProjectClient(guard.projectId, clientId)
+			await removeProjectClient(projectId, str(form, 'client_id'))
 		} catch {
 			return fail(500, { error: DB_ERROR })
 		}
-	},
+	}),
 
-	invite_client: async ({ locals, params, request }) => {
-		const guard = await requireOwner(locals, params.id)
-		if (guard.err) return guard.err
-		const email = str(await request.formData(), 'email').toLowerCase()
+	invite_client: ownerAction(async ({ projectId, form }) => {
+		const email = str(form, 'email').toLowerCase()
 		if (!(email && /^\S+@\S+\.\S+$/.test(email)))
 			return fail(400, { error: 'A valid email is required' })
 		try {
-			await inviteClientByEmail(email, guard.projectId)
+			await inviteClientByEmail(email, projectId)
 		} catch {
 			return fail(500, { error: DB_ERROR })
 		}
-	},
+	}),
 }

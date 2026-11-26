@@ -1,33 +1,33 @@
-import { error, fail, redirect } from '@sveltejs/kit'
-import { DB_ERROR, str } from '#lib/server/form.js'
-import { requireClientFromUrl } from '#lib/server/guard.js'
-import {
-	checkoutAction,
-	getClientProjectInvoices,
-} from '#lib/server/invoices.js'
+import { error, fail } from '@sveltejs/kit'
+import { clientAction, DB_ERROR } from '#lib/server/action.js'
+import { str } from '#lib/server/form.js'
+import { requireUser } from '#lib/server/guard.js'
+import { checkoutAction } from '#lib/server/invoice-actions.js'
+import { getClientProjectInvoices } from '#lib/server/invoices.js'
 import {
 	addComment,
 	approveProject,
+	handleUploadFileAction,
+	requestRevision,
+} from '#lib/server/project-actions.js'
+import {
 	getProjectComments,
 	getProjectFiles,
 	getProjectMilestones,
 	getProjectsForClient,
 	getProjectWithFreelancer,
-	handleUploadFileAction,
 	isProjectClient,
-	requestRevision,
 } from '#lib/server/projects.js'
 import type { Actions, PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals, url }) => {
-	if (!locals.user) redirect(303, '/login')
-	const userId = locals.user.userId
+	const user = requireUser(locals)
 	const projectId = url.searchParams.get('project')
 
 	if (!projectId) {
 		return {
 			project: null,
-			projects: await getProjectsForClient(userId),
+			projects: await getProjectsForClient(user.userId),
 			milestones: [],
 			files: [],
 			comments: [],
@@ -35,64 +35,43 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		}
 	}
 
-	if (!(await isProjectClient(projectId, userId))) error(403, 'Forbidden')
+	if (!(await isProjectClient(projectId, user.userId))) error(403, 'Forbidden')
 
 	const [project, milestones, files, comments, invoices] = await Promise.all([
 		getProjectWithFreelancer(projectId),
 		getProjectMilestones(projectId),
 		getProjectFiles(projectId),
 		getProjectComments(projectId),
-		getClientProjectInvoices(projectId, userId),
+		getClientProjectInvoices(projectId, user.userId),
 	])
 
 	if (!project) error(404, 'Project not found')
 
-	return {
-		project,
-		projects: [],
-		milestones,
-		files,
-		comments,
-		invoices,
-	}
+	return { project, projects: [], milestones, files, comments, invoices }
 }
 
 export const actions: Actions = {
-	comment: async ({ locals, url, request }) => {
-		const guard = await requireClientFromUrl(locals, url)
-		if (guard.err) return guard.err
-		const body = str(await request.formData(), 'body')
+	comment: clientAction(async ({ projectId, user, form }) => {
+		const body = str(form, 'body')
 		if (!body) return fail(400, { error: 'Message body is required' })
 		try {
-			await addComment(guard.projectId, guard.userId, body)
+			await addComment(projectId, user.userId, body)
 		} catch {
 			return fail(500, { error: DB_ERROR })
 		}
-	},
+	}),
 
-	approve: async ({ locals, url, request }) => {
-		const guard = await requireClientFromUrl(locals, url)
-		if (guard.err) return guard.err
-		const note = str(await request.formData(), 'note')
-		await approveProject(guard.projectId, guard.userId, note)
-	},
+	approve: clientAction(async ({ projectId, user, form }) => {
+		await approveProject(projectId, user.userId, str(form, 'note'))
+	}),
 
-	request_revision: async ({ locals, url, request }) => {
-		const guard = await requireClientFromUrl(locals, url)
-		if (guard.err) return guard.err
-		const note = str(await request.formData(), 'note')
-		await requestRevision(guard.projectId, guard.userId, note)
-	},
+	request_revision: clientAction(async ({ projectId, user, form }) => {
+		await requestRevision(projectId, user.userId, str(form, 'note'))
+	}),
 
-	upload_file: async ({ locals, url, request }) => {
-		const guard = await requireClientFromUrl(locals, url)
-		if (guard.err) return guard.err
-		return handleUploadFileAction(
-			guard.projectId,
-			guard.userId,
-			await request.formData(),
-		)
-	},
+	upload_file: clientAction(({ projectId, user, form }) =>
+		handleUploadFileAction(projectId, user.userId, form),
+	),
 
 	checkout: checkoutAction,
 }

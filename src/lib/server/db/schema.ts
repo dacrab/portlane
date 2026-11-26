@@ -12,11 +12,10 @@ import {
 	timestamp,
 } from 'drizzle-orm/pg-core'
 import { DEFAULT_CURRENCY } from '#lib/constants.js'
+import type { InvoiceStatus, ProjectStatus } from '#lib/domain/status.js'
+import type { UserRole } from '#lib/domain/types.js'
 
 const genId = () => crypto.randomUUID()
-
-export const USER_ROLES = ['freelancer', 'client'] as const
-export type UserRole = (typeof USER_ROLES)[number]
 
 export const users = pgTable(
 	'user',
@@ -111,7 +110,7 @@ export const projects = pgTable(
 			.references(() => users.id, { onDelete: 'cascade' }),
 		name: text('name').notNull(),
 		description: text('description'),
-		status: text('status').default('planning').notNull(),
+		status: text('status').$type<ProjectStatus>().default('planning').notNull(),
 		dueDate: date('due_date', { mode: 'string' }),
 		createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
 			.defaultNow()
@@ -212,7 +211,7 @@ export const invoices = pgTable(
 			.references(() => users.id),
 		amountCents: integer('amount_cents').notNull(),
 		currency: text('currency').default(DEFAULT_CURRENCY).notNull(),
-		status: text('status').default('draft').notNull(),
+		status: text('status').$type<InvoiceStatus>().default('draft').notNull(),
 		dueDate: date('due_date', { mode: 'string' }),
 		stripeSessionId: text('stripe_session_id'),
 		stripePaymentIntentId: text('stripe_payment_intent_id'),

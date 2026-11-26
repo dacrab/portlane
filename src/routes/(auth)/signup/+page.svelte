@@ -1,6 +1,11 @@
 <script lang="ts">
 import { authClient, authError } from '#lib/auth-client.js'
 import AuthCard from '#lib/components/AuthCard.svelte'
+import { PASSWORD_MIN_LENGTH } from '#lib/constants.js'
+import Button from '#lib/ui/Button.svelte'
+import Field from '#lib/ui/Field.svelte'
+import FormError from '#lib/ui/FormError.svelte'
+import Input from '#lib/ui/Input.svelte'
 
 let name = $state('')
 let email = $state('')
@@ -9,19 +14,19 @@ let error = $state('')
 let loading = $state(false)
 let sent = $state(false)
 
-async function submit(e: Event) {
-	e.preventDefault()
+async function submit(event: Event) {
+	event.preventDefault()
 	error = ''
 	loading = true
-	const { error: err } = await authClient.signUp.email({
+	const { error: authFailure } = await authClient.signUp.email({
 		name,
 		email,
 		password,
 		callbackURL: '/dashboard',
 	})
 	loading = false
-	if (err) {
-		error = authError(err, 'Sign up failed')
+	if (authFailure) {
+		error = authError(authFailure, 'Sign up failed')
 		return
 	}
 	sent = true
@@ -30,35 +35,53 @@ async function submit(e: Event) {
 
 <AuthCard>
 	{#if sent}
-		<div class="text-center space-y-2">
-			<h1 class="text-lg font-semibold">Check your email</h1>
-			<p class="text-sm text-muted">We sent a verification link to {email}. Open it to finish creating your account.</p>
-			<a href="/login" class="text-accent text-sm hover:underline">Back to sign in</a>
+		<div>
+			<h1 class="display text-[28px] leading-none">Check your email</h1>
+			<p class="mt-3 text-[13px] leading-relaxed text-muted">
+				We sent a verification link to <span class="font-medium text-ink">{email}</span>.
+				Open it to finish setting up your account.
+			</p>
+			<a href="/login" class="mt-6 inline-block text-xs font-medium text-accent hover:underline">
+				Back to sign in
+			</a>
 		</div>
 	{:else}
-	<form onsubmit={submit} class="space-y-4">
-		<h1 class="text-lg font-semibold text-center">Create an account</h1>
-		{#if error}
-			<p class="text-sm text-red-600 text-center">{error}</p>
-		{/if}
-		<div>
-			<label for="name" class="input-label">Name</label>
-			<input id="name" type="text" bind:value={name} required class="input" placeholder="Your name" />
+		<div class="mb-8">
+			<h1 class="display text-[28px] leading-none">Create an account</h1>
+			<p class="mt-2 text-[13px] text-muted">Your first project is a minute away.</p>
 		</div>
-		<div>
-			<label for="email" class="input-label">Email</label>
-			<input id="email" type="email" bind:value={email} required class="input" placeholder="your@email.com" />
-		</div>
-		<div>
-			<label for="password" class="input-label">Password</label>
-			<input id="password" type="password" bind:value={password} required class="input" placeholder="Min 8 characters" />
-		</div>
-		<button type="submit" class="btn btn-primary w-full" disabled={loading}>
-			{loading ? 'Creating account...' : 'Create account'}
-		</button>
-		<p class="text-sm text-center text-faint">
-			Already have an account? <a href="/login" class="text-accent hover:underline">Sign in</a>
-		</p>
-	</form>
+
+		<form onsubmit={submit} class="space-y-4">
+			<FormError message={error} />
+
+			<Field label="Name" for="name">
+				<Input id="name" type="text" bind:value={name} required autocomplete="name" placeholder="Your name" />
+			</Field>
+
+			<Field label="Email" for="email">
+				<Input id="email" type="email" bind:value={email} required autocomplete="email" placeholder="you@studio.com" />
+			</Field>
+
+			<Field label="Password" for="password" hint="At least {PASSWORD_MIN_LENGTH} characters.">
+				<Input
+					id="password"
+					type="password"
+					bind:value={password}
+					required
+					minlength={PASSWORD_MIN_LENGTH}
+					autocomplete="new-password"
+					placeholder="Choose a password"
+				/>
+			</Field>
+
+			<Button type="submit" disabled={loading} class="w-full">
+				{loading ? 'Creating account…' : 'Create account'}
+			</Button>
+
+			<p class="pt-2 text-center text-xs text-muted">
+				Already have an account?
+				<a href="/login" class="font-medium text-accent hover:underline">Sign in</a>
+			</p>
+		</form>
 	{/if}
 </AuthCard>

@@ -1,5 +1,12 @@
-import { fail } from '@sveltejs/kit'
+import { error, fail } from '@sveltejs/kit'
+import type { SessionUser } from '#lib/domain/types.js'
 import { isProjectClient, isProjectOwner } from '#lib/server/projects.js'
+
+/** Returns the signed-in user or throws a 401 for loads behind an auth layout. */
+export function requireUser(locals: App.Locals): SessionUser {
+	if (!locals.user) error(401, 'Unauthorized')
+	return locals.user
+}
 
 type GuardResult =
 	| { err: ReturnType<typeof fail> }

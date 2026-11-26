@@ -12,7 +12,6 @@ import IconUsersRegular from 'phosphor-icons-svelte/IconUsersRegular.svelte'
 export interface NavItem {
 	href: string
 	label: string
-	labelShort: string
 	R: typeof IconSquaresFourRegular
 	B: typeof IconSquaresFourBold
 }
@@ -21,35 +20,30 @@ export const navItems: NavItem[] = [
 	{
 		href: '/dashboard',
 		label: 'Dashboard',
-		labelShort: 'Home',
 		R: IconSquaresFourRegular,
 		B: IconSquaresFourBold,
 	},
 	{
 		href: '/dashboard/projects',
 		label: 'Projects',
-		labelShort: 'Projects',
 		R: IconFolderOpenRegular,
 		B: IconFolderOpenBold,
 	},
 	{
 		href: '/dashboard/invoices',
 		label: 'Invoices',
-		labelShort: 'Invoices',
 		R: IconFileTextRegular,
 		B: IconFileTextBold,
 	},
 	{
 		href: '/dashboard/clients',
 		label: 'Clients',
-		labelShort: 'Clients',
 		R: IconUsersRegular,
 		B: IconUsersBold,
 	},
 	{
 		href: '/dashboard/settings',
 		label: 'Settings',
-		labelShort: 'Settings',
 		R: IconGearSixRegular,
 		B: IconGearSixBold,
 	},

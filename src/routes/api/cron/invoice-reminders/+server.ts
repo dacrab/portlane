@@ -1,4 +1,4 @@
-import { fmtDateLong, fmtMoney } from '#lib/fmt.js'
+import { formatDateLong, formatMoney } from '#lib/domain/format.js'
 import { requireCron } from '#lib/server/cron.js'
 import { escapeHtml, sendEmail } from '#lib/server/email.js'
 import {
@@ -12,10 +12,10 @@ import type { RequestHandler } from './$types'
 
 function reminderHtml(reminder: InvoiceReminder): string {
 	const due = reminder.dueDate
-		? ` — it was due on ${fmtDateLong(reminder.dueDate)}`
+		? ` — it was due on ${formatDateLong(reminder.dueDate)}`
 		: ''
 	return `<p>Hi ${escapeHtml(reminder.clientName)},</p>
-<p>This is a friendly reminder that the invoice for <strong>${escapeHtml(reminder.projectName)}</strong> (${fmtMoney(reminder.amountCents, reminder.currency)}) is still unpaid${due}.</p>
+<p>This is a friendly reminder that the invoice for <strong>${escapeHtml(reminder.projectName)}</strong> (${formatMoney(reminder.amountCents, reminder.currency)}) is still unpaid${due}.</p>
 <p><a href="${PUBLIC_APP_URL}/portal">View and pay in your portal</a></p>
 <p>Thanks,<br>${escapeHtml(reminder.freelancerName)}</p>`
 }

@@ -1,7 +1,12 @@
 <script lang="ts">
 import { toast } from 'svelte-sonner'
-import Avatar from '#lib/components/Avatar.svelte'
 import { PASSWORD_MIN_LENGTH } from '#lib/constants.js'
+import Avatar from '#lib/ui/Avatar.svelte'
+import Button from '#lib/ui/Button.svelte'
+import Field from '#lib/ui/Field.svelte'
+import Input from '#lib/ui/Input.svelte'
+import PageHeader from '#lib/ui/PageHeader.svelte'
+import Section from '#lib/ui/Section.svelte'
 import { enhance } from '$app/forms'
 import type { ActionData, PageData } from './$types'
 
@@ -30,74 +35,84 @@ function confirmDeleteAccount() {
 }
 </script>
 
-	<div>
-		<p class="mb-1 text-xs font-semibold uppercase tracking-widest text-muted">Account</p>
-		<h1 class="page-title">Settings</h1>
-		<p class="mt-0.5 text-sm text-muted">Manage your account and preferences.</p>
-	</div>
+<div class="space-y-8">
+	<PageHeader title="Settings" description="Your account and sign-in details." />
 
-	<div class="grid gap-6 lg:grid-cols-2">
-		<div class="card space-y-5">
-			<div class="flex items-center gap-4">
-				<Avatar name={data.profile?.name ?? data.email ?? '?'} size={12} />
-				<div>
-					<p class="text-sm font-semibold text-heading">{data.profile?.name ?? 'No name set'}</p>
-					<p class="text-xs text-faint">{data.email}</p>
+	<div class="grid items-start gap-6 lg:grid-cols-2">
+		<Section title="Profile">
+			<div class="mb-6 flex items-center gap-4">
+				<Avatar name={data.profile?.name ?? data.email ?? '?'} size={11} />
+				<div class="min-w-0">
+					<p class="truncate text-[13px] font-medium text-ink">
+						{data.profile?.name ?? 'No name set'}
+					</p>
+					<p class="truncate text-[11px] text-muted">{data.email}</p>
 				</div>
 			</div>
 
 			<form method="POST" action="?/update_profile" use:enhance class="space-y-4">
-				<div>
-					<label for="name" class="mb-1.5 block text-xs font-medium text-muted">Full name</label>
-					<input id="name" name="name" type="text" required value={data.profile?.name ?? ''} class="input" />
-				</div>
-				<div>
-					<label for="email_display" class="mb-1.5 block text-xs font-medium text-muted">Email</label>
-					<input id="email_display" type="email" disabled value={data.email} class="input" />
-					<p class="mt-1 text-xs text-faint">Email cannot be changed here.</p>
-				</div>
-				<div class="pt-2 divide-top">
-					<button type="submit" class="btn btn-primary">Save changes</button>
+				<Field label="Full name" for="name">
+					<Input id="name" name="name" type="text" required value={data.profile?.name ?? ''} />
+				</Field>
+				<Field label="Email" for="email-display" hint="Email cannot be changed here.">
+					<Input id="email-display" type="email" disabled value={data.email} />
+				</Field>
+				<div class="border-t border-line pt-4">
+					<Button type="submit" size="sm">Save changes</Button>
 				</div>
 			</form>
-		</div>
+		</Section>
 
-		<div class="card space-y-5">
-			<div>
-				<p class="text-sm font-semibold text-heading">Change password</p>
-				<p class="mt-0.5 text-xs text-faint">Choose a strong password of at least {PASSWORD_MIN_LENGTH} characters.</p>
-			</div>
+		<Section title="Password">
+			<p class="mb-5 text-[13px] leading-relaxed text-muted">
+				Use at least {PASSWORD_MIN_LENGTH} characters. Changing it signs out other sessions.
+			</p>
 
 			<form method="POST" action="?/change_password" use:enhance class="space-y-4">
-				<div>
-					<label for="current_password" class="mb-1.5 block text-xs font-medium text-muted">Current password</label>
-					<input id="current_password" name="current_password" type="password" required autocomplete="current-password" class="input" placeholder="••••••••" />
-				</div>
-				<div>
-					<label for="password" class="mb-1.5 block text-xs font-medium text-muted">New password</label>
-					<input id="password" name="password" type="password" required minlength={PASSWORD_MIN_LENGTH} autocomplete="new-password" class="input" placeholder="••••••••" />
-				</div>
-				<div>
-					<label for="confirm" class="mb-1.5 block text-xs font-medium text-muted">Confirm password</label>
-					<input id="confirm" name="confirm" type="password" required minlength={PASSWORD_MIN_LENGTH} autocomplete="new-password" class="input" placeholder="••••••••" />
-				</div>
-				<div class="pt-2 divide-top">
-					<button type="submit" class="btn btn-primary">Update password</button>
+				<Field label="Current password" for="current-password">
+					<Input
+						id="current-password"
+						name="current_password"
+						type="password"
+						required
+						autocomplete="current-password"
+					/>
+				</Field>
+				<Field label="New password" for="new-password">
+					<Input
+						id="new-password"
+						name="password"
+						type="password"
+						required
+						minlength={PASSWORD_MIN_LENGTH}
+						autocomplete="new-password"
+					/>
+				</Field>
+				<Field label="Confirm password" for="confirm-password">
+					<Input
+						id="confirm-password"
+						name="confirm"
+						type="password"
+						required
+						minlength={PASSWORD_MIN_LENGTH}
+						autocomplete="new-password"
+					/>
+				</Field>
+				<div class="border-t border-line pt-4">
+					<Button type="submit" size="sm">Update password</Button>
 				</div>
 			</form>
-		</div>
+		</Section>
 	</div>
 
-	<div class="card card-danger space-y-4" style="max-width:42rem">
-		<div>
-			<p class="text-sm font-semibold text-danger">Danger zone</p>
-			<p class="mt-0.5 text-sm text-muted">
-				Permanently delete your account and all associated data. This cannot be undone.
-			</p>
-		</div>
-		<form bind:this={deleteForm} method="POST" action="?/delete_account" use:enhance>
-			<button type="button" class="btn btn-danger" onclick={confirmDeleteAccount}>
+	<Section title="Delete account" class="max-w-2xl">
+		<p class="text-[13px] leading-relaxed text-muted">
+			Permanently removes your account, projects, files, and invoices. This cannot be undone.
+		</p>
+		<form bind:this={deleteForm} method="POST" action="?/delete_account" use:enhance class="mt-4">
+			<Button type="button" variant="danger" size="sm" onclick={confirmDeleteAccount}>
 				Delete account
-			</button>
+			</Button>
 		</form>
-	</div>
+	</Section>
+</div>

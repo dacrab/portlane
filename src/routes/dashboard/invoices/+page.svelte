@@ -4,77 +4,76 @@ import IconFileTextRegular from 'phosphor-icons-svelte/IconFileTextRegular.svelt
 import { toast } from 'svelte-sonner'
 import { submitForm, toastEnhance } from '#lib/client/enhance.js'
 import ActionDeleteButton from '#lib/components/ActionDeleteButton.svelte'
-import AppDatePicker from '#lib/components/AppDatePicker.svelte'
-import AppSelect from '#lib/components/AppSelect.svelte'
-import EmptyState from '#lib/components/EmptyState.svelte'
-import SectionHeader from '#lib/components/SectionHeader.svelte'
-import { fmtDate, fmtMoney, INVOICE_STATUS_ITEMS } from '#lib/fmt.js'
+import { formatDate, formatMoney } from '#lib/domain/format.js'
+import {
+	INVOICE_STATUS_ITEMS,
+	INVOICE_STATUS_LABEL,
+	INVOICE_STATUS_TONE,
+} from '#lib/domain/status.js'
+import Badge from '#lib/ui/Badge.svelte'
+import Button from '#lib/ui/Button.svelte'
+import DatePicker from '#lib/ui/DatePicker.svelte'
+import EmptyState from '#lib/ui/EmptyState.svelte'
+import Field from '#lib/ui/Field.svelte'
+import Input from '#lib/ui/Input.svelte'
+import PageHeader from '#lib/ui/PageHeader.svelte'
+import Section from '#lib/ui/Section.svelte'
+import Select from '#lib/ui/Select.svelte'
+import Stat from '#lib/ui/Stat.svelte'
 import { enhance } from '$app/forms'
 import type { PageData } from './$types'
 
 let { data }: { data: PageData } = $props()
+
 let showForm = $state(false)
 let selectedProject = $state('')
 let selectedClient = $state('')
 
-type ProjectLight = {
-	id: string
-	name: string
-	clients: { id: string; name: string }[]
-}
-
 const clients = $derived(
-	data.projects.find((p: ProjectLight) => p.id === selectedProject)?.clients ??
+	data.projects.find((project) => project.id === selectedProject)?.clients ??
 		[],
 )
-
 const clientItems = $derived(
-	clients.map((c) => ({ value: c.id, label: c.name })),
+	clients.map((client) => ({ value: client.id, label: client.name })),
 )
 
 const stats = $derived({
 	total: data.invoices.length,
 	outstanding: data.invoices
-		.filter((i) => i.status === 'sent')
-		.reduce((s, i) => s + i.amountCents, 0),
+		.filter(
+			(invoice) => invoice.status === 'sent' || invoice.status === 'overdue',
+		)
+		.reduce((sum, invoice) => sum + invoice.amountCents, 0),
 	paid: data.invoices
-		.filter((i) => i.status === 'paid')
-		.reduce((s, i) => s + i.amountCents, 0),
-	overdue: data.invoices.filter((i) => i.status === 'overdue').length,
+		.filter((invoice) => invoice.status === 'paid')
+		.reduce((sum, invoice) => sum + invoice.amountCents, 0),
+	overdue: data.invoices.filter((invoice) => invoice.status === 'overdue')
+		.length,
 })
 </script>
 
 <div class="space-y-8">
-	<div class="flex items-center justify-between">
-		<div>
-			<p class="mb-1 text-xs font-semibold uppercase tracking-widest text-muted">Billing</p>
-			<h1 class="page-title">Invoices</h1>
-			<p class="mt-0.5 text-sm text-muted">{stats.total} total</p>
-		</div>
-		<button onclick={() => showForm = !showForm} class="btn btn-primary">New invoice</button>
-	</div>
+	<PageHeader title="Invoices" description="{stats.total} total">
+		{#snippet actions()}
+			<Button size="sm" onclick={() => (showForm = !showForm)}>
+				{showForm ? 'Close' : 'New invoice'}
+			</Button>
+		{/snippet}
+	</PageHeader>
 
 	{#if data.invoices.length > 0}
-		<div class="grid grid-cols-3 gap-4">
-			<div class="card py-4">
-				<p class="text-xs font-medium text-faint">Outstanding</p>
-				<p class="mt-1 text-xl font-semibold tracking-tight text-warning">{fmtMoney(stats.outstanding)}</p>
-			</div>
-			<div class="card py-4">
-				<p class="text-xs font-medium text-faint">Paid</p>
-				<p class="mt-1 text-xl font-semibold tracking-tight text-success">{fmtMoney(stats.paid)}</p>
-			</div>
-			<div class="card py-4">
-				<p class="text-xs font-medium text-faint">Overdue</p>
-				<p class="mt-1 text-xl font-semibold tracking-tight" class:text-danger={stats.overdue > 0} class:text-heading={stats.overdue === 0}>{stats.overdue}</p>
-			</div>
+		<div class="grid grid-cols-3 gap-3">
+			<Stat label="Outstanding" value={formatMoney(stats.outstanding)} tone="warning" />
+			<Stat label="Paid" value={formatMoney(stats.paid)} tone="success" />
+			<Stat label="Overdue" value={stats.overdue} tone={stats.overdue > 0 ? 'danger' : 'default'} />
 		</div>
 	{/if}
 
 	{#if showForm}
-		<div class="card">
-			<SectionHeader title="Create invoice" />
-			<form method="POST" action="?/create"
+		<Section title="Create invoice">
+			<form
+				method="POST"
+				action="?/create"
 				use:enhance={toastEnhance({
 					successMsg: 'Invoice created',
 					errorMsg: 'Failed to create invoice',
@@ -84,88 +83,121 @@ const stats = $derived({
 						selectedClient = ''
 					},
 				})}
-				class="grid gap-4 sm:grid-cols-2">
-				<div>
-					<p class="mb-1.5 text-xs font-medium text-muted">Project</p>
-					<AppSelect
+				class="grid gap-4 sm:grid-cols-2"
+			>
+				<Field label="Project">
+					<Select
 						name="project_id"
 						bind:value={selectedProject}
-						items={data.projects.map((p: { id: string; name: string }) => ({ value: p.id, label: p.name }))}
-						placeholder="Select project…"
+						items={data.projects.map((project) => ({
+							value: project.id,
+							label: project.name,
+						}))}
+						placeholder="Select project"
 						required
-						onchange={() => { selectedClient = ''; }}
+						onchange={() => {
+							selectedClient = ''
+						}}
 					/>
-				</div>
-				<div>
-					<p class="mb-1.5 text-xs font-medium text-muted">Client</p>
-					<AppSelect
+				</Field>
+				<Field label="Client">
+					<Select
 						name="client_id"
 						bind:value={selectedClient}
 						items={clientItems}
-						placeholder="Select client…"
+						placeholder="Select client"
 						required
 					/>
-				</div>
-				<div>
-					<label for="inv_amount" class="mb-1.5 block text-xs font-medium text-muted">Amount (USD)</label>
-					<input id="inv_amount" name="amount" type="number" min="0.01" step="0.01" required placeholder="500.00" class="input" />
-				</div>
-				<div>
-					<p class="mb-1.5 text-xs font-medium text-muted">
-						Due date <span class="text-faint">(optional)</span>
-					</p>
-					<AppDatePicker name="due_date" placeholder="Pick a due date" />
-				</div>
-				<div class="sm:col-span-2 flex gap-2 pt-2 divide-top">
-					<button type="submit" class="btn btn-primary">Create</button>
-					<button type="button" onclick={() => showForm = false} class="btn btn-ghost">Cancel</button>
+				</Field>
+				<Field label="Amount (USD)" for="invoice-amount">
+					<Input
+						id="invoice-amount"
+						name="amount"
+						type="number"
+						min="0.01"
+						step="0.01"
+						required
+						placeholder="500.00"
+					/>
+				</Field>
+				<Field label="Due date" optional>
+					<DatePicker name="due_date" placeholder="Pick a due date" />
+				</Field>
+				<div class="flex gap-2 pt-2 sm:col-span-2">
+					<Button type="submit" size="sm">Create</Button>
+					<Button type="button" variant="ghost" size="sm" onclick={() => (showForm = false)}>
+						Cancel
+					</Button>
 				</div>
 			</form>
-		</div>
+		</Section>
 	{/if}
 
-	<div class="overflow-hidden rounded-xl card p-0">
+	<div class="overflow-hidden rounded-lg border border-line bg-surface">
 		{#if data.invoices.length === 0}
-			<EmptyState icon={IconFileTextRegular} title="No invoices yet" description="Create your first invoice to start tracking payments." action={{ label: 'Create invoice', onClick: () => showForm = true }} />
+			<EmptyState
+				icon={IconFileTextRegular}
+				title="No invoices yet"
+				description="Create your first invoice to start tracking payments."
+				action={{ label: 'Create invoice', onClick: () => (showForm = true) }}
+			/>
 		{:else}
-			<div class="hidden sm:grid px-4 py-2.5 text-xs font-medium divide-bottom text-faint"
-				style="grid-template-columns:1fr auto auto auto auto auto">
-				<span>Project / Client</span>
-				<span class="pr-4">Due date</span>
-				<span class="pr-4">Amount</span>
-				<span class="pr-4">Status</span>
-				<span></span><span></span>
-			</div>
-			{#each data.invoices as inv}
-				<div class="flex items-center gap-4 px-6 py-4 divide-bottom">
-					<div class="flex-1 min-w-0">
-						<p class="text-sm font-medium text-body">{inv.projectName}</p>
-						<p class="mt-0.5 text-xs text-faint">{inv.clientName}</p>
-					</div>
-					<p class="hidden sm:block text-sm text-faint shrink-0">
-						{inv.dueDate ? fmtDate(inv.dueDate) : '—'}
-					</p>
-					<p class="text-sm font-semibold text-heading shrink-0">{fmtMoney(inv.amountCents, inv.currency)}</p>
-					<div class="w-28 shrink-0">
-						<form id="inv-status-{inv.id}" method="POST" action="?/update_status"
-							use:enhance={toastEnhance({ successMsg: 'Status updated' })}>
-							<input type="hidden" name="id" value={inv.id} />
-							<input type="hidden" name="status" value={inv.status} />
-							<AppSelect
-								value={inv.status}
-								items={INVOICE_STATUS_ITEMS}
-								onchange={(v: string) => {
-									if (v !== inv.status) submitForm(`inv-status-${inv.id}`)
-								}}
-							/>
-						</form>
-					</div>
-					<a href="/dashboard/invoices/{inv.id}" class="btn-icon shrink-0" title="View invoice">
-						<IconArrowRightRegular class="h-3.5 w-3.5" />
-					</a>
-				<ActionDeleteButton action="?/delete" id={inv.id} message="This will permanently delete the invoice." ondelete={() => toast.success('Invoice deleted')} />
-				</div>
-			{/each}
+			<ul class="divide-y divide-line">
+				{#each data.invoices as invoice (invoice.id)}
+					<li class="flex items-center gap-4 px-6 py-4">
+						<div class="min-w-0 flex-1">
+							<p class="truncate text-[13px] font-medium text-ink">{invoice.projectName}</p>
+							<p class="mt-0.5 text-[11px] text-muted">{invoice.clientName}</p>
+						</div>
+
+						<p class="hidden w-24 shrink-0 text-xs text-muted sm:block">
+							{invoice.dueDate ? formatDate(invoice.dueDate) : '—'}
+						</p>
+
+						<p class="w-24 shrink-0 text-right tabular text-[13px] font-medium text-ink sm:text-left">
+							{formatMoney(invoice.amountCents, invoice.currency)}
+						</p>
+
+						<div class="w-32 shrink-0">
+							<form
+								id="invoice-status-{invoice.id}"
+								method="POST"
+								action="?/update_status"
+								use:enhance={toastEnhance({ successMsg: 'Status updated' })}
+							>
+								<input type="hidden" name="id" value={invoice.id} />
+								<input type="hidden" name="status" value={invoice.status} />
+								<Select
+									value={invoice.status}
+									items={INVOICE_STATUS_ITEMS}
+									onchange={(value: string) => {
+										if (value !== invoice.status) submitForm(`invoice-status-${invoice.id}`)
+									}}
+								/>
+							</form>
+						</div>
+
+						<Badge tone={INVOICE_STATUS_TONE[invoice.status]} class="hidden sm:inline-flex">
+							{INVOICE_STATUS_LABEL[invoice.status]}
+						</Badge>
+
+						<a
+							href="/dashboard/invoices/{invoice.id}"
+							class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted transition-colors hover:bg-raised hover:text-ink"
+							aria-label="View invoice"
+						>
+							<IconArrowRightRegular class="h-4 w-4" />
+						</a>
+
+						<ActionDeleteButton
+							action="?/delete"
+							id={invoice.id}
+							message="This permanently deletes the invoice."
+							ondelete={() => toast.success('Invoice deleted')}
+						/>
+					</li>
+				{/each}
+			</ul>
 		{/if}
 	</div>
 </div>

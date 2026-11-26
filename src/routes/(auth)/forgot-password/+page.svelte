@@ -1,23 +1,27 @@
 <script lang="ts">
 import { authClient, authError } from '#lib/auth-client.js'
 import AuthCard from '#lib/components/AuthCard.svelte'
+import Button from '#lib/ui/Button.svelte'
+import Field from '#lib/ui/Field.svelte'
+import FormError from '#lib/ui/FormError.svelte'
+import Input from '#lib/ui/Input.svelte'
 
 let email = $state('')
 let sent = $state(false)
 let error = $state('')
 let loading = $state(false)
 
-async function submit(e: Event) {
-	e.preventDefault()
+async function submit(event: Event) {
+	event.preventDefault()
 	error = ''
 	loading = true
-	const { error: err } = await authClient.requestPasswordReset({
+	const { error: authFailure } = await authClient.requestPasswordReset({
 		email,
 		redirectTo: '/reset-password',
 	})
 	loading = false
-	if (err) {
-		error = authError(err, 'Request failed')
+	if (authFailure) {
+		error = authError(authFailure, 'Request failed')
 		return
 	}
 	sent = true
@@ -26,26 +30,35 @@ async function submit(e: Event) {
 
 <AuthCard>
 	{#if sent}
-		<div class="text-center space-y-2">
-			<h1 class="text-lg font-semibold">Check your email</h1>
-			<p class="text-sm text-muted">If an account exists for {email}, you'll receive a reset link shortly.</p>
-			<a href="/login" class="text-accent text-sm hover:underline">Back to sign in</a>
+		<div>
+			<h1 class="display text-[28px] leading-none">Check your email</h1>
+			<p class="mt-3 text-[13px] leading-relaxed text-muted">
+				If an account exists for <span class="font-medium text-ink">{email}</span>,
+				a reset link is on its way.
+			</p>
+			<a href="/login" class="mt-6 inline-block text-xs font-medium text-accent hover:underline">
+				Back to sign in
+			</a>
 		</div>
 	{:else}
+		<div class="mb-8">
+			<h1 class="display text-[28px] leading-none">Reset password</h1>
+			<p class="mt-2 text-[13px] text-muted">We'll email you a link to set a new one.</p>
+		</div>
+
 		<form onsubmit={submit} class="space-y-4">
-			<h1 class="text-lg font-semibold text-center">Reset password</h1>
-			{#if error}
-				<p class="text-sm text-red-600 text-center">{error}</p>
-			{/if}
-			<div>
-				<label for="email" class="input-label">Email</label>
-				<input id="email" type="email" bind:value={email} required class="input" placeholder="your@email.com" />
-			</div>
-			<button type="submit" class="btn btn-primary w-full" disabled={loading}>
-				{loading ? 'Sending...' : 'Send reset link'}
-			</button>
-			<p class="text-sm text-center text-faint">
-				<a href="/login" class="text-accent hover:underline">Back to sign in</a>
+			<FormError message={error} />
+
+			<Field label="Email" for="email">
+				<Input id="email" type="email" bind:value={email} required autocomplete="email" placeholder="you@studio.com" />
+			</Field>
+
+			<Button type="submit" disabled={loading} class="w-full">
+				{loading ? 'Sending…' : 'Send reset link'}
+			</Button>
+
+			<p class="pt-2 text-center text-xs text-muted">
+				<a href="/login" class="font-medium text-accent hover:underline">Back to sign in</a>
 			</p>
 		</form>
 	{/if}

@@ -1,208 +1,193 @@
 <script lang="ts">
 import IconFolderOpenRegular from 'phosphor-icons-svelte/IconFolderOpenRegular.svelte'
 import IconPlusRegular from 'phosphor-icons-svelte/IconPlusRegular.svelte'
-import { toast } from 'svelte-sonner'
-import AppDatePicker from '#lib/components/AppDatePicker.svelte'
-import AppSelect from '#lib/components/AppSelect.svelte'
-import EmptyState from '#lib/components/EmptyState.svelte'
-import SlideOver from '#lib/components/SlideOver.svelte'
+import { formatDate, todayISO } from '#lib/domain/format.js'
 import {
-	fmtDate,
 	PROJECT_STATUS_ITEMS,
-	statusBadge,
-	statusLabel,
-	today,
-} from '#lib/fmt.js'
-import { asRecord } from '#lib/records.js'
+	PROJECT_STATUS_LABEL,
+	PROJECT_STATUS_TONE,
+} from '#lib/domain/status.js'
+import Avatar from '#lib/ui/Avatar.svelte'
+import Badge from '#lib/ui/Badge.svelte'
+import Button from '#lib/ui/Button.svelte'
+import DatePicker from '#lib/ui/DatePicker.svelte'
+import EmptyState from '#lib/ui/EmptyState.svelte'
+import Field from '#lib/ui/Field.svelte'
+import Input from '#lib/ui/Input.svelte'
+import PageHeader from '#lib/ui/PageHeader.svelte'
+import Select from '#lib/ui/Select.svelte'
+import SlideOver from '#lib/ui/SlideOver.svelte'
+import Textarea from '#lib/ui/Textarea.svelte'
 import { enhance } from '$app/forms'
 import { page } from '$app/state'
+import type { PageData } from './$types'
 
-import type { ActionData, PageData } from './$types'
-
-let { data, form }: { data: PageData; form: ActionData } = $props()
+let { data }: { data: PageData } = $props()
 
 let open = $state(page.url.searchParams.has('new'))
-let loading = $state(false)
-
 let showArchived = $state(false)
-
-function progress(p: PItem) {
-	const total = p.totalMilestones
-	return total ? Math.round((p.completedMilestones / total) * 100) : null
-}
+let creating = $state(false)
 
 const createStatusItems = PROJECT_STATUS_ITEMS.filter(
-	(s) => s.value === 'planning' || s.value === 'in_progress',
+	(status) => status.value === 'planning' || status.value === 'in_progress',
 )
-
-type PItem = {
-	id: string
-	name: string
-	status: string
-	dueDate: string | null
-	completedMilestones: number
-	totalMilestones: number
-	clientCount: number
-}
 
 const items = $derived(data.projects)
-
 const visible = $derived(
-	showArchived ? items : items.filter((p) => p.status !== 'archived'),
+	showArchived
+		? items
+		: items.filter((project) => project.status !== 'archived'),
 )
 const archivedCount = $derived(
-	items.filter((p) => p.status === 'archived').length,
+	items.filter((project) => project.status === 'archived').length,
 )
 const activeCount = $derived(
-	items.filter((p) => !['completed', 'archived'].includes(p.status)).length,
+	items.filter((project) => !['completed', 'archived'].includes(project.status))
+		.length,
 )
-const reviewCount = $derived(items.filter((p) => p.status === 'review').length)
+const reviewCount = $derived(
+	items.filter((project) => project.status === 'review').length,
+)
 
-function focusOnMount(node: HTMLElement) {
-	node.focus()
+function progress(project: (typeof items)[number]) {
+	return project.totalMilestones > 0
+		? Math.round((project.completedMilestones / project.totalMilestones) * 100)
+		: null
 }
 </script>
 
-<SlideOver bind:open title="New project" description="Fill in the details to get started.">
+<SlideOver bind:open title="New project" description="Set up the basics. You can invite a client now or later.">
 	<form
 		method="POST"
 		action="?/create"
 		use:enhance={() => {
-			loading = true;
-			return async ({ result, update }) => {
-				loading = false;
-				if (result.type === 'failure') {
-					const error = asRecord(result.data)?.error
-					toast.error(typeof error === 'string' ? error : 'Failed to create project')
-				}
-				await update();
-			};
+			creating = true
+			return async ({ update }) => {
+				creating = false
+				await update()
+			}
 		}}
 		class="flex flex-1 flex-col gap-5 overflow-y-auto px-6 py-6"
 	>
-		{#if form?.error}
-			<p class="form-error">{String(form.error)}</p>
-		{/if}
+		<Field label="Project name" for="project-name">
+			<Input id="project-name" name="name" required placeholder="Brand redesign" />
+		</Field>
 
-		<div>
-			<label for="proj-name" class="mb-1.5 block text-xs font-medium text-muted">Project name <span class="text-danger">*</span></label>
-			<input id="proj-name" name="name" type="text" required use:focusOnMount class="input" placeholder="Brand Redesign" />
-		</div>
-
-		<div>
-			<label for="proj-desc" class="mb-1.5 block text-xs font-medium text-muted">
-				Description <span class="text-faint">(optional)</span>
-			</label>
-			<textarea id="proj-desc" name="description" rows="3" class="input resize-none"
-				placeholder="Brief description of the project scope and goals…"></textarea>
-		</div>
+		<Field label="Description" for="project-description" optional>
+			<Textarea
+				id="project-description"
+				name="description"
+				rows="3"
+				placeholder="Scope, goals, anything worth remembering."
+			/>
+		</Field>
 
 		<div class="grid gap-4 sm:grid-cols-2">
-			<div>
-				<p class="mb-1.5 text-xs font-medium text-muted">Due date <span class="text-faint">(optional)</span></p>
-				<AppDatePicker name="due_date" placeholder="Pick a date" />
-			</div>
-			<div>
-				<p class="mb-1.5 text-xs font-medium text-muted">Status</p>
-				<AppSelect
-					name="status"
-					value="planning"
-					items={createStatusItems}
-				/>
-			</div>
+			<Field label="Due date">
+				<DatePicker name="due_date" placeholder="Pick a date" />
+			</Field>
+			<Field label="Status">
+				<Select name="status" value="planning" items={createStatusItems} />
+			</Field>
 		</div>
 
-		<div>
-			<label for="client_email" class="mb-1.5 block text-xs font-medium text-muted">
-				Invite client <span class="text-faint">(optional)</span>
-			</label>
-			<input id="client_email" name="client_email" type="email" class="input" placeholder="client@company.com" />
-			<p class="mt-1 text-xs text-faint">Creates a client account linked to this project — they can sign in with this email.</p>
-		</div>
+		<Field
+			label="Invite client"
+			for="client-email"
+			optional
+			hint="They get a private portal for this project."
+		>
+			<Input id="client-email" name="client_email" type="email" placeholder="client@company.com" />
+		</Field>
 
-		<div class="mt-auto flex gap-3 pt-4 divide-top">
-			<button type="submit" disabled={loading} class="btn btn-primary flex-1 justify-center">
-				{loading ? 'Creating…' : 'Create project'}
-			</button>
-			<button type="button" onclick={() => open = false} class="btn btn-ghost">Cancel</button>
+		<div class="mt-auto flex gap-3 border-t border-line pt-5">
+			<Button type="submit" disabled={creating} class="flex-1">
+				{creating ? 'Creating…' : 'Create project'}
+			</Button>
+			<Button type="button" variant="ghost" onclick={() => (open = false)}>
+				Cancel
+			</Button>
 		</div>
 	</form>
 </SlideOver>
 
 <div class="space-y-8">
-	<div class="flex items-center justify-between">
-		<div>
-			<p class="mb-1 text-xs font-semibold uppercase tracking-widest text-muted">Workspace</p>
-			<h1 class="page-title">Projects</h1>
-			<p class="mt-0.5 text-sm text-muted">{visible.length} shown · {activeCount} active · {reviewCount} in review</p>
-		</div>
-		<div class="flex items-center gap-2">
+	<PageHeader
+		title="Projects"
+		description="{visible.length} shown · {activeCount} active · {reviewCount} in review"
+	>
+		{#snippet actions()}
 			{#if archivedCount > 0}
-				<button
-					onclick={() => showArchived = !showArchived}
-					class="btn btn-ghost text-xs px-3 gap-1.5"
-					style={showArchived ? 'border-color:var(--color-accent-600);color:var(--color-accent-600)' : ''}
-				>
+				<Button variant="ghost" size="sm" onclick={() => (showArchived = !showArchived)}>
 					{showArchived ? 'Hide archived' : `Archived (${archivedCount})`}
-				</button>
+				</Button>
 			{/if}
-			<button onclick={() => open = true} class="btn btn-primary">
-				<IconPlusRegular class="h-4 w-4" /><span class="hidden sm:inline"> New project</span>
-			</button>
-		</div>
-	</div>
+			<Button size="sm" onclick={() => (open = true)}>
+				<IconPlusRegular class="h-4 w-4" />
+				New project
+			</Button>
+		{/snippet}
+	</PageHeader>
 
-	<div class="overflow-hidden rounded-xl card p-0">
-		{#if visible.length > 0}
-			<div class="hidden sm:grid px-6 py-2.5 text-xs font-medium divide-bottom text-faint"
-				style="grid-template-columns:1fr 120px 80px 100px">
+	<div class="overflow-hidden rounded-lg border border-line bg-surface">
+		{#if visible.length === 0}
+			<EmptyState
+				icon={IconFolderOpenRegular}
+				title="No projects yet"
+				description="Create a project and invite your first client."
+				action={{ label: 'Create project', onClick: () => (open = true) }}
+			/>
+		{:else}
+			<div class="hidden items-center gap-4 border-b border-line px-6 py-2.5 text-[11px] font-medium text-faint sm:grid sm:grid-cols-[minmax(0,1fr)_8rem_4rem_6rem]">
 				<span>Project</span>
 				<span>Progress</span>
 				<span class="text-center">Clients</span>
 				<span class="text-right">Status</span>
 			</div>
-		{/if}
 
-		{#if visible.length === 0}
-			<EmptyState icon={IconFolderOpenRegular} title="No projects yet" description="Create a project and invite your first client." action={{ label: 'Create project', onClick: () => open = true }} />
-		{:else}
-			{#each visible as p}
-				{@const pct = progress(p)}
-				{@const overdue = p.dueDate && p.dueDate < today() && p.status !== 'completed'}
-				{@const clientCount = p.clientCount}
-				<a href="/dashboard/projects/{p.id}"
-					class="flex items-center gap-4 px-6 py-4 transition-colors hover-bg divide-bottom no-underline"
-					style="opacity:{p.status === 'archived' ? '0.6' : '1'}">
-					<div class="flex flex-1 items-center gap-3 min-w-0">
-						<div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold bg-accent-soft">
-							{p.name.at(0)?.toUpperCase()}
-						</div>
-						<div class="min-w-0">
-							<p class="text-sm font-medium truncate text-body">{p.name}</p>
-							<p class="mt-0.5 text-xs" class:text-danger={overdue} class:text-faint={!overdue}>
-								{overdue ? '⚠ Overdue · ' : (p.dueDate ? 'Due ' : '')}
-								{p.dueDate ? fmtDate(p.dueDate) : "No due date"}
-							</p>
-						</div>
-					</div>
-					<div class="hidden sm:flex w-[120px] items-center gap-2 shrink-0">
-						{#if pct !== null}
-							<div class="h-1.5 flex-1 rounded-full overflow-hidden bg-subtle">
-								<div class="h-full rounded-full" style="width:{pct}%;background:var(--color-accent-600)"></div>
+			<ul class="divide-y divide-line">
+				{#each visible as project (project.id)}
+					{@const pct = progress(project)}
+					{@const overdue = project.dueDate !== null && project.dueDate < todayISO() && project.status !== 'completed'}
+					<li>
+						<a
+							href="/dashboard/projects/{project.id}"
+							class="flex items-center gap-4 px-6 py-4 transition-colors hover:bg-raised"
+						>
+							<div class="flex min-w-0 flex-1 items-center gap-3">
+								<Avatar name={project.name} size={8} />
+								<div class="min-w-0">
+									<p class="truncate text-[13px] font-medium text-ink">{project.name}</p>
+									<p class="mt-0.5 text-[11px] {overdue ? 'text-danger' : 'text-muted'}">
+										{project.dueDate ? `Due ${formatDate(project.dueDate)}` : 'No due date'}
+									</p>
+								</div>
 							</div>
-							<span class="text-xs w-7 text-right tabular-nums text-faint">{pct}%</span>
-						{:else}
-							<span class="text-xs text-faint">—</span>
-						{/if}
-					</div>
-					<div class="hidden sm:flex w-[80px] justify-center shrink-0">
-						<span class="text-xs font-medium text-faint">{clientCount}</span>
-					</div>
-					<div class="w-[100px] flex justify-end shrink-0">
-						<span class="{statusBadge[p.status] ?? 'badge badge-neutral'}">{statusLabel[p.status] ?? p.status}</span>
-					</div>
-				</a>
-			{/each}
+
+							<div class="hidden w-32 shrink-0 items-center gap-2 sm:flex">
+								{#if pct !== null}
+									<div class="h-1 flex-1 overflow-hidden rounded-xs bg-raised">
+										<div class="h-full bg-accent" style="width:{pct}%"></div>
+									</div>
+									<span class="w-8 text-right tabular text-[11px] text-muted">{pct}%</span>
+								{:else}
+									<span class="text-[11px] text-faint">—</span>
+								{/if}
+							</div>
+
+							<div class="hidden w-16 shrink-0 text-center sm:block">
+								<span class="tabular text-xs text-muted">{project.clientCount}</span>
+							</div>
+
+							<div class="flex w-24 shrink-0 justify-end">
+								<Badge tone={PROJECT_STATUS_TONE[project.status]}>
+									{PROJECT_STATUS_LABEL[project.status]}
+								</Badge>
+							</div>
+						</a>
+					</li>
+				{/each}
+			</ul>
 		{/if}
 	</div>
 </div>

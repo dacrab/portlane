@@ -1,17 +1,17 @@
-import { error } from '@sveltejs/kit'
+import { authed } from '#lib/server/action.js'
 import { getRecentComments, markCommentsRead } from '#lib/server/comments.js'
 import { getDashboardStats } from '#lib/server/dashboard.js'
+import { requireUser } from '#lib/server/guard.js'
 import { getDashboardProjects } from '#lib/server/projects.js'
 import type { Actions, PageServerLoad } from './$types'
 
 export const load: PageServerLoad = async ({ locals }) => {
-	if (!locals.user) error(401)
-	const userId = locals.user.userId
+	const user = requireUser(locals)
 
 	const [projects, stats, activity] = await Promise.all([
-		getDashboardProjects(userId),
-		getDashboardStats(userId),
-		getRecentComments(userId, 5),
+		getDashboardProjects(user.userId),
+		getDashboardStats(user.userId),
+		getRecentComments(user.userId, 5),
 	])
 
 	const onboarding = {
@@ -34,8 +34,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 }
 
 export const actions: Actions = {
-	mark_read: async ({ locals }) => {
-		if (!locals.user) error(401)
-		await markCommentsRead(locals.user.userId)
-	},
+	mark_read: authed(async ({ user }) => {
+		await markCommentsRead(user.userId)
+	}),
 }

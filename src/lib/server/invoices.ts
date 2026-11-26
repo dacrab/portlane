@@ -1,5 +1,3 @@
-import type { Action } from '@sveltejs/kit'
-import { fail } from '@sveltejs/kit'
 import {
 	and,
 	desc,
@@ -15,12 +13,9 @@ import {
 import { alias } from 'drizzle-orm/pg-core'
 import * as schema from '#lib/server/db/schema.js'
 import { useDb } from '#lib/server/db.js'
-import { str } from '#lib/server/form.js'
-import { createCheckoutSession } from '#lib/server/stripe.js'
 
 export async function getFreelancerInvoices(freelancerId: string) {
-	const db = useDb()
-	return db
+	return useDb()
 		.select({
 			...getTableColumns(schema.invoices),
 			projectName: schema.projects.name,
@@ -78,10 +73,9 @@ export async function getInvoiceProjects(freelancerId: string) {
 }
 
 export async function getInvoiceById(invoiceId: string) {
-	const db = useDb()
 	const freelancer = alias(schema.users, 'freelancer')
 	const client = alias(schema.users, 'client')
-	const [invoice] = await db
+	const [invoice] = await useDb()
 		.select({
 			...getTableColumns(schema.invoices),
 			projectName: schema.projects.name,
@@ -105,8 +99,7 @@ export async function getClientProjectInvoices(
 	projectId: string,
 	clientId: string,
 ) {
-	const db = useDb()
-	return db
+	return useDb()
 		.select()
 		.from(schema.invoices)
 		.where(
@@ -117,116 +110,6 @@ export async function getClientProjectInvoices(
 		)
 		.orderBy(desc(schema.invoices.createdAt))
 }
-
-export async function createInvoice(input: {
-	projectId: string
-	clientId: string
-	freelancerId: string
-	amountCents: number
-	dueDate: string | null
-}) {
-	await useDb().insert(schema.invoices).values(input)
-}
-
-export async function setInvoiceStatus(
-	invoiceId: string,
-	freelancerId: string,
-	status: string,
-) {
-	await useDb()
-		.update(schema.invoices)
-		.set({ status })
-		.where(
-			and(
-				eq(schema.invoices.id, invoiceId),
-				eq(schema.invoices.freelancerId, freelancerId),
-			),
-		)
-}
-
-export async function deleteInvoice(invoiceId: string, freelancerId: string) {
-	await useDb()
-		.delete(schema.invoices)
-		.where(
-			and(
-				eq(schema.invoices.id, invoiceId),
-				eq(schema.invoices.freelancerId, freelancerId),
-			),
-		)
-}
-
-type CheckoutResult =
-	| { url: string }
-	| ReturnType<typeof fail<{ error: string }>>
-
-async function handleCheckoutAction(
-	locals: App.Locals,
-	form: FormData,
-	origin: string,
-): Promise<CheckoutResult> {
-	if (!locals.user) return fail(401, { error: 'Unauthorized' })
-	const invoiceId = str(form, 'invoiceId')
-	if (!invoiceId) return fail(400, { error: 'Invoice ID required' })
-
-	const db = useDb()
-	const [invoice] = await db
-		.select({
-			id: schema.invoices.id,
-			projectId: schema.invoices.projectId,
-			amountCents: schema.invoices.amountCents,
-			currency: schema.invoices.currency,
-			status: schema.invoices.status,
-			stripeSessionId: schema.invoices.stripeSessionId,
-			projectName: schema.projects.name,
-		})
-		.from(schema.invoices)
-		.innerJoin(
-			schema.projects,
-			eq(schema.projects.id, schema.invoices.projectId),
-		)
-		.where(
-			and(
-				eq(schema.invoices.id, invoiceId),
-				or(
-					eq(schema.invoices.freelancerId, locals.user.userId),
-					eq(schema.invoices.clientId, locals.user.userId),
-				),
-			),
-		)
-		.limit(1)
-
-	if (!invoice) return fail(404, { error: 'Invoice not found' })
-	if (invoice.stripeSessionId)
-		return fail(400, { error: 'A payment session already exists' })
-	if (invoice.status !== 'sent' && invoice.status !== 'overdue')
-		return fail(400, { error: 'Invoice is not payable' })
-
-	const portalUrl = `${origin}/portal?project=${invoice.projectId}`
-	const result = await createCheckoutSession(
-		{
-			id: invoice.id,
-			amountCents: invoice.amountCents,
-			currency: invoice.currency,
-			projectName: invoice.projectName,
-		},
-		locals.user.role === 'client'
-			? { successUrl: `${portalUrl}&payment=success`, cancelUrl: portalUrl }
-			: {
-					successUrl: `${origin}/dashboard/invoices/${invoice.id}?payment=success`,
-					cancelUrl: `${origin}/dashboard/invoices/${invoice.id}`,
-				},
-	)
-
-	await db
-		.update(schema.invoices)
-		.set({ stripeSessionId: result.sessionId })
-		.where(eq(schema.invoices.id, invoice.id))
-
-	return { url: result.url }
-}
-
-export const checkoutAction: Action = async ({ locals, request, url }) =>
-	handleCheckoutAction(locals, await request.formData(), url.origin)
 
 const REMINDER_INTERVAL_DAYS = 7
 

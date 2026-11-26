@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm'
-import type { UserRole } from '#lib/server/db/schema.js'
+import type { UserRole } from '#lib/domain/types.js'
 import * as schema from '#lib/server/db/schema.js'
 import { useDb } from '#lib/server/db.js'
 import { deleteObjects } from '#lib/server/storage.js'

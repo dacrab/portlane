@@ -1,186 +1,293 @@
 <script lang="ts">
 import IconArrowRightRegular from 'phosphor-icons-svelte/IconArrowRightRegular.svelte'
-import IconCheckRegular from 'phosphor-icons-svelte/IconCheckRegular.svelte'
+import IconCheckBold from 'phosphor-icons-svelte/IconCheckBold.svelte'
+import Badge from '#lib/ui/Badge.svelte'
+import Button from '#lib/ui/Button.svelte'
+import Logo from '#lib/ui/Logo.svelte'
+
+const steps = [
+	{
+		title: 'Invite your client',
+		body: 'Add an email and they get a private portal with a secure password link. No new tool for them to learn.',
+	},
+	{
+		title: 'Run the work in the open',
+		body: 'Milestones, files, and one comment thread. Everything the project needs, where both of you can see it.',
+	},
+	{
+		title: 'Approve and get paid',
+		body: 'Clients approve the work and pay invoices in the same place. Overdue reminders send themselves.',
+	},
+]
 
 const features = [
 	{
-		title: 'Projects & milestones',
-		body: 'Plan the work, track progress, and check milestones off as you go.',
+		title: 'Milestones',
+		body: 'A timeline both sides can read at a glance, with progress that updates as work lands.',
 	},
 	{
-		title: 'Files, in one place',
-		body: 'Share deliverables in the project timeline instead of scattered email attachments.',
+		title: 'Files',
+		body: 'Deliverables live on the project, not in an email thread from three weeks ago.',
 	},
 	{
-		title: 'Invoices & payments',
-		body: 'Draft, send, and get paid online — with automatic overdue reminders.',
+		title: 'Approvals',
+		body: 'One click to approve, or a clear note to request a revision. Both are recorded.',
 	},
 	{
-		title: 'Comments',
-		body: 'One thread per project, so feedback never gets lost.',
+		title: 'Invoices',
+		body: 'Draft, send, and collect payment online. Status follows the money, not your memory.',
 	},
 	{
-		title: 'Client portal',
-		body: 'A private, login-protected space your clients can actually use.',
+		title: 'Time and notes',
+		body: 'Log hours for yourself and keep private notes your client never sees.',
 	},
 	{
-		title: 'Time & notes',
-		body: 'Log hours and keep internal notes that clients never see.',
+		title: 'One portal',
+		body: 'A quiet, login-protected space that looks like your studio, not a generic dashboard.',
 	},
+]
+
+const milestones = [
+	{ name: 'Discovery', done: true },
+	{ name: 'Design', done: true },
+	{ name: 'Development', done: false, current: true },
+	{ name: 'Launch', done: false },
 ]
 </script>
 
-<div class="min-h-screen" style="background:var(--color-bg);color:var(--color-text)">
+<div class="min-h-dvh bg-page">
+	<header class="sticky top-0 z-40 border-b border-line bg-page/85 backdrop-blur">
+		<div class="mx-auto flex h-16 max-w-6xl items-center justify-between gap-6 px-6">
+			<Logo />
 
-	<header class="sticky top-0 z-40" style="background:color-mix(in srgb, var(--color-bg-elevated) 85%, transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--color-border)">
-		<div class="mx-auto flex h-14 max-w-[68rem] items-center gap-8 px-8">
-			<a href="/" class="mr-auto flex items-center gap-2 text-[0.9375rem] font-bold -tracking-[0.02em] no-underline" style="color:var(--color-text-heading)">
-				<img src="/favicon.svg" alt="" class="h-[1.375rem] w-[1.375rem]" />
-				Portlane
-			</a>
-			<nav class="flex items-center gap-7 max-md:hidden">
-				<a href="#how" class="text-sm no-underline" style="color:var(--color-text-muted)">How it works</a>
-				<a href="#features" class="text-sm no-underline" style="color:var(--color-text-muted)">Features</a>
-				<a href="/login" class="text-sm no-underline" style="color:var(--color-text-muted)">Log in</a>
+			<nav class="hidden items-center gap-7 text-[13px] text-muted md:flex">
+				<a href="#how" class="transition-colors hover:text-ink">How it works</a>
+				<a href="#features" class="transition-colors hover:text-ink">Features</a>
 			</nav>
-			<a href="/signup" class="btn btn-primary">Get started</a>
+
+			<div class="flex items-center gap-2">
+				<a
+					href="/login"
+					class="px-3 text-[13px] text-muted transition-colors hover:text-ink"
+				>
+					Log in
+				</a>
+				<Button href="/signup" size="sm">
+					Get started
+					<IconArrowRightRegular class="h-3.5 w-3.5" />
+				</Button>
+			</div>
 		</div>
 	</header>
 
-	<section class="border-b px-8 py-20 md:py-24" style="border-color:var(--color-border)">
-		<div class="mx-auto grid max-w-[68rem] items-center gap-16 md:grid-cols-2">
+	<section class="border-b border-line">
+		<div class="mx-auto grid max-w-6xl items-center gap-16 px-6 py-20 lg:grid-cols-[1.05fr_0.95fr] lg:py-28">
 			<div>
-				<h1 class="m-0 mb-5 text-[clamp(2.25rem,4.5vw,3.25rem)] font-extrabold leading-[1.08] -tracking-[0.04em]" style="color:var(--color-text-heading)">Client work,<br>finally organized.</h1>
-				<p class="m-0 mb-8 max-w-[38ch] leading-[1.7]" style="font-size:1.0625rem;color:var(--color-text-muted)">Portlane gives every project a private workspace — timeline, files, invoices, and approvals in one place. Your clients will actually use it.</p>
-				<div class="mb-6 flex flex-wrap items-center gap-5">
-				<a href="/signup" class="btn btn-primary btn-lg">
-					Get started <IconArrowRightRegular class="h-[0.875rem] w-[0.875rem] shrink-0" />
-				</a>
-					<span class="text-xs" style="color:var(--color-text-faint)">Free to use · No credit card required</span>
-				</div>
-			</div>
+				<p class="flex items-center gap-2.5 text-xs text-muted">
+					<span class="lane-mark"></span>
+					Client work, one lane
+				</p>
 
-			<div class="flex justify-end max-md:justify-start">
-				<div class="w-full max-w-[22rem] overflow-hidden rounded-xl shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_8px_24px_rgba(0,0,0,0.08)]" style="background:var(--color-bg-elevated);border:1px solid var(--color-border)">
-					<div class="flex items-center gap-3 border-b px-4 py-3" style="background:var(--color-bg-subtle);border-color:var(--color-border)">
-						<div class="flex gap-[0.3rem]">
-							<span class="block h-2 w-2 rounded-full" style="background:#ef4444"></span>
-							<span class="block h-2 w-2 rounded-full" style="background:#f59e0b"></span>
-							<span class="block h-2 w-2 rounded-full" style="background:#22c55e"></span>
-						</div>
-						<span class="text-xs font-medium" style="color:var(--color-text-muted)">Acme Corp · Website Redesign</span>
+				<h1 class="display mt-6 text-[clamp(2.75rem,6vw,4.25rem)] leading-[1.02]">
+					Stop chasing.<br />Start shipping.
+				</h1>
+
+				<p class="mt-6 max-w-md text-[15px] leading-relaxed text-body">
+					Portlane gives every client project a private workspace — milestones,
+					files, approvals, and invoices behind one link they will actually use.
+				</p>
+
+				<div class="mt-8 flex flex-wrap items-center gap-4">
+					<Button href="/signup">
+						Start a project
+						<IconArrowRightRegular class="h-4 w-4" />
+					</Button>
+					<span class="text-xs text-muted">Free to use · No card required</span>
+				</div>
+
+				<dl class="mt-12 grid max-w-md grid-cols-3 gap-4 border-t border-line pt-5">
+					<div>
+						<dt class="text-[11px] text-muted">Setup</dt>
+						<dd class="mt-1 text-[13px] text-ink">Under 5 minutes</dd>
 					</div>
-					<div class="p-5">
-						<div class="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.05em]" style="color:var(--color-text-faint)">Milestones</div>
-						{#each [['Discovery', true],['Design', true],['Development', false],['Launch', false]] as [m, done]}
-							<div class="flex items-center gap-[0.625rem] py-[0.3rem]">
-								<span class="flex h-[1.125rem] w-[1.125rem] shrink-0 items-center justify-center rounded-full border" style="border:1.5px solid var(--color-border);color:var(--color-bg-elevated);background:{done ? 'var(--color-ink)' : 'transparent'};border-color:{done ? 'var(--color-ink)' : 'var(--color-border)'}">
-									{#if done}<IconCheckRegular class="h-[0.625rem] w-[0.625rem]" />{/if}
-								</span>
-								<span class="text-sm" style="color:{(done ? 'var(--color-text-faint)' : 'var(--color-text)')};text-decoration:{done ? 'line-through' : 'none'}">{m}</span>
-							</div>
-						{/each}
-						<div class="my-4 h-px" style="background:var(--color-border-subtle)"></div>
-						<div class="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.05em]" style="color:var(--color-text-faint)">Invoice #003</div>
-						<div class="flex items-center justify-between py-1 text-sm" style="color:var(--color-text)"><span style="color:var(--color-text-muted)">Design phase — 20h</span><span>$3,200</span></div>
-						<div class="mt-1 flex items-center justify-between border-t pt-2 text-sm font-semibold" style="border-color:var(--color-border-subtle)"><span>Total due</span><span class="text-base" style="color:var(--color-text-heading)">$3,200</span></div>
-						<div class="mt-[0.875rem] w-full rounded-[0.375rem] px-2 py-2 text-center text-sm font-medium" style="background:var(--color-ink);color:var(--color-bg-elevated)">Pay now</div>
+					<div>
+						<dt class="text-[11px] text-muted">Client access</dt>
+						<dd class="mt-1 text-[13px] text-ink">One private link</dd>
+					</div>
+					<div>
+						<dt class="text-[11px] text-muted">Payments</dt>
+						<dd class="mt-1 text-[13px] text-ink">Online, in the portal</dd>
+					</div>
+				</dl>
+			</div>
+
+			<div class="flex justify-center lg:justify-end">
+				<div class="w-full max-w-md border border-line bg-surface">
+					<div class="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
+						<div>
+							<p class="text-[11px] text-muted">Acme Studio</p>
+							<p class="mt-0.5 text-[13px] font-medium text-ink">Website redesign</p>
+						</div>
+						<Badge tone="accent">In progress</Badge>
+					</div>
+
+					<div class="px-5 py-4">
+						<div class="flex items-baseline justify-between text-[11px]">
+							<span class="text-muted">Milestones</span>
+							<span class="tabular text-faint">2 / 4</span>
+						</div>
+						<div class="mt-2 h-1 overflow-hidden rounded-xs bg-raised">
+							<div class="h-full w-1/2 bg-accent"></div>
+						</div>
+
+						<ul class="mt-4 space-y-2.5">
+							{#each milestones as milestone (milestone.name)}
+								<li class="flex items-center gap-2.5">
+									<span class="flex h-4 w-4 items-center justify-center rounded-full {milestone.done ? 'bg-accent text-page' : milestone.current ? 'border border-accent text-accent' : 'border border-line-strong text-transparent'}">
+										{#if milestone.done}
+											<IconCheckBold class="h-2.5 w-2.5" />
+										{:else if milestone.current}
+											<span class="h-1.5 w-1.5 rounded-full bg-accent"></span>
+										{/if}
+									</span>
+									<span class="text-[13px] {milestone.done ? 'text-faint line-through' : 'text-body'}">
+										{milestone.name}
+									</span>
+									{#if milestone.current}
+										<span class="ml-auto text-[10px] text-accent">Now</span>
+									{/if}
+								</li>
+							{/each}
+						</ul>
+					</div>
+
+					<div class="border-t border-line px-5 py-4">
+						<div class="flex items-baseline justify-between">
+							<span class="text-[11px] text-muted">Invoice 003</span>
+							<span class="tabular text-[13px] font-medium text-ink">$3,200</span>
+						</div>
+						<div class="mt-2 flex items-center justify-between">
+							<span class="text-[11px] text-muted">Due Jun 30</span>
+							<Badge tone="warning">Sent</Badge>
+						</div>
+					</div>
+
+					<div class="flex items-center justify-between border-t border-line bg-raised px-5 py-2.5">
+						<span class="text-[10px] text-muted">Client portal</span>
+						<span class="text-[10px] text-faint">acme.portlane.app</span>
 					</div>
 				</div>
 			</div>
 		</div>
 	</section>
 
-	<section id="how" class="px-8 py-20" style="background:var(--color-bg-elevated)">
-		<div class="mx-auto max-w-[68rem]">
-			<p class="m-0 mb-3 text-[0.75rem] font-semibold uppercase tracking-[0.07em]" style="color:var(--color-text-heading)">How it works</p>
-			<h2 class="m-0 mb-12 text-[clamp(1.75rem,3.5vw,2.5rem)] font-extrabold leading-[1.1] -tracking-[0.035em]" style="color:var(--color-text-heading)">Less back-and-forth.<br>More done.</h2>
-			<div class="grid gap-12 md:grid-cols-3">
-				<div class="flex flex-col gap-[0.875rem]">
-					<span class="text-[0.6875rem] font-bold tracking-[0.06em]" style="color:var(--color-border)">01</span>
-					<h3 class="m-0 mb-2 text-[1.0625rem] font-semibold -tracking-[0.02em]" style="color:var(--color-text-heading)">Invite your client with one link</h3>
-					<p class="m-0 text-[0.9375rem] leading-[1.65]" style="color:var(--color-text-muted)">Add a client by email and they get a secure link to set a password and open their private project portal.</p>
-				</div>
-				<div class="flex flex-col gap-[0.875rem]">
-					<span class="text-[0.6875rem] font-bold tracking-[0.06em]" style="color:var(--color-border)">02</span>
-					<h3 class="m-0 mb-2 text-[1.0625rem] font-semibold -tracking-[0.02em]" style="color:var(--color-text-heading)">Everything in one place</h3>
-					<p class="m-0 text-[0.9375rem] leading-[1.65]" style="color:var(--color-text-muted)">Files, milestones, comments, and invoices — all in a clean timeline. Clients stop asking, you stop repeating yourself.</p>
-				</div>
-				<div class="flex flex-col gap-[0.875rem]">
-					<span class="text-[0.6875rem] font-bold tracking-[0.06em]" style="color:var(--color-border)">03</span>
-					<h3 class="m-0 mb-2 text-[1.0625rem] font-semibold -tracking-[0.02em]" style="color:var(--color-text-heading)">Approve, pay, move on</h3>
-					<p class="m-0 text-[0.9375rem] leading-[1.65]" style="color:var(--color-text-muted)">Clients approve work and pay invoices in the same portal. No email chains. No "did you get my payment?" messages.</p>
-				</div>
-			</div>
-		</div>
-	</section>
+	<section id="how" class="border-b border-line bg-surface">
+		<div class="mx-auto max-w-6xl px-6 py-20">
+			<p class="flex items-center gap-2.5 text-xs text-muted">
+				<span class="lane-mark"></span>
+				How it works
+			</p>
+			<h2 class="display mt-4 max-w-xl text-[clamp(1.9rem,4vw,2.75rem)] leading-[1.08]">
+				Less back-and-forth.<br />More finished work.
+			</h2>
 
-	<section class="px-8 py-20">
-		<div class="mx-auto grid max-w-[68rem] items-center gap-20 md:grid-cols-2">
-			<div>
-				<p class="m-0 mb-3 text-[0.75rem] font-semibold uppercase tracking-[0.07em]" style="color:var(--color-text-heading)">Invoicing</p>
-				<h2 class="mb-4 text-[clamp(1.75rem,3.5vw,2.5rem)] font-extrabold leading-[1.1] -tracking-[0.035em]" style="color:var(--color-text-heading)">Get paid faster.</h2>
-				<p class="m-0 mb-6 text-base leading-[1.7]" style="color:var(--color-text-muted)">Create an invoice in seconds, send it inside the portal, and let clients pay in one click. No PDFs flying around in email.</p>
-				<ul class="m-0 flex list-none flex-col gap-[0.625rem] p-0">
-					{#each ['Draft → sent → paid tracking','Clients pay in one click from the portal','Automatic overdue reminders'] as item}
-						<li class="flex items-center gap-2 text-[0.9375rem]" style="color:var(--color-text)"><span style="color:var(--color-text-heading)"><IconCheckRegular class="h-4 w-4 shrink-0" /></span>{item}</li>
-					{/each}
-				</ul>
-			</div>
-			<div class="flex justify-center">
-				<div class="w-full max-w-[22rem] overflow-hidden rounded-xl shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_8px_24px_rgba(0,0,0,0.08)]" style="background:var(--color-bg-elevated);border:1px solid var(--color-border)">
-					<div class="border-b px-5 py-[0.875rem] text-[0.8125rem] font-semibold" style="color:var(--color-text-heading);border-color:var(--color-border);background:var(--color-bg-subtle)">Invoices</div>
-					{#each [['Website Redesign','$3,200','Paid'],['Brand Identity','$1,800','Sent'],['Monthly Retainer','$900','Draft']] as row}
-						<div class="flex items-center justify-between border-b px-5 py-[0.875rem]" style="border-color:var(--color-border-subtle)">
-							<div>
-								<div class="mb-[0.125rem] text-sm font-medium" style="color:var(--color-text-heading)">{row[0]}</div>
-								<div class="text-xs" style="color:var(--color-text-faint)">{row[1]}</div>
-							</div>
-							<span class="rounded-full px-2 py-[0.2rem] text-[0.6875rem] font-semibold" style="background:{(row[2] === 'Paid' ? 'rgba(21,128,61,0.10)' : row[2] === 'Sent' ? 'rgba(180,83,9,0.10)' : 'var(--color-bg-subtle)')};color:{(row[2] === 'Paid' ? '#15803d' : row[2] === 'Sent' ? '#b45309' : 'var(--color-text-muted)')}">{row[2]}</span>
-						</div>
-					{/each}
-				</div>
-			</div>
-		</div>
-	</section>
-
-	<section id="features" class="px-8 py-20" style="background:var(--color-bg-elevated)">
-		<div class="mx-auto max-w-[68rem]">
-			<p class="m-0 mb-3 text-[0.75rem] font-semibold uppercase tracking-[0.07em]" style="color:var(--color-text-heading)">Features</p>
-			<h2 class="m-0 mb-12 text-[clamp(1.75rem,3.5vw,2.5rem)] font-extrabold leading-[1.1] -tracking-[0.035em]" style="color:var(--color-text-heading)">Everything in one workspace.</h2>
-			<div class="grid gap-6 md:grid-cols-3">
-				{#each features as { title, body }}
-					<div class="flex flex-col gap-2 rounded-xl border p-6" style="background:var(--color-bg-elevated);border-color:var(--color-border)">
-						<h3 class="m-0 text-[1.0625rem] font-semibold -tracking-[0.02em]" style="color:var(--color-text-heading)">{title}</h3>
-						<p class="m-0 text-[0.9375rem] leading-[1.6]" style="color:var(--color-text-muted)">{body}</p>
+			<div class="mt-12 grid gap-10 md:grid-cols-3">
+				{#each steps as step, index (step.title)}
+					<div class="border-t border-line pt-5">
+						<span class="tabular text-[11px] text-faint">0{index + 1}</span>
+						<h3 class="mt-3 text-[15px] font-medium text-ink">{step.title}</h3>
+						<p class="mt-2 text-[13px] leading-relaxed text-muted">{step.body}</p>
 					</div>
 				{/each}
 			</div>
 		</div>
 	</section>
 
-	<section class="border-t px-8 py-24" style="border-color:var(--color-border)">
-		<div class="mx-auto flex max-w-[68rem] flex-col items-center gap-4 text-center">
-			<h2 class="m-0 text-[clamp(1.75rem,3.5vw,2.5rem)] font-extrabold -tracking-[0.035em]" style="color:var(--color-text-heading)">Ready to impress your clients?</h2>
-			<p class="m-0 mb-2 text-base" style="color:var(--color-text-muted)">Set up your first project in under 5 minutes.</p>
-			<a href="/signup" class="btn btn-primary btn-lg">
-				Get started <IconArrowRightRegular class="h-[0.875rem] w-[0.875rem] shrink-0" />
-			</a>
+	<section class="border-b border-line">
+		<div class="mx-auto grid max-w-6xl items-center gap-14 px-6 py-20 lg:grid-cols-2">
+			<div>
+				<p class="flex items-center gap-2.5 text-xs text-muted">
+					<span class="lane-mark"></span>
+					Invoicing
+				</p>
+				<h2 class="display mt-4 text-[clamp(1.9rem,4vw,2.75rem)] leading-[1.08]">
+					Get paid without the follow-up.
+				</h2>
+				<p class="mt-4 max-w-md text-[14px] leading-relaxed text-body">
+					Create an invoice in seconds, send it inside the portal, and let the
+					client pay in one click. Reminders go out on their own.
+				</p>
+				<ul class="mt-6 space-y-2.5">
+					{#each ['Draft, sent, paid — status follows the money', 'Clients pay from the same portal', 'Overdue reminders every seven days'] as item (item)}
+						<li class="flex items-center gap-2.5 text-[13px] text-body">
+							<span class="text-accent"><IconCheckBold class="h-3.5 w-3.5" /></span>
+							{item}
+						</li>
+					{/each}
+				</ul>
+			</div>
+
+			<div class="border border-line bg-surface">
+				<div class="border-b border-line px-5 py-3 text-[11px] font-medium text-muted">
+					Invoices
+				</div>
+				{#each [{ name: 'Website redesign', amount: '$3,200', status: 'Paid', tone: 'success' }, { name: 'Brand identity', amount: '$1,800', status: 'Sent', tone: 'warning' }, { name: 'Monthly retainer', amount: '$900', status: 'Draft', tone: 'neutral' }] as row (row.name)}
+					<div class="flex items-center justify-between gap-4 border-b border-line px-5 py-4 last:border-b-0">
+						<div>
+							<p class="text-[13px] font-medium text-ink">{row.name}</p>
+							<p class="mt-0.5 tabular text-[11px] text-muted">{row.amount}</p>
+						</div>
+						<Badge tone={row.tone as 'success' | 'warning' | 'neutral'}>{row.status}</Badge>
+					</div>
+				{/each}
+			</div>
 		</div>
 	</section>
 
-	<footer style="background:var(--color-bg-elevated);border-top:1px solid var(--color-border)">
-		<div class="mx-auto flex max-w-[68rem] flex-wrap items-center justify-between gap-4 px-8 py-6">
-			<a href="/" class="flex items-center gap-2 text-[0.9375rem] font-bold -tracking-[0.02em] no-underline" style="color:var(--color-text-heading);opacity:0.5">
-				<img src="/favicon.svg" alt="" class="h-[1.375rem] w-[1.375rem]" />
-				Portlane
-			</a>
-			<p class="m-0 text-xs" style="color:var(--color-text-faint)">© {new Date().getFullYear()} Portlane</p>
-			<div class="flex gap-5">
-				<a href="/login" class="text-xs no-underline" style="color:var(--color-text-faint)">Log in</a>
-				<a href="/signup" class="text-xs no-underline" style="color:var(--color-text-faint)">Sign up</a>
+	<section id="features" class="border-b border-line bg-surface">
+		<div class="mx-auto max-w-6xl px-6 py-20">
+			<p class="flex items-center gap-2.5 text-xs text-muted">
+				<span class="lane-mark"></span>
+				Everything in the workspace
+			</p>
+			<h2 class="display mt-4 max-w-xl text-[clamp(1.9rem,4vw,2.75rem)] leading-[1.08]">
+				One place. Both sides.
+			</h2>
+
+			<div class="mt-12 grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
+				{#each features as feature (feature.title)}
+					<div class="border-t border-line pt-5">
+						<h3 class="text-[14px] font-medium text-ink">{feature.title}</h3>
+						<p class="mt-2 text-[13px] leading-relaxed text-muted">{feature.body}</p>
+					</div>
+				{/each}
+			</div>
+		</div>
+	</section>
+
+	<section class="bg-ink">
+		<div class="mx-auto flex max-w-6xl flex-col items-start justify-between gap-8 px-6 py-20 sm:flex-row sm:items-end">
+			<div>
+				<p class="text-xs text-page/50">Ready when you are</p>
+				<h2 class="display mt-3 max-w-lg text-[clamp(1.9rem,4vw,2.75rem)] leading-[1.08] text-page">
+					Give your next project a proper home.
+				</h2>
+			</div>
+			<Button href="/signup" size="md" class="shrink-0">
+				Get started
+				<IconArrowRightRegular class="h-4 w-4" />
+			</Button>
+		</div>
+	</section>
+
+	<footer class="bg-surface">
+		<div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-6">
+			<Logo size="sm" />
+			<p class="text-[11px] text-muted">© {new Date().getFullYear()} Portlane</p>
+			<div class="flex gap-5 text-[11px] text-muted">
+				<a href="/login" class="transition-colors hover:text-ink">Log in</a>
+				<a href="/signup" class="transition-colors hover:text-ink">Sign up</a>
 			</div>
 		</div>
 	</footer>
-
 </div>
