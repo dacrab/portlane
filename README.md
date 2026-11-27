@@ -30,6 +30,8 @@ bunx vite dev
 
 Fill in `.env` before the migration: database URL, auth secret, storage keys, and Stripe keys. In development, Resend and Sentry are optional and auth links are printed to the console instead of sent.
 
+Demo mode is on by default, which keeps the app usable without an email domain: sign-ups skip verification, no email is sent, and inviting a new client shows a temporary password in the project view. Set `DEMO_MODE=false` when you have a verified sending domain and want real verification and password-setup emails.
+
 The default `dev` script runs through Doppler. Without it, export the variables from `.env` and use `bunx vite dev`. Builds read `PUBLIC_APP_URL` at build time, so use `doppler run -- bun run build` or export it first.
 
 ## Production
@@ -37,7 +39,8 @@ The default `dev` script runs through Doppler. Without it, export the variables 
 - Apply migrations with `bun run db:migrate`. Never use `drizzle-kit push` against a real database.
 - Set `PUBLIC_APP_URL` at build time; SvelteKit inlines it. It must be the canonical `https://` origin.
 - `BETTER_AUTH_SECRET` must be at least 32 characters. Generate one with `openssl rand -base64 32`.
-- Email is required in production: set `RESEND_API_KEY` and an `EMAIL_FROM` on a verified domain. Startup fails otherwise, because sign-up and client invites depend on verification and password-setup emails.
+- Demo mode is the default, so email is optional: no domain, Resend account, or `EMAIL_FROM` is needed. Sign-ups skip verification, emails are skipped, and new client invites return a temporary password in the UI.
+- For a real deployment, set `DEMO_MODE=false`, then set `RESEND_API_KEY` and an `EMAIL_FROM` on a verified domain. Startup fails if either is missing, because sign-up and client invites depend on verification and password-setup emails.
 - Set `CRON_SECRET` so Vercel's cron requests can authenticate. Vercel sends it automatically as `Authorization: Bearer $CRON_SECRET`.
 - `SENTRY_DSN` and `PUBLIC_SENTRY_DSN` are optional, but recommended.
 

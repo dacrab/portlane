@@ -91,15 +91,6 @@ function progress(project: (typeof items)[number]) {
 			</Field>
 		</div>
 
-		<Field
-			label="Invite client"
-			for="client-email"
-			optional
-			hint="They get a private portal for this project."
-		>
-			<Input id="client-email" name="client_email" type="email" placeholder="client@company.com" />
-		</Field>
-
 		<div class="mt-auto flex gap-3 border-t border-line pt-5">
 			<Button type="submit" disabled={creating} class="flex-1">
 				{creating ? 'Creating…' : 'Create project'}

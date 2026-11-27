@@ -1,9 +1,10 @@
+import { isDemoMode } from '#lib/server/demo.js'
 import { EMAIL_FROM, RESEND_API_KEY } from '$app/env/private'
 
 const DEFAULT_FROM = 'Portlane <onboarding@resend.dev>'
 
 export function emailEnabled(): boolean {
-	return Boolean(RESEND_API_KEY)
+	return !isDemoMode() && Boolean(RESEND_API_KEY)
 }
 
 function fromAddress(): string {

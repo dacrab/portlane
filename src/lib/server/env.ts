@@ -1,3 +1,4 @@
+import { isDemoMode } from '#lib/server/demo.js'
 import { dev } from '$app/env'
 import {
 	AWS_ACCESS_KEY_ID,
@@ -40,7 +41,7 @@ export function assertServerEnv(): void {
 		CRON_SECRET,
 	}
 
-	if (!dev) {
+	if (!(dev || isDemoMode())) {
 		required.RESEND_API_KEY = RESEND_API_KEY
 		required.EMAIL_FROM = EMAIL_FROM
 	}
@@ -70,7 +71,7 @@ export function assertServerEnv(): void {
 	if (!dev && appUrl.protocol !== 'https:') {
 		invalid('PUBLIC_APP_URL must use https in production.')
 	}
-	if (!dev && EMAIL_FROM.includes('resend.dev')) {
+	if (!(dev || isDemoMode()) && EMAIL_FROM.includes('resend.dev')) {
 		invalid(
 			'EMAIL_FROM still uses Resend’s test sender. Verify a domain and set EMAIL_FROM before deploying.',
 		)

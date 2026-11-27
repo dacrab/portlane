@@ -139,7 +139,8 @@ export const actions: Actions = {
 		if (!(email && /^\S+@\S+\.\S+$/.test(email)))
 			return fail(400, { error: 'A valid email is required' })
 		try {
-			await inviteClientByEmail(email, projectId)
+			const invite = await inviteClientByEmail(email, projectId)
+			return { invited: true, email, tempPassword: invite.tempPassword ?? null }
 		} catch {
 			return fail(500, { error: DB_ERROR })
 		}

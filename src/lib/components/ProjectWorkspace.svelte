@@ -100,6 +100,7 @@ let comment = $state('')
 let milestoneName = $state('')
 let inviteEmail = $state('')
 let inviting = $state(false)
+let demoInvite = $state<{ email: string; password: string } | null>(null)
 let minutes = $state('')
 let timeDescription = $state('')
 let noteBody = $state(untrack(() => note))
@@ -110,6 +111,12 @@ function copyPortalLink() {
 		`${window.location.origin}/portal?project=${project.id}`,
 	)
 	toast.success('Portal link copied')
+}
+
+function copyDemoInvite() {
+	if (!demoInvite) return
+	navigator.clipboard.writeText(`${demoInvite.email} / ${demoInvite.password}`)
+	toast.success('Demo login copied')
 }
 
 function exportTime() {
@@ -503,6 +510,7 @@ function exportTime() {
 						inviting = true
 						return async ({ result, update }) => {
 							inviting = false
+							const invitedEmail = inviteEmail
 							inviteEmail = ''
 							await update()
 							if (result.type === 'failure') {
@@ -511,9 +519,20 @@ function exportTime() {
 							} else if (result.type === 'error') {
 								toast.error('Something went wrong')
 							} else {
-								toast.success('Client added', {
-									description: 'They can sign in to the portal with this email.',
-								})
+								const tempPassword =
+									result.type === 'success'
+										? asRecord(result.data)?.tempPassword
+										: undefined
+								if (typeof tempPassword === 'string') {
+									demoInvite = { email: invitedEmail, password: tempPassword }
+									toast.success('Client added', {
+										description: 'Share the demo password shown below.',
+									})
+								} else {
+									toast.success('Client added', {
+										description: 'They can sign in to the portal with this email.',
+									})
+								}
 							}
 						}
 					}}
@@ -528,6 +547,25 @@ function exportTime() {
 						{/if}
 					</Button>
 				</form>
+
+				{#if demoInvite}
+					<div class="border-t border-line bg-raised px-6 py-3">
+						<p class="text-xs font-medium text-ink">
+							Demo login for {demoInvite.email}
+						</p>
+						<div class="mt-2 flex items-center gap-2">
+							<code class="min-w-0 flex-1 truncate rounded bg-surface px-2 py-1 font-mono text-xs text-body">
+								{demoInvite.password}
+							</code>
+							<Button size="sm" variant="secondary" onclick={copyDemoInvite}>
+								Copy
+							</Button>
+							<Button size="sm" variant="ghost" onclick={() => (demoInvite = null)}>
+								Dismiss
+							</Button>
+						</div>
+					</div>
+				{/if}
 			</Section>
 
 			<Section title="Private notes">

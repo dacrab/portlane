@@ -1,4 +1,5 @@
 import { fail } from '@sveltejs/kit'
+import { hashPassword } from 'better-auth/crypto'
 import { and, eq, max } from 'drizzle-orm'
 import { MAX_FILE_SIZE } from '#lib/constants.js'
 import type { ProjectStatus } from '#lib/domain/status.js'
@@ -6,6 +7,7 @@ import { DB_ERROR } from '#lib/server/action.js'
 import { sendPasswordSetupEmail } from '#lib/server/auth.js'
 import * as schema from '#lib/server/db/schema.js'
 import { useDb } from '#lib/server/db.js'
+import { isDemoMode } from '#lib/server/demo.js'
 import { formFile } from '#lib/server/form.js'
 import { deleteObjects, putObject } from '#lib/server/storage.js'
 
@@ -261,7 +263,15 @@ function nameFromEmail(email: string): string {
 	)
 }
 
-export async function inviteClientByEmail(email: string, projectId: string) {
+export interface ClientInvite {
+	clientId: string
+	tempPassword?: string
+}
+
+export async function inviteClientByEmail(
+	email: string,
+	projectId: string,
+): Promise<ClientInvite> {
 	const db = useDb()
 
 	const [existing] = await db
@@ -290,9 +300,23 @@ export async function inviteClientByEmail(email: string, projectId: string) {
 		.values({ projectId, clientId })
 		.onConflictDoNothing()
 
+	let tempPassword: string | undefined
 	if (await needsActivation(clientId)) {
-		await sendPasswordSetupEmail(email)
+		if (isDemoMode()) {
+			tempPassword = crypto.randomUUID().replaceAll('-', '').slice(0, 12)
+			await db.insert(schema.accounts).values({
+				id: crypto.randomUUID(),
+				userId: clientId,
+				accountId: clientId,
+				providerId: 'credential',
+				password: await hashPassword(tempPassword),
+			})
+		} else {
+			await sendPasswordSetupEmail(email)
+		}
 	}
+
+	return { clientId, tempPassword }
 }
 
 async function needsActivation(userId: string): Promise<boolean> {

@@ -10,6 +10,7 @@ export const variables = defineEnvVars({
 	BETTER_AUTH_SECRET: optional,
 	RESEND_API_KEY: optional,
 	EMAIL_FROM: optional,
+	DEMO_MODE: optional,
 	DATABASE_URL: optional,
 	AWS_ACCESS_KEY_ID: optional,
 	AWS_SECRET_ACCESS_KEY: optional,

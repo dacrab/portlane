@@ -4,6 +4,7 @@ import { sveltekitCookies } from 'better-auth/svelte-kit'
 import { PASSWORD_MIN_LENGTH } from '#lib/constants.js'
 import * as schema from '#lib/server/db/schema.js'
 import { useDb } from '#lib/server/db.js'
+import { isDemoMode } from '#lib/server/demo.js'
 import { emailEnabled, escapeHtml, sendEmail } from '#lib/server/email.js'
 import { BETTER_AUTH_SECRET } from '$app/env/private'
 import { PUBLIC_APP_URL } from '$app/env/public'
@@ -48,7 +49,7 @@ function createAuth() {
 		emailAndPassword: {
 			enabled: true,
 			minPasswordLength: PASSWORD_MIN_LENGTH,
-			requireEmailVerification: true,
+			requireEmailVerification: !isDemoMode(),
 			revokeSessionsOnPasswordReset: true,
 			sendResetPassword: async ({ user, url }) => {
 				await sendAuthEmail({
@@ -60,7 +61,7 @@ function createAuth() {
 			},
 		},
 		emailVerification: {
-			sendOnSignUp: true,
+			sendOnSignUp: !isDemoMode(),
 			autoSignInAfterVerification: true,
 			sendVerificationEmail: async ({ user, url }) => {
 				await sendAuthEmail({
